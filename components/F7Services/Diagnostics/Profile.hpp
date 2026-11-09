@@ -87,7 +87,7 @@ public:
      * @param event Event to record.
      * @param first Value recorded with the event.
      */
-    static void Record(const ProfileEvent event, const uint32_t first);
+    static void Record(ProfileEvent event, uint32_t first);
 
     /**
      * @brief Record an event with two values.
@@ -96,7 +96,7 @@ public:
      * @param first First value recorded with the event.
      * @param second Second value recorded with the event.
      */
-    static void Record(const ProfileEvent event, const uint32_t first, const uint32_t second);
+    static void Record(ProfileEvent event, uint32_t first, uint32_t second);
 
     /**
      * @brief Record an event with three values.
@@ -106,21 +106,21 @@ public:
      * @param second Second value recorded with the event.
      * @param third Third value recorded with the event.
      */
-    static void Record(const ProfileEvent event, const uint32_t first, const uint32_t second, const uint32_t third);
+    static void Record(ProfileEvent event, uint32_t first, uint32_t second, uint32_t third);
 
     /**
      * @brief Mark the start of a message's life, so it can be followed across tasks.
      *
      * @param messageId ID of the message.
      */
-    static void MessageStart(const uint32_t messageId);
+    static void MessageStart(uint32_t messageId);
 
     /**
      * @brief Mark the end of a message's life.
      *
      * @param messageId ID of the message.
      */
-    static void MessageStop(const uint32_t messageId);
+    static void MessageStop(uint32_t messageId);
 
 #else
 
@@ -182,7 +182,7 @@ public:
      * @param end Event recorded at the end.
      * @param first Value recorded with both.
      */
-    ProfileSpan(const ProfileEvent start, const ProfileEvent end, const uint32_t first) : _end(end), _first(first)
+    ProfileSpan(ProfileEvent start, ProfileEvent end, uint32_t first) : _end(end), _first(first)
     {
         Profile::Record(start, first);
     }
@@ -196,7 +196,7 @@ public:
      * @param second Second value recorded at the start.
      * @param third Third value recorded at the start.
      */
-    ProfileSpan(const ProfileEvent start, const ProfileEvent end, const uint32_t first, const uint32_t second, const uint32_t third) : _end(end), _first(first)
+    ProfileSpan(ProfileEvent start, ProfileEvent end, uint32_t first, uint32_t second, uint32_t third) : _end(end), _first(first)
     {
         Profile::Record(start, first, second, third);
     }

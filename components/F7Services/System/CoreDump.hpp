@@ -53,7 +53,7 @@ public:
      *
      * @param vpMessage Pointer to the message requesting the coredump information.
      */
-    void GetInformation(void * const vpMessage);
+    void GetInformation(void *vpMessage);
 
     /**
      * @brief Get part (maybe all) of the core dump.
@@ -65,14 +65,14 @@ public:
      *
      * @param vpMessage Pointer to the message requesting the core dump fragment.
      */
-    void GetFragment(void * const vpMessage);
+    void GetFragment(void *vpMessage);
 
     /**
      * @brief Erase the core dump.
      *
      * @param vpMessage Pointer to the message requesting the core dump erasure.
      */
-    void Erase(void * const vpMessage);
+    void Erase(void *vpMessage);
 
 private:
     /**

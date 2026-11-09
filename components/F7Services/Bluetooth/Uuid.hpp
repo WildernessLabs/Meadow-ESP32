@@ -24,9 +24,9 @@ struct Uuid128
      */
     uint8_t data[16];
 
-    Uuid128(const char * const fromString);
+    Uuid128(const char *fromString);
     Uuid128();
-    Uuid128(const uint8_t * const other);
+    Uuid128(const uint8_t *other);
 
     std::string ToString() const;
 
@@ -98,8 +98,8 @@ struct Uuid16
     }
 
     Uuid16();
-    Uuid16(const uint16_t value);
-    Uuid16(const uint8_t * const other);
+    Uuid16(uint16_t value);
+    Uuid16(const uint8_t *other);
 
     /**
      * @brief Construct a new Uuid16 object (copy constructor)

@@ -109,7 +109,7 @@ public:
     /**
      *  @brief Constructor for the Message Dispatcher.
      */
-    explicit MessageDispatcher(TransportProviderBase * const transportProvider);
+    explicit MessageDispatcher(TransportProviderBase *transportProvider);
 
     /**
      *  @brief Queue a message for the ESP32.

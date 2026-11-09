@@ -30,7 +30,7 @@ public:
      * @param value Initial value for the descriptor, or nullptr for an empty value.
      * @param valueLength Number of bytes available at value; at most maxValueLength of them are copied.
      */
-    BluetoothDescriptor(const BluetoothCharacteristic * const parent, const Uuid128 uuid, const CharacteristicPermission permission, const uint16_t maxValueLength, const uint8_t * const value, const uint16_t valueLength);
+    BluetoothDescriptor(const BluetoothCharacteristic *parent, Uuid128 uuid, CharacteristicPermission permission, uint16_t maxValueLength, const uint8_t *value, uint16_t valueLength);
 
     /**
      * @brief Construct a new BluetoothDescriptor object.
@@ -42,7 +42,7 @@ public:
      * @param value Initial value for the descriptor, or nullptr for an empty value.
      * @param valueLength Number of bytes available at value; at most maxValueLength of them are copied.
      */
-    BluetoothDescriptor(const BluetoothCharacteristic * const parent, const Uuid16 uuid, const CharacteristicPermission permission, const uint16_t maxValueLength, const uint8_t * const value, const uint16_t valueLength);
+    BluetoothDescriptor(const BluetoothCharacteristic *parent, Uuid16 uuid, CharacteristicPermission permission, uint16_t maxValueLength, const uint8_t *value, uint16_t valueLength);
 
     /**
      * @brief Destroy the Bluetooth Descriptor object
@@ -54,7 +54,7 @@ public:
      *
      * @param value Value to set the descriptor to.
      */
-    void SetValue(const uint32_t length, const uint8_t * const value);
+    void SetValue(uint32_t length, const uint8_t *value);
 
     /**
      * @brief Name of the descriptor.

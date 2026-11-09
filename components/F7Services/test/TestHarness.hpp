@@ -107,7 +107,7 @@ void WaitForResponse(MockMessageDispatcher *dispatcher, uint32_t milliseconds);
  *
  * @return Pointer to the response, which the caller owns, or nullptr on a timeout.
  */
-Message *WaitForResponseTo(MockMessageDispatcher *dispatcher, const Esp32Interfaces::Esp32Interfaces interface, const uint32_t function, const unsigned timeout);
+Message *WaitForResponseTo(MockMessageDispatcher *dispatcher, Esp32Interfaces::Esp32Interfaces interface, uint32_t function, unsigned timeout);
 
 /**
  * @brief Queue a request and return the response it produced.
@@ -121,7 +121,7 @@ Message *WaitForResponseTo(MockMessageDispatcher *dispatcher, const Esp32Interfa
  *
  * @return Pointer to the response, which the caller owns, or nullptr on a timeout.
  */
-Message *SendRequest(MockMessageDispatcher *dispatcher, const Esp32Interfaces::Esp32Interfaces interface, const uint32_t function, uint8_t *payload, const uint32_t payloadLength, const unsigned timeout);
+Message *SendRequest(MockMessageDispatcher *dispatcher, Esp32Interfaces::Esp32Interfaces interface, uint32_t function, uint8_t *payload, uint32_t payloadLength, unsigned timeout);
 
 /**
  * @brief Queue a request and read back the result and errno it produced.
@@ -136,7 +136,7 @@ Message *SendRequest(MockMessageDispatcher *dispatcher, const Esp32Interfaces::E
  *
  * @return True if a response arrived, false if the call timed out.
  */
-bool SendRequestForResultAndErrno(MockMessageDispatcher *dispatcher, const Esp32Interfaces::Esp32Interfaces interface, const uint32_t function, uint8_t *payload, const uint32_t payloadLength, const unsigned timeout, SocketCallResult *callResult);
+bool SendRequestForResultAndErrno(MockMessageDispatcher *dispatcher, Esp32Interfaces::Esp32Interfaces interface, uint32_t function, uint8_t *payload, uint32_t payloadLength, unsigned timeout, SocketCallResult *callResult);
 
 /**
  * @brief Release every message waiting in the outbound queue.
@@ -144,6 +144,6 @@ bool SendRequestForResultAndErrno(MockMessageDispatcher *dispatcher, const Esp32
  * @param dispatcher Dispatcher whose outbound queue is to be emptied.
  * @param settlingTime Milliseconds to wait for any further messages after each one found.
  */
-void DrainOutboundQueue(MockMessageDispatcher *dispatcher, const uint32_t settlingTime);
+void DrainOutboundQueue(MockMessageDispatcher *dispatcher, uint32_t settlingTime);
 
 #endif // _TEST_HARNESS_HPP_

@@ -44,7 +44,7 @@ const uint32_t BLUETOOTH_RESPONSE_TIMEOUT = 10000;
  * @param payload Encoded request, nullptr if the request carries no payload.
  * @param payloadLength Length of the encoded request, 0 if the request carries no payload.
  */
-void RunBluetoothLifecycleRequest(MockMessageDispatcher *dispatcher, const uint32_t function, const uint32_t transitionEvent, const int32_t completionEvent, const uint32_t expectedStatusCode, uint8_t *payload, const uint32_t payloadLength);
+void RunBluetoothLifecycleRequest(MockMessageDispatcher *dispatcher, uint32_t function, uint32_t transitionEvent, int32_t completionEvent, uint32_t expectedStatusCode, uint8_t *payload, uint32_t payloadLength);
 
 /**
  * @brief Start the Bluetooth service using the specified configuration.
@@ -52,7 +52,7 @@ void RunBluetoothLifecycleRequest(MockMessageDispatcher *dispatcher, const uint3
  * @param dispatcher Dispatcher to queue the request on.
  * @param configuration Configuration of the service.
  */
-void StartBluetoothService(MockMessageDispatcher *dispatcher, const char * const configuration);
+void StartBluetoothService(MockMessageDispatcher *dispatcher, const char *configuration);
 
 /**
  * @brief Stop the Bluetooth service.
@@ -68,6 +68,6 @@ void StopBluetoothService(MockMessageDispatcher *dispatcher);
  * @param handle Handle of the characteristic to write to.
  * @param value Value to write to the characteristic.
  */
-void QueueServerDataSet(MockMessageDispatcher *dispatcher, const uint16_t handle, const uint32_t value);
+void QueueServerDataSet(MockMessageDispatcher *dispatcher, uint16_t handle, uint32_t value);
 
 #endif // _TEST_BLUETOOTH_HELPERS_HPP_

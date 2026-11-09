@@ -86,12 +86,12 @@ public:
     /**
      * @brief Construct a new BluetoothCharacteristicValue object with a 16-bit UUID.
      */
-    BluetoothCharacteristicValue(BluetoothCharacteristic * const c, const Uuid16 uuid, const CharacteristicPermission permission, const int maxValueLength);
+    BluetoothCharacteristicValue(BluetoothCharacteristic *c, Uuid16 uuid, CharacteristicPermission permission, int maxValueLength);
 
     /**
      * @brief Construct a new BluetoothCharacteristicValue object with a 128-bit UUID.
      */
-    BluetoothCharacteristicValue(BluetoothCharacteristic * const c, const Uuid128 uuid, const CharacteristicPermission permission, const int maxValueLength);
+    BluetoothCharacteristicValue(BluetoothCharacteristic *c, Uuid128 uuid, CharacteristicPermission permission, int maxValueLength);
 
     /**
      * @brief Destroy the BluetoothCharacteristicValue object and release any allocated resources.
@@ -101,12 +101,12 @@ public:
     /**
      * @brief Set the value of the characteristic.
      */
-    bool WriteValue(const uint8_t * const source, const int length);
+    bool WriteValue(const uint8_t *source, int length);
 
     /**
      * @brief Read the value of the characteristic.
      */
-    bool ReadValue(uint8_t * const dest, const int length);
+    bool ReadValue(uint8_t *dest, int length);
 
     /**
      *  @brief Indicate if the UUID value is 128-bit.

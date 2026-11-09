@@ -44,7 +44,7 @@
  * @param expectedStatusCode Status code the message should carry.
  * @param line Line the assertion was made on.
  */
-void AssertMessageHeader(const Message * const message, const uint8_t expectedMessageType, const uint8_t expectedInterface, const uint32_t expectedFunction, const uint32_t expectedStatusCode, const UNITY_LINE_TYPE line);
+void AssertMessageHeader(const Message *message, uint8_t expectedMessageType, uint8_t expectedInterface, uint32_t expectedFunction, uint32_t expectedStatusCode, UNITY_LINE_TYPE line);
 
 /**
  * @brief Check that a message carries no payload.
@@ -52,7 +52,7 @@ void AssertMessageHeader(const Message * const message, const uint8_t expectedMe
  * @param message Message to be checked.
  * @param line Line the assertion was made on.
  */
-void AssertNoPayload(const Message * const message, const UNITY_LINE_TYPE line);
+void AssertNoPayload(const Message *message, UNITY_LINE_TYPE line);
 
 /**
  * @brief Check that a message carries a payload.
@@ -60,7 +60,7 @@ void AssertNoPayload(const Message * const message, const UNITY_LINE_TYPE line);
  * @param message Message to be checked.
  * @param line Line the assertion was made on.
  */
-void AssertHasPayload(const Message * const message, const UNITY_LINE_TYPE line);
+void AssertHasPayload(const Message *message, UNITY_LINE_TYPE line);
 
 /**
  * @brief Check the message ID a message carries.
@@ -69,7 +69,7 @@ void AssertHasPayload(const Message * const message, const UNITY_LINE_TYPE line)
  * @param expectedMessageID Message ID the message should carry.
  * @param line Line the assertion was made on.
  */
-void AssertMessageID(const Message * const message, const uint32_t expectedMessageID, const UNITY_LINE_TYPE line);
+void AssertMessageID(const Message *message, uint32_t expectedMessageID, UNITY_LINE_TYPE line);
 
 /**
  * @brief Check the number of messages waiting to be sent to the STM32.
@@ -78,7 +78,7 @@ void AssertMessageID(const Message * const message, const uint32_t expectedMessa
  * @param expectedLength Number of messages the queue should hold.
  * @param line Line the assertion was made on.
  */
-void AssertOutboundQueueLength(MockMessageDispatcher *dispatcher, const int expectedLength, const UNITY_LINE_TYPE line);
+void AssertOutboundQueueLength(MockMessageDispatcher *dispatcher, int expectedLength, UNITY_LINE_TYPE line);
 
 /**
  * @brief Check that a message is a response carrying the given function and status code.

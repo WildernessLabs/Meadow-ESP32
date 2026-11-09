@@ -99,7 +99,7 @@ public:
      * @param reply Reply that is now due.
      * @param address Client the question is about.
      */
-    void Expect(const PendingReply reply, const esp_bd_addr_t address);
+    void Expect(PendingReply reply, const esp_bd_addr_t address);
 
     /**
      * @brief Accept a reply from the STM32 if it answers the question asked.
@@ -110,7 +110,7 @@ public:
      * @return true if the reply was due, in which case it is no longer due; false if it was not,
      *         in which case whatever is due stays due.
      */
-    bool Take(const PendingReply reply, const esp_bd_addr_t address);
+    bool Take(PendingReply reply, const esp_bd_addr_t address);
 
     /**
      * @brief Forget any reply still due, as when pairing has finished or the client has gone.

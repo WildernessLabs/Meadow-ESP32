@@ -138,12 +138,12 @@ private:
     /**
      * @brief Set the log level of a component, or of every component in a named group.
      */
-    static bool SetComponentLogging(const char * const component, const esp_log_level_t level);
+    static bool SetComponentLogging(const char *component, esp_log_level_t level);
 
     /**
      * @brief Turn logging on for the specified component.
      */
-    static bool TurnLoggingOn(const char * const component);
+    static bool TurnLoggingOn(const char *component);
 
     /**
      * @brief Turn logging off for every component the configuration can turn on.
@@ -153,7 +153,7 @@ private:
     /**
      * @brief Start sending the log messages over UDP as well as writing them out as before.
      */
-    static StatusCodes::StatusCodes StartUdpLogging(const uint16_t port);
+    static StatusCodes::StatusCodes StartUdpLogging(uint16_t port);
 
     /**
      * @brief Stop sending the log messages over UDP and put back the output that was there before.
@@ -206,7 +206,7 @@ public:
     /**
      * @brief Configure the logging system.
      */
-    static StatusCodes::StatusCodes Configure(const char * const components, uint32_t interface, uint32_t udpPort);
+    static StatusCodes::StatusCodes Configure(const char *components, uint32_t interface, uint32_t udpPort);
 
     /**
      *  @brief Translate the ESP-IDF error codes into StatusCodes.
@@ -216,45 +216,45 @@ public:
     /**
      *  @brief Convert a message type into a meaningful string.
      */
-    static const char *MessageTypeName(const uint8_t type);
+    static const char *MessageTypeName(uint8_t type);
 
     /**
      *  @brief Convert the interface enum (Esp32Interfaces) from an interface type into a string name.
      */
-    static const char *InterfaceName(const uint32_t interface);
+    static const char *InterfaceName(uint32_t interface);
 
     /**
      *  @brief Convert the request enum into a WiFi message name.
      */
-    static const char *WiFiFunctionName(const uint32_t function);
+    static const char *WiFiFunctionName(uint32_t function);
 
     /**
      *  @brief Convert the request enum into a System message name.
      */
-    static const char *SystemFunctionName(const uint32_t function);
+    static const char *SystemFunctionName(uint32_t function);
 
     /**
      *  @brief Convert the request enum into a Bluetooth message name.
      */
-    static const char *BluetoothFunctionName(const uint32_t function);
+    static const char *BluetoothFunctionName(uint32_t function);
 
     /**
      *  @brief Convert the request enum into a Transport message name.
      */
-    static const char *TransportFunctionName(const uint32_t function);
+    static const char *TransportFunctionName(uint32_t function);
 
     /**
      *  @brief Convert the specified function ID into a string name.  The function name will vary between the interfaces.
      */
-    static const char *FunctionName(const uint32_t interface, const uint32_t function);
+    static const char *FunctionName(uint32_t interface, uint32_t function);
 
     /**
      *  @brief Convert a status code into a meaningful name.
      */
-    static const char *StatusCodeName(const uint32_t code);
+    static const char *StatusCodeName(uint32_t code);
 
     /**
      *  @brief Decode the message structure and output the components.
      */
-    static void DumpMessage(const char * const componentName, const Message * const message);
+    static void DumpMessage(const char *componentName, const Message *message);
 };

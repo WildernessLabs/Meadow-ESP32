@@ -180,14 +180,14 @@ public:
      *
      * @param alsoCall Callback to call for each failed allocation, or nullptr.
      */
-    static void Setup(const esp_alloc_failed_hook_t alsoCall = nullptr);
+    static void Setup(esp_alloc_failed_hook_t alsoCall = nullptr);
 
     /**
      * @brief Add one to a counter.
      *
      * @param counter Counter to add to.
      */
-    static void Increment(const MetricCounter counter);
+    static void Increment(MetricCounter counter);
 
     /**
      * @brief Set a gauge, raising its highest value if this is higher.
@@ -195,7 +195,7 @@ public:
      * @param gauge Gauge to set.
      * @param value New value.
      */
-    static void Set(const MetricGauge gauge, const uint32_t value);
+    static void Set(MetricGauge gauge, uint32_t value);
 
     /**
      * @brief Record a time in a histogram.
@@ -203,7 +203,7 @@ public:
      * @param histogram Histogram to record in.
      * @param microseconds Time to record.
      */
-    static void Record(const MetricHistogram histogram, const uint32_t microseconds);
+    static void Record(MetricHistogram histogram, uint32_t microseconds);
 
     /**
      * @brief Value of a counter.
@@ -211,7 +211,7 @@ public:
      * @param counter Counter to read.
      * @return The count.
      */
-    static uint32_t Read(const MetricCounter counter);
+    static uint32_t Read(MetricCounter counter);
 
     /**
      * @brief Value of a gauge.
@@ -220,7 +220,7 @@ public:
      * @param maximum Set to the highest value the gauge has had.
      * @return The value now.
      */
-    static uint32_t Read(const MetricGauge gauge, uint32_t &maximum);
+    static uint32_t Read(MetricGauge gauge, uint32_t &maximum);
 
     /**
      * @brief Read a histogram.
@@ -231,7 +231,7 @@ public:
      * @param histogram Histogram to read.
      * @param reading Filled in with what the histogram holds.
      */
-    static void Read(const MetricHistogram histogram, HistogramReading &reading);
+    static void Read(MetricHistogram histogram, HistogramReading &reading);
 
     /**
      * @brief Set every metric back to zero.
@@ -245,7 +245,7 @@ public:
      *
      * @param alsoCall Callback to call for each failed allocation, or nullptr.
      */
-    static inline void Setup(const esp_alloc_failed_hook_t alsoCall = nullptr)
+    static inline void Setup(esp_alloc_failed_hook_t alsoCall = nullptr)
     {
         if (alsoCall != nullptr)
         {
@@ -282,7 +282,7 @@ public:
      * @param microseconds Time.
      * @return Index of the bucket, 0 to NUMBER_OF_BUCKETS - 1.
      */
-    static size_t BucketFor(const uint32_t microseconds);
+    static size_t BucketFor(uint32_t microseconds);
 
     /**
      * @brief Shortest time that falls in a bucket.
@@ -290,22 +290,22 @@ public:
      * @param bucket Index of the bucket.
      * @return Lower bound of the bucket in microseconds.
      */
-    static uint32_t BucketLowerBound(const size_t bucket);
+    static uint32_t BucketLowerBound(size_t bucket);
 
     /**
      * @brief Name of a counter, for reports.
      */
-    static const char *Name(const MetricCounter counter);
+    static const char *Name(MetricCounter counter);
 
     /**
      * @brief Name of a gauge, for reports.
      */
-    static const char *Name(const MetricGauge gauge);
+    static const char *Name(MetricGauge gauge);
 
     /**
      * @brief Name of a histogram, for reports.
      */
-    static const char *Name(const MetricHistogram histogram);
+    static const char *Name(MetricHistogram histogram);
 
     /**
      * @brief Request latency histogram for an interface.
@@ -314,7 +314,7 @@ public:
      * @param histogram Set to the histogram when there is one.
      * @return true if the interface has a request latency histogram.
      */
-    static bool RequestLatencyFor(const uint8_t interface, MetricHistogram &histogram);
+    static bool RequestLatencyFor(uint8_t interface, MetricHistogram &histogram);
 
     /**
      * @brief Handler time histogram for an interface.
@@ -323,7 +323,7 @@ public:
      * @param histogram Set to the histogram when there is one.
      * @return true if the interface has a handler time histogram.
      */
-    static bool HandlerTimeFor(const uint8_t interface, MetricHistogram &histogram);
+    static bool HandlerTimeFor(uint8_t interface, MetricHistogram &histogram);
 };
 
 /**
@@ -340,7 +340,7 @@ public:
      *
      * @param histogram Histogram the time is recorded in.
      */
-    explicit MetricTimer(const MetricHistogram histogram) : _histogram(histogram), _recording(true), _start(esp_timer_get_time())
+    explicit MetricTimer(MetricHistogram histogram) : _histogram(histogram), _recording(true), _start(esp_timer_get_time())
     {
     }
 
@@ -350,7 +350,7 @@ public:
      * @param histogram Histogram the time is recorded in.
      * @param recording false to record nothing.
      */
-    MetricTimer(const MetricHistogram histogram, const bool recording) : _histogram(histogram), _recording(recording), _start(esp_timer_get_time())
+    MetricTimer(MetricHistogram histogram, bool recording) : _histogram(histogram), _recording(recording), _start(esp_timer_get_time())
     {
     }
 

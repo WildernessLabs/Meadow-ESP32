@@ -64,12 +64,12 @@ public:
     /**
      * @brief Construct a new Bluetooth Characteristic object with a 16-bit UUID.
      */
-    BluetoothCharacteristic(const Uuid16 uuid, const CharacteristicPermission permission, const CharacteristicProperty property, const int maxValueLength);
+    BluetoothCharacteristic(Uuid16 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength);
 
     /**
      * @brief Construct a new Bluetooth Characteristic objectwith a 128-bit UUID.
      */
-    BluetoothCharacteristic(const Uuid128 uuid, const CharacteristicPermission permission, const CharacteristicProperty property, const int maxValueLength);
+    BluetoothCharacteristic(Uuid128 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength);
 
     /**
      * @brief Destroy the BluetoothCharacteristic object
@@ -116,7 +116,7 @@ public:
      */
     const BluetoothCharacteristicValue &GetValue() const;
 
-    void AddDescriptor(BluetoothDescriptor * const descriptor);
+    void AddDescriptor(BluetoothDescriptor *descriptor);
 
     /**
      * @brief Method to be executed when a value changes.

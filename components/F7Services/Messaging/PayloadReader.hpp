@@ -49,7 +49,7 @@ private:
      *
      *  @return The first of them, or nullptr (and the reader is failed) if fewer are left.
      */
-    const uint8_t *Take(const uint32_t count);
+    const uint8_t *Take(uint32_t count);
 
 public:
     /**
@@ -58,7 +58,7 @@ public:
      *  @param buffer Start of the payload, nullptr if there is none.
      *  @param length Number of bytes in the payload.
      */
-    PayloadReader(const uint8_t *buffer, const uint32_t length);
+    PayloadReader(const uint8_t *buffer, uint32_t length);
 
     /**
      *  @brief Read one byte.
@@ -94,7 +94,7 @@ public:
      *  @param destination Where to put the bytes.
      *  @param count Number of bytes to copy.
      */
-    void ReadBytes(uint8_t * const destination, const uint32_t count);
+    void ReadBytes(uint8_t *destination, uint32_t count);
 
     /**
      *  @brief Copy a block whose length was read from the payload into new memory.
@@ -107,7 +107,7 @@ public:
      *  @return The block, which the caller releases, or nullptr if count is 0, the payload is too
      *          short or there is no memory (the last two fail the reader).
      */
-    uint8_t *ReadBlock(const uint32_t count);
+    uint8_t *ReadBlock(uint32_t count);
 
     /**
      *  @brief Copy a null terminated string into new memory.

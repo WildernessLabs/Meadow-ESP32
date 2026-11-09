@@ -106,12 +106,12 @@ private:
     /**
      *  @brief Get the system configuration.
      */
-    void GetConfiguration(Message * const request);
+    void GetConfiguration(Message *request);
 
     /**
      *  @brief Set a system configuration item.
      */
-    void SetConfigurationItem(Message * const request);
+    void SetConfigurationItem(Message *request);
 
     /**
      * @brief Check that a buffer holds a NUL terminator within a given number of bytes.
@@ -130,17 +130,17 @@ private:
      * @returns
      *      true if a NUL byte was found within the first length bytes of buffer.
      */
-    static bool ContainsNulTerminator(const uint8_t * const buffer, const uint32_t length);
+    static bool ContainsNulTerminator(const uint8_t *buffer, uint32_t length);
 
     /**
      *  @brief Put the ESP32 into deep sleep.
      */
-    void DeepSleep(Message * const request);
+    void DeepSleep(Message *request);
 
     /**
      *  @brief Get the battery level.
      */
-    void GetBatteryChargeLevel(Message * const request);
+    void GetBatteryChargeLevel(Message *request);
 
     /**
      * @brief Process the logging configuration.

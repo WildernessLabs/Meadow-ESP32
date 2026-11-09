@@ -157,7 +157,7 @@ public:
      *
      * @return true if the settings were valid (or absent), false if any was not.
      */
-    bool Parse(const cJSON * const security);
+    bool Parse(const cJSON *security);
 
     /**
      * @brief Put every setting back to its default.
@@ -198,7 +198,7 @@ public:
      *
      * @return true if any read or write needs MITM protection.
      */
-    static bool PermissionRequiresMitm(const CharacteristicPermission permission);
+    static bool PermissionRequiresMitm(CharacteristicPermission permission);
 
     /**
      * @brief Does an attribute with this permission need an encrypted link?
@@ -207,7 +207,7 @@ public:
      *
      * @return true if any read or write needs encryption, with or without MITM protection.
      */
-    static bool PermissionRequiresEncryption(const CharacteristicPermission permission);
+    static bool PermissionRequiresEncryption(CharacteristicPermission permission);
 
     /**
      * @brief Permission for the Client Characteristic Configuration descriptor of a characteristic.
@@ -221,7 +221,7 @@ public:
      *
      * @return descriptorPermission with the write security the value needs added.
      */
-    static CharacteristicPermission ClientConfigurationPermission(const CharacteristicPermission descriptorPermission, const CharacteristicPermission valuePermission);
+    static CharacteristicPermission ClientConfigurationPermission(CharacteristicPermission descriptorPermission, CharacteristicPermission valuePermission);
 
     /**
      * @brief Is this a passkey the user could have entered?
@@ -230,7 +230,7 @@ public:
      *
      * @return true if it is at most six decimal digits.
      */
-    static bool IsValidPasskey(const uint32_t passkey)
+    static bool IsValidPasskey(uint32_t passkey)
     {
         return (passkey <= MAXIMUM_PASSKEY);
     }

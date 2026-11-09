@@ -72,7 +72,7 @@ private:
      * @returns
      *      true if name is safe to concatenate onto PARTITION_PATH_NAME.
      */
-    bool IsValidFileName(const char * const name);
+    bool IsValidFileName(const char *name);
 
     /**
      * @brief Turn a request into its response and hand it to the dispatcher.
@@ -89,7 +89,7 @@ private:
      * @param result
      *      Status code the response should carry.
      */
-    void SendResponse(Message *message, const StatusCodes::StatusCodes result);
+    void SendResponse(Message *message, StatusCodes::StatusCodes result);
 
     /**
      * @brief Read an open file and encode it, with its name, as the payload of message.
@@ -110,7 +110,7 @@ private:
      *      CompletedOk if the whole file was read and encoded, EspOutOfMemory if memory ran
      *      out, otherwise Failure.
      */
-    StatusCodes::StatusCodes ReadOpenFile(FILE * const file, const uint32_t length, Esp32Messaging::FileNameAndContents * const fileData, Message * const message);
+    StatusCodes::StatusCodes ReadOpenFile(FILE *file, uint32_t length, Esp32Messaging::FileNameAndContents *fileData, Message *message);
 
 public:
     /**
@@ -156,25 +156,25 @@ public:
     /**
      * @brief Format the file system.
      */
-    void Format(Message * const message);
+    void Format(Message *message);
 
     /**
      * @brief Read a file from the file system.
      */
-    void ReadFile(Message * const message);
+    void ReadFile(Message *message);
 
     /**
      * @brief Write a file to the file system.
      */
-    void WriteFile(Message * const message);
+    void WriteFile(Message *message);
 
     /**
      * @brief Delete a file from the file system.
      */
-    void DeleteFile(Message * const message);
+    void DeleteFile(Message *message);
 
     /**
      * @brief Get a list of the files on the file system.
      */
-    void ListFiles(Message * const message);
+    void ListFiles(Message *message);
 };

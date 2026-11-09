@@ -43,7 +43,7 @@ namespace Utils
      * @param address Address in network byte order, as held in in_addr::s_addr.
      * @return std::string The address, for example "192.168.1.1".
      */
-    std::string Ipv4AddressToString(const uint32_t address);
+    std::string Ipv4AddressToString(uint32_t address);
 
     /**
      * @brief Release heap storage obtained from pvPortMalloc and set the caller's pointer to nullptr.
@@ -102,7 +102,7 @@ namespace Utils
      *
      * @param what Description of the object that could not be created.
      */
-    [[noreturn]] void CreationFailed(const char * const what);
+    [[noreturn]] void CreationFailed(const char *what);
 
     /**
      * @brief Check that a FreeRTOS object was created, stopping with a diagnostic if not.
@@ -127,5 +127,5 @@ namespace Utils
      * @param result Value returned by the creation call.
      * @param what Description of the task, for the diagnostic.
      */
-    void RequireTaskCreated(const BaseType_t result, const char * const what);
+    void RequireTaskCreated(BaseType_t result, const char *what);
 }; // namespace Utils

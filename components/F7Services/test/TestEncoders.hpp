@@ -128,7 +128,7 @@ namespace TestEncoders
      *
      * @return Number of bytes required to hold the encoded object.
      */
-    uint32_t EncodedCoreDumpFragmentRequestBufferSize(const Esp32Messaging::CoreDumpFragmentRequest * const request);
+    uint32_t EncodedCoreDumpFragmentRequestBufferSize(const Esp32Messaging::CoreDumpFragmentRequest *request);
 
     /**
      * @brief Encode a CoreDumpFragmentRequest object into a newly allocated buffer.
@@ -140,7 +140,7 @@ namespace TestEncoders
      *
      * @return Pointer to the encoded object, nullptr if the buffer cannot be allocated.
      */
-    uint8_t *EncodeCoreDumpFragmentRequest(const Esp32Messaging::CoreDumpFragmentRequest * const request);
+    uint8_t *EncodeCoreDumpFragmentRequest(const Esp32Messaging::CoreDumpFragmentRequest *request);
 
     /**
      * @brief Extract the CoreDumpFragmentResponse object encoded in the given buffer.
@@ -169,7 +169,7 @@ namespace TestEncoders
      *
      * @return Number of bytes required to hold the encoded object.
      */
-    uint32_t EncodedBTStackConfigBufferSize(const Esp32Messaging::BTStackConfig * const bTStackConfig);
+    uint32_t EncodedBTStackConfigBufferSize(const Esp32Messaging::BTStackConfig *bTStackConfig);
 
     /**
      * @brief Encode a BTStackConfig object into the given buffer.
@@ -180,7 +180,7 @@ namespace TestEncoders
      * @param bTStackConfig Pointer to the BTStackConfig object to be encoded.
      * @param buffer Pointer to the block of memory to hold the encoded object.
      */
-    void EncodeBTStackConfig(const Esp32Messaging::BTStackConfig * const bTStackConfig, uint8_t *buffer);
+    void EncodeBTStackConfig(const Esp32Messaging::BTStackConfig *bTStackConfig, uint8_t *buffer);
 
     /**
      * @brief Calculate the memory required to hold an encoded BTServerDataSet object.
@@ -189,7 +189,7 @@ namespace TestEncoders
      *
      * @return Number of bytes required to hold the encoded object.
      */
-    uint32_t EncodedBTServerDataSetBufferSize(const Esp32Messaging::BTServerDataSet * const bTServerDataSet);
+    uint32_t EncodedBTServerDataSetBufferSize(const Esp32Messaging::BTServerDataSet *bTServerDataSet);
 
     /**
      * @brief Encode a BTServerDataSet object into the given buffer.
@@ -200,7 +200,7 @@ namespace TestEncoders
      * @param bTServerDataSet Pointer to the BTServerDataSet object to be encoded.
      * @param buffer Pointer to the block of memory to hold the encoded object.
      */
-    void EncodeBTServerDataSet(const Esp32Messaging::BTServerDataSet * const bTServerDataSet, uint8_t *buffer);
+    void EncodeBTServerDataSet(const Esp32Messaging::BTServerDataSet *bTServerDataSet, uint8_t *buffer);
 
     /**
      * @brief Number of bytes in an encoded socket request.
@@ -270,7 +270,7 @@ namespace TestEncoders
      *
      * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
      */
-    uint8_t *EncodeSocketRequest(const int32_t domain, const int32_t type, const int32_t protocol);
+    uint8_t *EncodeSocketRequest(int32_t domain, int32_t type, int32_t protocol);
 
     /**
      * @brief Encode a connect request for an IPv4 address into a newly allocated buffer.
@@ -287,7 +287,7 @@ namespace TestEncoders
      *
      * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
      */
-    uint8_t *EncodeConnectRequest(const int32_t socketHandle, const char *address, const uint16_t port);
+    uint8_t *EncodeConnectRequest(int32_t socketHandle, const char *address, uint16_t port);
 
     /**
      * @brief Encode a send request into a newly allocated buffer.
@@ -302,7 +302,7 @@ namespace TestEncoders
      *
      * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
      */
-    uint8_t *EncodeSendRequest(const int32_t socketHandle, const char *data, const uint32_t length, uint32_t *encodedLength);
+    uint8_t *EncodeSendRequest(int32_t socketHandle, const char *data, uint32_t length, uint32_t *encodedLength);
 
     /**
      * @brief Encode a send request whose wire Length field disagrees with the size of the
@@ -323,7 +323,7 @@ namespace TestEncoders
      *
      * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
      */
-    uint8_t *EncodeSendRequestWithDeclaredLength(const int32_t socketHandle, const char *data, const uint32_t bufferLength, const int32_t declaredLength, uint32_t *encodedLength);
+    uint8_t *EncodeSendRequestWithDeclaredLength(int32_t socketHandle, const char *data, uint32_t bufferLength, int32_t declaredLength, uint32_t *encodedLength);
 
     /**
      * @brief Encode a sendto request into a newly allocated buffer.
@@ -341,7 +341,7 @@ namespace TestEncoders
      *
      * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
      */
-    uint8_t *EncodeSendToRequest(const int32_t socketHandle, const char *data, const uint32_t length, const uint8_t *destinationAddress, const uint32_t destinationAddressLength, uint32_t *encodedLength);
+    uint8_t *EncodeSendToRequest(int32_t socketHandle, const char *data, uint32_t length, const uint8_t *destinationAddress, uint32_t destinationAddressLength, uint32_t *encodedLength);
 
     /**
      * @brief Encode a sendto request whose wire Length field disagrees with the size of
@@ -360,7 +360,7 @@ namespace TestEncoders
      *
      * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
      */
-    uint8_t *EncodeSendToRequestWithDeclaredLength(const int32_t socketHandle, const char *data, const uint32_t bufferLength, const int32_t declaredLength, const uint8_t *destinationAddress, const uint32_t destinationAddressLength, uint32_t *encodedLength);
+    uint8_t *EncodeSendToRequestWithDeclaredLength(int32_t socketHandle, const char *data, uint32_t bufferLength, int32_t declaredLength, const uint8_t *destinationAddress, uint32_t destinationAddressLength, uint32_t *encodedLength);
 
     /**
      * @brief Encode a sendmsg request carrying a single iovec into a newly allocated buffer.
@@ -377,7 +377,7 @@ namespace TestEncoders
      *
      * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
      */
-    uint8_t *EncodeSendMsgRequest(const int32_t socketHandle, const uint8_t *name, const uint32_t nameLength, const char *data, const uint32_t length, uint32_t *encodedLength);
+    uint8_t *EncodeSendMsgRequest(int32_t socketHandle, const uint8_t *name, uint32_t nameLength, const char *data, uint32_t length, uint32_t *encodedLength);
 
     /**
      * @brief Encode a recvfrom request into a newly allocated buffer.
@@ -390,7 +390,7 @@ namespace TestEncoders
      *
      * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
      */
-    uint8_t *EncodeRecvFromRequest(const int32_t socketHandle, const int32_t length);
+    uint8_t *EncodeRecvFromRequest(int32_t socketHandle, int32_t length);
 
     /**
      * @brief Encode a recvmsg request into a newly allocated buffer.
@@ -403,7 +403,7 @@ namespace TestEncoders
      *
      * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
      */
-    uint8_t *EncodeRecvMsgRequest(const int32_t socketHandle, const int32_t length);
+    uint8_t *EncodeRecvMsgRequest(int32_t socketHandle, int32_t length);
 
     /**
      * @brief Encode a close request into a newly allocated buffer.
@@ -415,7 +415,7 @@ namespace TestEncoders
      *
      * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
      */
-    uint8_t *EncodeCloseRequest(const int32_t socketHandle);
+    uint8_t *EncodeCloseRequest(int32_t socketHandle);
 
     /**
      * @brief Encode a poll request into a newly allocated buffer.
@@ -430,7 +430,7 @@ namespace TestEncoders
      *
      * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
      */
-    uint8_t *EncodePollRequest(const int32_t socketHandle, const uint16_t events, const bool setup, const uint32_t setupMessageId);
+    uint8_t *EncodePollRequest(int32_t socketHandle, uint16_t events, bool setup, uint32_t setupMessageId);
 
     /**
      * @brief Size of the buffer EncodeIoctlRequest produces.
@@ -448,7 +448,7 @@ namespace TestEncoders
      *
      * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
      */
-    uint8_t *EncodeIoctlRequest(const int32_t command);
+    uint8_t *EncodeIoctlRequest(int32_t command);
 
     /**
      * @brief Extract the IoctlResponse object encoded in the given buffer.

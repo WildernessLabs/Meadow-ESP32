@@ -76,6 +76,6 @@ public:
     {
     }
 
-    unsigned short Assign(BluetoothService * const service);
-    unsigned short Assign(BluetoothAttribute * const attribute);
+    unsigned short Assign(BluetoothService *service);
+    unsigned short Assign(BluetoothAttribute *attribute);
 };

@@ -63,17 +63,17 @@ protected:
     /**
      *  @brief Create a new event message and add to the outbound message queue.
      */
-    void RaiseEvent(const uint8_t interface, const uint32_t eventType, const uint32_t statusCode, uint8_t *payload, const uint32_t payloadLength);
+    void RaiseEvent(uint8_t interface, uint32_t eventType, uint32_t statusCode, uint8_t *payload, uint32_t payloadLength);
 
     /**
      *  @brief Create a new event message and add to the outbound message queue.
      */
-    void RaiseEvent(const uint8_t interface, const uint32_t eventType, const uint32_t statusCode);
+    void RaiseEvent(uint8_t interface, uint32_t eventType, uint32_t statusCode);
 
     /**
      *  @brief Create a new event message and add to the outbound message queue.
      */
-    void RaiseEvent(const uint8_t interface, const uint32_t eventType);
+    void RaiseEvent(uint8_t interface, uint32_t eventType);
 
     /**
      * @brief Send an IntegerResponse to the STM32.
@@ -83,7 +83,7 @@ protected:
      * @param statusCode - The status code of the response.
      * @param result - Value to send.
      */
-    void SendIntegerResult(const uint8_t interface, const uint32_t eventType, const uint32_t statusCode, const uint32_t value);
+    void SendIntegerResult(uint8_t interface, uint32_t eventType, uint32_t statusCode, uint32_t value);
 
     /**
      * @brief Answer a request whose function code this handler does not recognise.

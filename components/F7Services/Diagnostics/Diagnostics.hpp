@@ -123,7 +123,7 @@ private:
      * @param runTime Run-time counter of the task now.
      * @return Run time used since the last report.
      */
-    static configRUN_TIME_COUNTER_TYPE RunTimeSinceLastReport(const UBaseType_t taskNumber, const configRUN_TIME_COUNTER_TYPE runTime);
+    static configRUN_TIME_COUNTER_TYPE RunTimeSinceLastReport(UBaseType_t taskNumber, configRUN_TIME_COUNTER_TYPE runTime);
 
     /**
      * @brief Remember the run time of each task for the next report.
@@ -132,7 +132,7 @@ private:
      * @param numberOfTasks Number of entries in tasks.
      * @param totalRunTime Total run time read by uxTaskGetSystemState.
      */
-    static void RememberRunTimes(const TaskStatus_t *tasks, const UBaseType_t numberOfTasks, const configRUN_TIME_COUNTER_TYPE totalRunTime);
+    static void RememberRunTimes(const TaskStatus_t *tasks, UBaseType_t numberOfTasks, configRUN_TIME_COUNTER_TYPE totalRunTime);
 
     /**
      * @brief Percentage of one core that a run time represents over an interval.
@@ -141,7 +141,7 @@ private:
      * @param interval Length of the interval in the same units.
      * @return Percentage, or 0 if the interval is empty.
      */
-    static uint32_t PercentageOfInterval(const configRUN_TIME_COUNTER_TYPE runTime, const configRUN_TIME_COUNTER_TYPE interval);
+    static uint32_t PercentageOfInterval(configRUN_TIME_COUNTER_TYPE runTime, configRUN_TIME_COUNTER_TYPE interval);
 
     /**
      * @brief Gives the tests access to the private members.
@@ -174,14 +174,14 @@ private:
      *
      * @param sequence Sequence number of the snapshot.
      */
-    static void WriteTasks(const uint32_t sequence);
+    static void WriteTasks(uint32_t sequence);
 
     /**
      * @brief Write a record for each kind of heap memory.
      *
      * @param sequence Sequence number of the snapshot.
      */
-    static void WriteHeap(const uint32_t sequence);
+    static void WriteHeap(uint32_t sequence);
 
     /**
      * @brief Write the record for one kind of heap memory.
@@ -190,28 +190,28 @@ private:
      * @param name Name of the kind of memory.
      * @param caps Capabilities that select it.
      */
-    static void WriteHeapRegion(const uint32_t sequence, const char *name, const uint32_t caps);
+    static void WriteHeapRegion(uint32_t sequence, const char *name, uint32_t caps);
 
     /**
      * @brief Write a record of the heap each task is using (with CONFIG_HEAP_TASK_TRACKING).
      *
      * @param sequence Sequence number of the snapshot.
      */
-    static void WriteTaskHeap(const uint32_t sequence);
+    static void WriteTaskHeap(uint32_t sequence);
 
     /**
      * @brief Write a record for each counter, gauge and histogram (with CONFIG_MEADOW_METRICS).
      *
      * @param sequence Sequence number of the snapshot.
      */
-    static void WriteMetrics(const uint32_t sequence);
+    static void WriteMetrics(uint32_t sequence);
 
     /**
      * @brief Write a record for each network protocol (with CONFIG_LWIP_STATS).
      *
      * @param sequence Sequence number of the snapshot.
      */
-    static void WriteNetwork(const uint32_t sequence);
+    static void WriteNetwork(uint32_t sequence);
 
     /**
      * @brief Name of a task state, for the records.
@@ -219,7 +219,7 @@ private:
      * @param state Task state.
      * @return Its name.
      */
-    static const char *TaskStateName(const eTaskState state);
+    static const char *TaskStateName(eTaskState state);
 
 public:
     /**
@@ -239,7 +239,7 @@ public:
      *                           with RequestSnapshot.  A period below one second is raised to
      *                           one second.
      */
-    static void Setup(const uint32_t periodMilliseconds);
+    static void Setup(uint32_t periodMilliseconds);
 
     /**
      * @brief Ask the snapshot task to take a snapshot now.  Does nothing before Setup.

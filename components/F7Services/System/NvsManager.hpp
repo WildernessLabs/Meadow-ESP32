@@ -65,40 +65,40 @@ public:
     /**
      *  @brief Get an unsigned integer value.
      */
-    static uint32_t GetValue(const char *nameSpace, const char *name, const uint32_t defaultValue);
+    static uint32_t GetValue(const char *nameSpace, const char *name, uint32_t defaultValue);
 
     /**
      *  @brief Set an unsigned integer value.
      */
-    static ErrorCodes SetValue(const char *nameSpace, const char *name, const uint32_t value);
+    static ErrorCodes SetValue(const char *nameSpace, const char *name, uint32_t value);
 
     /**
      *  @brief Get an integer value.
      */
-    static int32_t GetValue(const char *nameSpace, const char *name, const int32_t defaultValue);
+    static int32_t GetValue(const char *nameSpace, const char *name, int32_t defaultValue);
 
     /**
      *  @brief Set an integer value.
      */
-    static ErrorCodes SetValue(const char *nameSpace, const char *name, const int32_t value);
+    static ErrorCodes SetValue(const char *nameSpace, const char *name, int32_t value);
 
     /**
      *  @brief Get a byte value.
      */
-    static uint8_t GetValue(const char *nameSpace, const char *name, const uint8_t defaultValue);
+    static uint8_t GetValue(const char *nameSpace, const char *name, uint8_t defaultValue);
 
     /**
      *  @brief Set a byte value.
      */
-    static ErrorCodes SetValue(const char *nameSpace, const char *name, const uint8_t value);
+    static ErrorCodes SetValue(const char *nameSpace, const char *name, uint8_t value);
 
     /**
      *  @brief Get a boolean value.
      */
-    static bool GetValue(const char *nameSpace, const char *name, const bool defaultValue);
+    static bool GetValue(const char *nameSpace, const char *name, bool defaultValue);
 
     /**
      *  @brief Set a boolean value.
      */
-    static ErrorCodes SetValue(const char *nameSpace, const char *name, const bool value);
+    static ErrorCodes SetValue(const char *nameSpace, const char *name, bool value);
 };

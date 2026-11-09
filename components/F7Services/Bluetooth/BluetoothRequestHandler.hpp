@@ -256,7 +256,7 @@ private:
     /**
      * @brief Start the bluetooth service from the attribute graph sent be the managed code.
      */
-    void Start(Message * const request);
+    void Start(Message *request);
 
     /**
      * @brief Start the Bluetooth stack.
@@ -268,7 +268,7 @@ private:
      *
      * @param started true once the service has started, false if a step on the way failed.
      */
-    void SignalServiceStart(const bool started);
+    void SignalServiceStart(bool started);
 
     /**
      * @brief Give the stack the pairing and bonding settings.
@@ -287,21 +287,21 @@ private:
      *
      * @param removed true if the bond was removed.
      */
-    void SignalBondRemoved(const bool removed);
+    void SignalBondRemoved(bool removed);
 
     /**
      * @brief Answer a PasskeyRequestEvent with the passkey the user entered (PasskeyReply).
      *
      * @param request Request from the STM32, a BTPairingReply.
      */
-    void PasskeyReply(Message * const request);
+    void PasskeyReply(Message *request);
 
     /**
      * @brief Answer a NumericComparisonRequestEvent (NumericComparisonReply).
      *
      * @param request Request from the STM32, a BTPairingReply.
      */
-    void NumericComparisonReply(Message * const request);
+    void NumericComparisonReply(Message *request);
 
     /**
      * @brief Pass the STM32's answer to a question about pairing to the stack.
@@ -309,28 +309,28 @@ private:
      * @param request Request from the STM32, a BTPairingReply.
      * @param reply Kind of reply the request is.
      */
-    void ReplyToPairing(Message * const request, const BluetoothPairing::PendingReply reply);
+    void ReplyToPairing(Message *request, BluetoothPairing::PendingReply reply);
 
     /**
      * @brief Send the STM32 the addresses of the bonded devices (GetBondedDevices).
      *
      * @param request Request from the STM32.
      */
-    void GetBondedDevices(Message * const request);
+    void GetBondedDevices(Message *request);
 
     /**
      * @brief Remove the bond with one device (RemoveBond).
      *
      * @param request Request from the STM32, a BTDeviceAddress.
      */
-    void RemoveBond(Message * const request);
+    void RemoveBond(Message *request);
 
     /**
      * @brief Remove the bond with every device (RemoveAllBonds).
      *
      * @param request Request from the STM32.
      */
-    void RemoveAllBonds(Message * const request);
+    void RemoveAllBonds(Message *request);
 
     /**
      * @brief Ask the stack to remove one bond and wait for it to finish.
@@ -373,7 +373,7 @@ private:
      * @param address Client being paired with.
      * @param passkey Number to show the user, 0 when one is being asked for.
      */
-    static void RaisePairingEvent(const BluetoothFunction::BluetoothFunction event, const esp_bd_addr_t address, const uint32_t passkey);
+    static void RaisePairingEvent(BluetoothFunction::BluetoothFunction event, const esp_bd_addr_t address, uint32_t passkey);
 
     /**
      * @brief Act on the end of pairing, or of encryption with a bonded client, and tell the STM32.
@@ -411,7 +411,7 @@ private:
     /**
      * @brief Get the Handles and send them to the STM32.
      */
-    void GetHandles(Message * const request);
+    void GetHandles(Message *request);
 
     /**
      * @brief Release the attribute table and set its length back to 0.
@@ -424,7 +424,7 @@ private:
     /**
      * @brief Stop the Bluetooth stack.
      */
-    void Stop(Message * const request);
+    void Stop(Message *request);
 
     /**
      * @brief Take down whatever part of the Bluetooth stack is up.
@@ -441,12 +441,12 @@ private:
     /**
      * @brief Set the current value for the specified attribute handle.
      */
-    void SetCurrentValueForAttributeHandle(Message * const request);
+    void SetCurrentValueForAttributeHandle(Message *request);
 
     /**
      * @brief Write request event handler (this has to be static as it is called from C APIs).
      */
-    static void OnDataWriteRequest(const uint16_t handle, uint8_t * const data, const uint16_t dataLength);
+    static void OnDataWriteRequest(uint16_t handle, uint8_t *data, uint16_t dataLength);
 
     /**
      * @brief Add one piece of a prepared (long) write to the value being collected.
@@ -463,14 +463,14 @@ private:
      *
      * @return ESP_GATT_OK if the piece was kept, otherwise the status to send the client.
      */
-    static esp_gatt_status_t PrepareWrite(const uint16_t handle, const uint16_t offset, const uint8_t * const value, const uint16_t length);
+    static esp_gatt_status_t PrepareWrite(uint16_t handle, uint16_t offset, const uint8_t *value, uint16_t length);
 
     /**
      * @brief Finish a prepared write: deliver the value collected to the STM32, or discard it.
      *
      * @param execute true to deliver the value, false if the client cancelled the write.
      */
-    static void ExecuteWrite(const bool execute);
+    static void ExecuteWrite(bool execute);
 
     /**
      * @brief Discard any prepared write that has not been executed.
@@ -539,7 +539,7 @@ public:
      *
      * @return true if the client set the notification bit.
      */
-    static bool NotificationsEnabled(const uint16_t valueHandle);
+    static bool NotificationsEnabled(uint16_t valueHandle);
 
     /**
      * @brief Number of notifications sent to a client since the board started.
@@ -593,5 +593,5 @@ public:
     /**
      * @brief Get the MAC address for the Bluetooth interface.
      */
-    static void GetMacAddress(uint8_t * const macAddress);
+    static void GetMacAddress(uint8_t *macAddress);
 };

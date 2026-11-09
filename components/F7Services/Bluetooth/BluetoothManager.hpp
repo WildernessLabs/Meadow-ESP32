@@ -170,7 +170,7 @@ private:
      * @return true if the device name can be advertised, false if it is longer than
      *         MAXIMUM_ADVERTISED_NAME_LENGTH, in which case the default name is kept.
      */
-    bool GetDeviceInformation(const cJSON * const json);
+    bool GetDeviceInformation(const cJSON *json);
 
     /**
      * @brief Add services from the JSON configuration.
@@ -179,7 +179,7 @@ private:
      *
      * @return Number of service, characteristic and descriptor entries rejected.
      */
-    uint32_t AddServices(const cJSON * const json);
+    uint32_t AddServices(const cJSON *json);
 
     /**
      * @brief Add characteristics from the JSON configuration.
@@ -189,7 +189,7 @@ private:
      *
      * @return Number of characteristic and descriptor entries rejected.
      */
-    uint32_t AddCharacteristics(const cJSON * const json, BluetoothService * const service);
+    uint32_t AddCharacteristics(const cJSON *json, BluetoothService *service);
 
     /**
      * @brief Add descriptors from the JSON configuration.
@@ -199,7 +199,7 @@ private:
      *
      * @return Number of descriptor entries rejected.
      */
-    uint32_t AddDescriptors(const cJSON * const json, BluetoothCharacteristic * const characteristic);
+    uint32_t AddDescriptors(const cJSON *json, BluetoothCharacteristic *characteristic);
 
     /**
      * @brief Give a notifying or indicating characteristic a Client Characteristic Configuration descriptor.
@@ -212,7 +212,7 @@ private:
      * @param characteristic Characteristic that has had its configured descriptors added.
      * @param properties Properties the configuration gave the characteristic.
      */
-    void AddClientCharacteristicConfiguration(BluetoothCharacteristic * const characteristic, const uint16_t properties);
+    void AddClientCharacteristicConfiguration(BluetoothCharacteristic *characteristic, uint16_t properties);
 
     /**
      * @brief Make subscribing to a characteristic need the same security as reading its value.
@@ -225,7 +225,7 @@ private:
      * @param characteristic Characteristic that has all its descriptors.
      * @param permission Permission the configuration gave the characteristic.
      */
-    void ProtectClientCharacteristicConfiguration(BluetoothCharacteristic * const characteristic, const uint16_t permission);
+    void ProtectClientCharacteristicConfiguration(BluetoothCharacteristic *characteristic, uint16_t permission);
 
     /**
      * @brief Count the characteristics and descriptors that need a pairing protected against a man in the middle.
@@ -247,7 +247,7 @@ private:
      * @param uuid128 Reference to Uuid128 to be set if UUID is 128-bit.
      * @param is128 Reference to bool to indicate if UUID is 128-bit.
      */
-    void ParseUuid(const cJSON * const json, Uuid16 &uuid16, Uuid128 &uuid128, bool &is128);
+    void ParseUuid(const cJSON *json, Uuid16 &uuid16, Uuid128 &uuid128, bool &is128);
 
     /**
      * @brief 16-bit assigned number for the company identifier.
@@ -302,7 +302,7 @@ public:
      *         false if the graph needed more handles than count and was left partially
      *         updated.
      */
-    bool SetHandles(const uint16_t * const handles, const uint16_t count);
+    bool SetHandles(const uint16_t *handles, uint16_t count);
 
     /**
      * @brief Get all of the handles associated with the services, characteristics and descriptors.
@@ -314,7 +314,7 @@ public:
      *         the graph needed more handles than capacity and handles was left partially
      *         filled.
      */
-    bool GetHandles(uint16_t * const handles, const uint16_t capacity);
+    bool GetHandles(uint16_t *handles, uint16_t capacity);
 
     /**
      * @brief Get the Company Identifier.
@@ -359,7 +359,7 @@ public:
      *
      * @return true if handle holds a characteristic's value.
      */
-    bool IsCharacteristicValueHandle(const uint16_t handle);
+    bool IsCharacteristicValueHandle(uint16_t handle);
 
     /**
      * @brief Get the current value for a attribute with the specified handle, starting at an offset.
@@ -368,12 +368,12 @@ public:
      *  ESP_GATT_INVALID_HANDLE if the handle is unknown, ESP_GATT_INVALID_OFFSET if the
      *  offset is beyond the length of the value.
      */
-    esp_gatt_status_t GetCurrentValueForAttributeHandle(const uint16_t handle, const uint16_t offset, uint8_t *pData, const uint16_t capacity, uint16_t * const pLen);
+    esp_gatt_status_t GetCurrentValueForAttributeHandle(uint16_t handle, uint16_t offset, uint8_t *pData, uint16_t capacity, uint16_t *pLen);
 
     /**
      * @brief @brief Set the value for a attribute with the specified handle.
      */
-    void SetCurrentValueForAttributeHandle(const uint16_t handle, const uint8_t * const pData, const uint16_t len);
+    void SetCurrentValueForAttributeHandle(uint16_t handle, const uint8_t *pData, uint16_t len);
 
     /**
      * @brief Get the handle of the Client Characteristic Configuration descriptor of the characteristic whose value has this handle.
@@ -384,7 +384,7 @@ public:
      *
      * @return Handle of the descriptor, or 0 if the handle is not a characteristic value or the characteristic has none.
      */
-    uint16_t GetClientConfigurationHandle(const uint16_t valueHandle);
+    uint16_t GetClientConfigurationHandle(uint16_t valueHandle);
 
     /**
      * @brief Get the handles of every Client Characteristic Configuration descriptor in the graph.
@@ -403,7 +403,7 @@ public:
      *
      * @return true if bit 0 is set.
      */
-    static bool ClientConfigurationEnablesNotifications(const uint16_t configuration)
+    static bool ClientConfigurationEnablesNotifications(uint16_t configuration)
     {
         return ((configuration & 0x0001) != 0);
     }
@@ -411,7 +411,7 @@ public:
     /**
      * @brief Get the properties for the characteristic with the specified handle.
      */
-    CharacteristicProperty GetCharacteristicProperties(const uint16_t handle);
+    CharacteristicProperty GetCharacteristicProperties(uint16_t handle);
 
     /**
      * @brief Check whether a handle identifies a known characteristic value.
@@ -420,12 +420,12 @@ public:
      *
      * @return True if a characteristic with this value handle exists, false otherwise.
      */
-    bool IsKnownCharacteristicHandle(const uint16_t handle);
+    bool IsKnownCharacteristicHandle(uint16_t handle);
 
     /**
      * @brief Get the permissions for the characteristic with the specified handle.
      */
-    CharacteristicPermission GetCharacteristicPermissions(const uint16_t handle);
+    CharacteristicPermission GetCharacteristicPermissions(uint16_t handle);
 
     /**
      * @brief Build the graph of services, characteristics and descriptors from a pointer toJSON configuration.
@@ -443,5 +443,5 @@ public:
      *      true if configuration was parsed and the graph was built from it, false if
      *      configuration was refused.
      */
-    bool BuildGraphFromJson(const char * const configuration);
+    bool BuildGraphFromJson(const char *configuration);
 };

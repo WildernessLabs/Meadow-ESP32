@@ -83,8 +83,7 @@ unsigned RadioTimeout(void);
  *
  * @return Pointer to a message holding the encoded credentials in its payload.
  */
-Message *CreateAccessPointMessage(
-    const uint32_t function, const char *ssid, const char *password, const uint32_t ipAddress = 0, const uint32_t subnetMask = 0, const uint32_t gateway = 0, const uint8_t authenticationMode = WiFiAuthenticationMode::WpaWpa2Psk, const uint8_t channel = 0, const uint8_t hidden = 0);
+Message *CreateAccessPointMessage(uint32_t function, const char *ssid, const char *password, uint32_t ipAddress = 0, uint32_t subnetMask = 0, uint32_t gateway = 0, uint8_t authenticationMode = WiFiAuthenticationMode::WpaWpa2Psk, uint8_t channel = 0, uint8_t hidden = 0);
 
 /**
  * @brief Queue a request carrying a network name and password.
@@ -100,9 +99,7 @@ Message *CreateAccessPointMessage(
  * @param channel Channel the soft access point is asked for, 0 to leave it to the ESP32.
  * @param hidden Non zero to ask for the soft access point's name to be hidden.
  */
-void QueueAccessPointRequest(
-    MockMessageDispatcher *dispatcher, const uint32_t function, const char *ssid, const char *password, const uint32_t ipAddress = 0, const uint32_t subnetMask = 0, const uint32_t gateway = 0, const uint8_t authenticationMode = WiFiAuthenticationMode::WpaWpa2Psk, const uint8_t channel = 0,
-    const uint8_t hidden = 0);
+void QueueAccessPointRequest(MockMessageDispatcher *dispatcher, uint32_t function, const char *ssid, const char *password, uint32_t ipAddress = 0, uint32_t subnetMask = 0, uint32_t gateway = 0, uint8_t authenticationMode = WiFiAuthenticationMode::WpaWpa2Psk, uint8_t channel = 0, uint8_t hidden = 0);
 
 /**
  * @brief Queue a request that carries no payload.
@@ -110,7 +107,7 @@ void QueueAccessPointRequest(
  * @param dispatcher Dispatcher to queue the request on.
  * @param function Function the message should request.
  */
-void QueueWiFiRequest(MockMessageDispatcher *dispatcher, const uint32_t function);
+void QueueWiFiRequest(MockMessageDispatcher *dispatcher, uint32_t function);
 
 /**
  * @brief Read the messages a connection request generates until its response arrives.
@@ -124,7 +121,7 @@ void QueueWiFiRequest(MockMessageDispatcher *dispatcher, const uint32_t function
  * @param timeout Milliseconds to wait for each message.
  * @param progress Filled in with the outcome of the connection attempt.
  */
-void CollectConnectionMessages(MockMessageDispatcher *dispatcher, const unsigned timeout, ConnectionProgress *progress);
+void CollectConnectionMessages(MockMessageDispatcher *dispatcher, unsigned timeout, ConnectionProgress *progress);
 
 /**
  * @brief Stop the soft access point, whether or not it is running.

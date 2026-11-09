@@ -40,7 +40,7 @@ struct FileSystemTestContext
  * @param formatFileSystem True to format the partition so the test starts with an empty
  *                         file system.
  */
-void CreateFileSystemTestContext(FileSystemTestContext *context, const bool formatFileSystem);
+void CreateFileSystemTestContext(FileSystemTestContext *context, bool formatFileSystem);
 
 /**
  * @brief Release the objects held in a file system test context.
