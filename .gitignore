@@ -67,7 +67,7 @@ packages
 .vscode/ipch
 
 # Rider files
-.idea/
+.idea/workspace.xml
 .settings/
 Secrets.hpp
 Secrets.cs
