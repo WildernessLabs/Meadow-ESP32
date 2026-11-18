@@ -769,7 +769,7 @@ const char *WiFiRequestHandler::FindCountryCode(const char *code)
 
     if (code != nullptr)
     {
-        for (auto _validCountryCode : WiFiRequestHandler::_validCountryCodes)
+        for (auto _validCountryCode: WiFiRequestHandler::_validCountryCodes)
         {
             if (!strcmp(code, _validCountryCode))
             {

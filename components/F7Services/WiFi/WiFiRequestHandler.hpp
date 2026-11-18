@@ -311,21 +311,21 @@ private:
      *
      *  This will be filled with 0 at startup and when the device disconnects from an access point.
      */
-    wifi_event_sta_connected_t _apInformation{};
+    wifi_event_sta_connected_t _apInformation {};
 
     /**
      *  @brief Information about the disconnect reason.
      *
      *  This will be filled with 0 at startup and should only be populated following a disconnect event.
      */
-    wifi_event_sta_disconnected_t _disconnectData{};
+    wifi_event_sta_disconnected_t _disconnectData {};
 
     /**
      *  @brief Current IP information (IP address, subnet mask and gateway).
      *
      *  This will be filled with 0 at startup and when the device disconnects from an access point.
      */
-    esp_netif_ip_info_t _ipInformation{};
+    esp_netif_ip_info_t _ipInformation {};
 
     /**
      *  @brief Mutex guarding _apInformation, _disconnectData and _ipInformation.
