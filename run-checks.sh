@@ -61,7 +61,19 @@ COMPONENTS_DIR=$SOURCE_DIR/components/F7Services
 
 echo "Running cppcheck"
 
-cppcheck --error-exitcode=1 --quiet --check-level=exhaustive --force --inline-suppr -iCMakeLists.txt -imanaged_components -ibuild .
+#
+#   CLion builds each CMake profile into its own cmake-build-<profile> directory.  These hold CMake's
+#   compiler identification sources, which cppcheck cannot parse, so skip any that exist.
+#
+CMAKE_BUILD_EXCLUDES=
+for directory in cmake-build-*/
+do
+    if [ -d "$directory" ]; then
+        CMAKE_BUILD_EXCLUDES+=" -i${directory%/}"
+    fi
+done
+
+cppcheck --error-exitcode=1 --quiet --check-level=exhaustive --force --inline-suppr -iCMakeLists.txt -imanaged_components -ibuild $CMAKE_BUILD_EXCLUDES .
 
 echo "Running clang-format"
 clang-format --dry-run --Werror $VERBOSE_FLAGS $SOURCE_DIR/main/*.?pp
