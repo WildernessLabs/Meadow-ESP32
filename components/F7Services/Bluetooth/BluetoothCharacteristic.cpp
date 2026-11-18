@@ -87,9 +87,9 @@ BluetoothCharacteristic::~BluetoothCharacteristic()
 {
     TRACE_MESSAGE("~BluetoothCharacteristic: Enter");
 
-    for (auto it = _descriptors.begin(); it != _descriptors.end(); ++it)
+    for (const auto * const descriptor: _descriptors)
     {
-        delete *it;
+        delete descriptor;
     }
     _descriptors.clear();
 
