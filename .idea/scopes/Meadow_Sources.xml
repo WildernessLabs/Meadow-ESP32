@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Meadow Sources" pattern="file:components//*||file:main//*||file:test//*" />
+</component>
