@@ -1810,14 +1810,140 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
     catch (const ThreadPoolException &e)
     {
         TRACE_MESSAGE("DispatchRequest: Exception caught: %s", e.what());
-        request->DeletePayload();
-        request->MessageType = MessageTypes::Response;
-        request->StatusCode = StatusCodes::ThreadPoolIsFull;
-        _messageDispatcher->QueueMessageForStm32(request);
+        RespondThreadPoolIsFull(request);
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
     }
     xEventGroupWaitBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
     TRACE_MESSAGE("DispatchRequest: Exit");
+}
+
+namespace
+{
+    /**
+     *  @brief Encode a POSIX error response as the payload of a message.
+     *
+     *  @tparam Response
+     *      Type of the response.
+     *  @param message
+     *      Message that carries the response.  Its payload must already have been deleted.
+     *  @param response
+     *      Response to encode.
+     *  @param bufferSize
+     *      Encoders method that gives the size of the encoded response.
+     *  @param encode
+     *      Encoders method that encodes the response.
+     */
+    template <typename Response>
+    void EncodeErrorResponse(Message * const message, const Response &response, int (*bufferSize)(const Response * const),
+                             void (*encode)(const Response * const, uint8_t *))
+    {
+        message->PayloadLength = bufferSize(&response);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload == nullptr)
+        {
+            message->PayloadLength = 0;
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            encode(&response, message->Payload);
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
+    }
+}
+
+/**
+ *  @brief Answer a request that the thread pool could not take.
+ *
+ *  A POSIX socket call is answered with its own response, a result of -1 and errno ENOBUFS, so
+ *  that the application sees that the coprocessor has no room for the call and can back off and
+ *  retry (issue #956).  The ThreadPoolIsFull status code became ENOMEM on the STM32, and .NET
+ *  has no SocketError for ENOMEM, so the application saw "Unknown socket error".
+ *
+ *  getaddrinfo and freeaddrinfo do not report an errno, so they keep the ThreadPoolIsFull status
+ *  code, as does any other request.
+ *
+ *  @param request
+ *      Request that was refused.  It becomes the response and is queued for the STM32.
+ */
+void WiFiRequestHandler::RespondThreadPoolIsFull(Message *request)
+{
+    request->DeletePayload();
+    request->MessageType = MessageTypes::Response;
+    const int32_t noBufferSpace = Mapping::NuttxErrno(ENOBUFS);
+    switch (request->Function)
+    {
+        case WiFiFunction::Socket:
+        case WiFiFunction::Connect:
+        case WiFiFunction::Bind:
+        case WiFiFunction::Listen:
+        case WiFiFunction::Shutdown:
+        case WiFiFunction::Send:
+        case WiFiFunction::SendTo:
+        case WiFiFunction::SendMsg:
+        case WiFiFunction::SetSockOpt:
+            {
+                Esp32Messaging::IntegerAndErrnoResponse response = {};
+                response.Result = -1;
+                response.ResponseErrno = noBufferSpace;
+                EncodeErrorResponse(request, response, Encoders::EncodedIntegerAndErrnoResponseBufferSize, Encoders::EncodeIntegerAndErrnoResponse);
+            }
+            break;
+        case WiFiFunction::Accept:
+            {
+                Esp32Messaging::AcceptResponse response = {};
+                response.Result = -1;
+                response.ResponseErrno = noBufferSpace;
+                EncodeErrorResponse(request, response, Encoders::EncodedAcceptResponseBufferSize, Encoders::EncodeAcceptResponse);
+            }
+            break;
+        case WiFiFunction::GetSockOpt:
+            {
+                Esp32Messaging::GetSockOptResponse response = {};
+                response.Result = -1;
+                response.ResponseErrno = noBufferSpace;
+                EncodeErrorResponse(request, response, Encoders::EncodedGetSockOptResponseBufferSize, Encoders::EncodeGetSockOptResponse);
+            }
+            break;
+        case WiFiFunction::RecvFrom:
+            {
+                Esp32Messaging::RecvFromResponse response = {};
+                response.Result = -1;
+                response.ResponseErrno = noBufferSpace;
+                EncodeErrorResponse(request, response, Encoders::EncodedRecvFromResponseBufferSize, Encoders::EncodeRecvFromResponse);
+            }
+            break;
+        case WiFiFunction::RecvMsg:
+            {
+                Esp32Messaging::RecvMsgResponse response = {};
+                response.Result = -1;
+                response.ResponseErrno = noBufferSpace;
+                EncodeErrorResponse(request, response, Encoders::EncodedRecvMsgResponseBufferSize, Encoders::EncodeRecvMsgResponse);
+            }
+            break;
+        case WiFiFunction::Ioctl:
+            {
+                Esp32Messaging::IoctlResponse response = {};
+                response.Result = -1;
+                response.ResponseErrno = noBufferSpace;
+                EncodeErrorResponse(request, response, Encoders::EncodedIoctlResponseBufferSize, Encoders::EncodeIoctlResponse);
+            }
+            break;
+        case WiFiFunction::GetSockName:
+        case WiFiFunction::GetPeerName:
+            {
+                Esp32Messaging::GetSockPeerNameResponse response = {};
+                response.Result = -1;
+                response.ResponseErrno = noBufferSpace;
+                EncodeErrorResponse(request, response, Encoders::EncodedGetSockPeerNameResponseBufferSize, Encoders::EncodeGetSockPeerNameResponse);
+            }
+            break;
+        default:
+            request->StatusCode = StatusCodes::ThreadPoolIsFull;
+            break;
+    }
+    TRACE_MESSAGE("RespondThreadPoolIsFull: function %" PRIu32 ", status %d", static_cast<uint32_t>(request->Function), static_cast<int>(request->StatusCode));
+    _messageDispatcher->QueueMessageForStm32(request);
 }
 
 /**
