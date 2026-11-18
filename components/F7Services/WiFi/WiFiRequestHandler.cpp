@@ -1831,9 +1831,7 @@ namespace
      *  @param encode
      *      Encoders method that encodes the response.
      */
-    template <typename Response>
-    void EncodeErrorResponse(Message * const message, const Response &response, int (*bufferSize)(const Response * const),
-                             void (*encode)(const Response * const, uint8_t *))
+    template<typename Response> void EncodeErrorResponse(Message * const message, const Response &response, int (*bufferSize)(const Response * const), void (*encode)(const Response * const, uint8_t *))
     {
         message->PayloadLength = bufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
@@ -1848,7 +1846,7 @@ namespace
             message->StatusCode = StatusCodes::CompletedOk;
         }
     }
-}
+} // namespace
 
 /**
  *  @brief Answer a request that the thread pool could not take.
