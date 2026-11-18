@@ -476,7 +476,7 @@ void FileSystem::ReadFile(Message * const message)
                     //  be longer than the protocol's payload maximum is refused before anything
                     //  is allocated for it (issue #310).
                     //
-                    const auto responseOverhead = static_cast<uint32_t>(Encoders::EncodedFileNameAndContentsBufferSize(fileData));
+                    const uint32_t responseOverhead = Encoders::EncodedFileNameAndContentsBufferSize(fileData);
                     if ((fileInfo.st_size < 0) || (static_cast<uint64_t>(fileInfo.st_size) > (Message::MAXIMUM_PAYLOAD_LENGTH - responseOverhead)))
                     {
                         ERROR_MESSAGE("ReadFile: %s is %" PRIi32 " bytes, more than one response can hold.", fileData->Name, static_cast<int32_t>(fileInfo.st_size));

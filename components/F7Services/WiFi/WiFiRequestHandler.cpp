@@ -1831,7 +1831,7 @@ namespace
      *  @param encode
      *      Encoders method that encodes the response.
      */
-    template<typename Response> void EncodeErrorResponse(Message * const message, const Response &response, int (*bufferSize)(const Response * const), void (*encode)(const Response * const, uint8_t *))
+    template<typename Response> void EncodeErrorResponse(Message * const message, const Response &response, uint32_t (*bufferSize)(const Response * const), void (*encode)(const Response * const, uint8_t *))
     {
         message->PayloadLength = bufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
@@ -2781,7 +2781,7 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
                         {
                             accessPointList->NumberOfAccessPoints = apCount;
 
-                            int singleAccessPointSize = Encoders::EncodedAccessPointBufferSize(accessPoint);
+                            const uint32_t singleAccessPointSize = Encoders::EncodedAccessPointBufferSize(accessPoint);
                             accessPointList->AccessPointsLength = singleAccessPointSize * apCount;
                             accessPointList->AccessPoints = static_cast<uint8_t *>(pvPortMalloc(accessPointList->AccessPointsLength));
                             if (accessPointList->AccessPoints == nullptr)
