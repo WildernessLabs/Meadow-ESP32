@@ -223,7 +223,7 @@ uint32_t SystemRequestHandler::GetMaximumMessageQueueLength()
  */
 ThreadPool *SystemRequestHandler::SharedThreadPool()
 {
-    static ThreadPool * const threadPool = new ThreadPool();
+    static auto * const threadPool = new ThreadPool();
     return (threadPool);
 }
 
@@ -620,7 +620,7 @@ void SystemRequestHandler::SendConfigurationAsInterruptMessage()
     std::string deviceName;
     PopulateConfiguration(&config, defaultAccessPoint, deviceName);
 
-    Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
+    auto *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
     if (message == nullptr)
     {
         ERROR_MESSAGE("SendConfigurationAsInterruptMessage: cannot allocate the message, the configuration is not sent.");

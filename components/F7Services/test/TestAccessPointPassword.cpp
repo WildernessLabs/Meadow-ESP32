@@ -106,7 +106,7 @@ public:
      */
     static bool Accepts(const char *ssid, const char *password, StatusCodes::StatusCodes &status, const uint8_t authenticationMode = WiFiAuthenticationMode::WpaWpa2Psk, const uint8_t channel = 0)
     {
-        MockMessageDispatcher *dispatcher = new MockMessageDispatcher(nullptr);
+        auto *dispatcher = new MockMessageDispatcher(nullptr);
         TEST_ASSERT_NOT_NULL(dispatcher);
         WiFiRequestHandler *handler = Handler(dispatcher);
 
@@ -133,7 +133,7 @@ public:
      */
     static StatusCodes::StatusCodes Start(const char *ssid, const char *password, bool &interfaceTouched, const uint8_t authenticationMode = WiFiAuthenticationMode::WpaWpa2Psk)
     {
-        MockMessageDispatcher *dispatcher = new MockMessageDispatcher(nullptr);
+        auto *dispatcher = new MockMessageDispatcher(nullptr);
         TEST_ASSERT_NOT_NULL(dispatcher);
         WiFiRequestHandler *handler = Handler(dispatcher);
 
@@ -162,7 +162,7 @@ public:
         TEST_ASSERT_EQUAL_MESSAGE(1, dispatcher->OutboundMessageQueueLength(), "The handler did not answer.");
         Message *response = dispatcher->GetOutboundMessage();
         TEST_ASSERT_NOT_NULL(response);
-        const StatusCodes::StatusCodes status = static_cast<StatusCodes::StatusCodes>(response->StatusCode);
+        const auto status = static_cast<StatusCodes::StatusCodes>(response->StatusCode);
         Message::DeleteMessage(response);
         return (status);
     }

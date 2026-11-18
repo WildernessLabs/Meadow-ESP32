@@ -267,7 +267,7 @@ TEST_CASE("Start is refused when the configuration is not shorter than the maxim
     TEST_ASSERT_NOT_NULL(dispatcher);
 
     const uint32_t payloadLength = Message::MAXIMUM_PAYLOAD_LENGTH + 16;
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(payload);
     memset(payload, 'x', payloadLength);
 
@@ -318,7 +318,7 @@ TEST_CASE("Start is refused when an attribute needs MITM protection the security
     Esp32Messaging::BTStackConfig stackConfig = {};
     stackConfig.Config = const_cast<char *>(unreachableJson);
     const uint32_t payloadLength = TestEncoders::EncodedBTStackConfigBufferSize(&stackConfig);
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(payload);
     TestEncoders::EncodeBTStackConfig(&stackConfig, payload);
 
@@ -388,7 +388,7 @@ static void QueueServerDataSetRaw(MockMessageDispatcher *dispatcher, const uint1
     dataSet.SetData = data;
 
     const uint32_t payloadLength = TestEncoders::EncodedBTServerDataSetBufferSize(&dataSet);
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(payload);
     TestEncoders::EncodeBTServerDataSet(&dataSet, payload);
 
@@ -425,7 +425,7 @@ TEST_CASE("ServerDataSet refuses an unknown handle", CLASS_OF_TESTS)
 
     uint16_t handles[MEADOW_A_HANDLE_COUNT];
     GetServiceHandles(dispatcher, MEADOW_A_HANDLE_COUNT, handles);
-    const uint16_t unknownHandle = static_cast<uint16_t>(handles[MEADOW_A_HANDLE_COUNT - 1] + 1000);
+    const auto unknownHandle = static_cast<uint16_t>(handles[MEADOW_A_HANDLE_COUNT - 1] + 1000);
 
     uint32_t smallValue = 0;
     QueueServerDataSetRaw(dispatcher, unknownHandle, sizeof(smallValue), reinterpret_cast<uint8_t *>(&smallValue));
@@ -572,7 +572,7 @@ static void CheckStartReportsFailure(MockMessageDispatcher *dispatcher, const ch
 
     const uint32_t payloadLength = TestEncoders::EncodedBTStackConfigBufferSize(&stackConfig);
     TEST_ASSERT_GREATER_THAN(0, payloadLength);
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(payload);
     TestEncoders::EncodeBTStackConfig(&stackConfig, payload);
 

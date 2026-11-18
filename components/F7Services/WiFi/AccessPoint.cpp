@@ -516,7 +516,7 @@ void WiFiRequestHandler::AccessPointStoppedEvent()
 void WiFiRequestHandler::RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFunction eventType, Esp32Messaging::NodeConnectionChangeEventData *data)
 {
     uint32_t payloadLength = Encoders::EncodedNodeConnectionChangeEventDataBufferSize(data);
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     if (payload != nullptr)
     {
         Encoders::EncodeNodeConnectionChangeEventData(data, payload);
@@ -628,7 +628,7 @@ void WiFiRequestHandler::NodeDisconnectedEvent(wifi_event_ap_stadisconnected_t *
     //  (issue #550).
     //
     LockConnectedNodesMap();
-    std::map<uint64_t, uint32_t>::iterator it = _connectedNodes.find(key);
+    auto it = _connectedNodes.find(key);
     const bool found = (it != _connectedNodes.end());
     //
     //  The STM32 was told of the node only if it was given an address, so only then is it

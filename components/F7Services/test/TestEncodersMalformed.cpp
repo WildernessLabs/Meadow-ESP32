@@ -222,7 +222,7 @@ struct DecoderCase
  */
 static uint8_t *ExactCopy(const uint8_t *bytes, const uint32_t length)
 {
-    uint8_t *copy = static_cast<uint8_t *>(pvPortMalloc(length == 0 ? 1 : length));
+    auto *copy = static_cast<uint8_t *>(pvPortMalloc(length == 0 ? 1 : length));
     TEST_ASSERT_NOT_NULL(copy);
     if (length > 0)
     {

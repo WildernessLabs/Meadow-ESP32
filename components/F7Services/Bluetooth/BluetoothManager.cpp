@@ -448,7 +448,7 @@ esp_gatt_status_t BluetoothManager::GetCurrentValueForAttributeHandle(const uint
         }
         else
         {
-            uint16_t length = static_cast<uint16_t>(existing->second.length - offset);
+            auto length = static_cast<uint16_t>(existing->second.length - offset);
             if (length > capacity)
             {
                 ERROR_MESSAGE("GetCurrentValueForAttributeHandle: %" PRIu16 " bytes from offset %" PRIu16 " for handle 0x%04" PRIx16 " truncated to %" PRIu16 ".", length, offset, handle, capacity);
@@ -607,9 +607,9 @@ uint32_t BluetoothManager::AddServices(const cJSON * const json)
             }
             else
             {
-                uint16_t uuid = static_cast<uint16_t>(serviceUUID->valueint);
+                auto uuid = static_cast<uint16_t>(serviceUUID->valueint);
                 TRACE_MESSAGE("Service Name: %s, " UUID_KEY ": %4" PRIx16, serviceName->valuestring, uuid);
-                BluetoothService * const service = new BluetoothService(serviceName->valuestring, Uuid16(uuid));
+                auto * const service = new BluetoothService(serviceName->valuestring, Uuid16(uuid));
                 rejected += AddCharacteristics(service_configuration, service);
                 Services.Add(service);
             }
@@ -695,9 +695,9 @@ uint32_t BluetoothManager::AddCharacteristics(const cJSON * const json, Bluetoot
             bool is128bits = false;
             ParseUuid(uuid, uuid16bits, uuid128bits, is128bits);
 
-            uint16_t permissions = static_cast<uint16_t>(permission->valueint);
-            uint16_t properties = static_cast<uint16_t>(props->valueint);
-            uint16_t length = static_cast<uint16_t>(len->valueint);
+            auto permissions = static_cast<uint16_t>(permission->valueint);
+            auto properties = static_cast<uint16_t>(props->valueint);
+            auto length = static_cast<uint16_t>(len->valueint);
 
             BluetoothCharacteristic *new_characteristic;
             if (is128bits)
@@ -812,8 +812,8 @@ uint32_t BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCha
             bool is128bits = false;
             ParseUuid(uuid, uuid16bits, uuid128bits, is128bits);
 
-            uint16_t permissions = static_cast<uint16_t>(permission->valueint);
-            uint16_t length = static_cast<uint16_t>(len->valueint);
+            auto permissions = static_cast<uint16_t>(permission->valueint);
+            auto length = static_cast<uint16_t>(len->valueint);
 
             //
             //  A client configuration descriptor is two bytes.  A client's subscribe write is
@@ -834,7 +834,7 @@ uint32_t BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCha
              *  field's own storage (or, for valuestring, the address of the pointer itself)
              *  and lets it read whatever heap memory follows.
              */
-            uint8_t * const valueBuffer = new uint8_t[length];
+            auto * const valueBuffer = new uint8_t[length];
             memset(valueBuffer, 0, length);
             if (cJSON_IsString(value))
             {
@@ -1003,13 +1003,13 @@ void BluetoothManager::ParseUuid(const cJSON * const json, Uuid16 &uuid16, Uuid1
 
     if (cJSON_IsNumber(json))
     {
-        Uuid16 uuid16bits = Uuid16(static_cast<uint16_t>(json->valueint));
+        auto uuid16bits = Uuid16(static_cast<uint16_t>(json->valueint));
         memcpy(uuid16.data, uuid16bits.data, sizeof(uuid16.data));
         is128 = false;
     }
     else
     {
-        Uuid128 uuid128bits = Uuid128(json->valuestring);
+        auto uuid128bits = Uuid128(json->valuestring);
         memcpy(uuid128.data, uuid128bits.data, sizeof(uuid128.data));
         is128 = true;
     }

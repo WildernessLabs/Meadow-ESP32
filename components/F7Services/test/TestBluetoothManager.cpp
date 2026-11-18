@@ -582,7 +582,7 @@ static_assert(std::is_lvalue_reference_v<decltype(std::declval<BluetoothCharacte
  */
 TEST_CASE("A characteristic owns its declaration and value", CLASS_OF_TESTS)
 {
-    BluetoothCharacteristic *characteristic = new BluetoothCharacteristic(Uuid16(0x2a19), CharacteristicPermission::Read, CharacteristicProperty::Read, 20);
+    auto *characteristic = new BluetoothCharacteristic(Uuid16(0x2a19), CharacteristicPermission::Read, CharacteristicProperty::Read, 20);
     TEST_ASSERT_NOT_NULL(characteristic);
 
     TEST_ASSERT_EQUAL_UINT16(characteristic->GetValue().Handle, characteristic->GetDeclaration().ValueHandle);

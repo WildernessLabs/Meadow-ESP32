@@ -253,7 +253,7 @@ void Diagnostics::WriteTasks(const uint32_t sequence)
     //  array is too small.  Leave room for a few more and use the count it returns.
     //
     const UBaseType_t capacity = uxTaskGetNumberOfTasks() + TASK_ARRAY_HEADROOM;
-    TaskStatus_t *tasks = static_cast<TaskStatus_t *>(pvPortMalloc(capacity * sizeof(TaskStatus_t)));
+    auto *tasks = static_cast<TaskStatus_t *>(pvPortMalloc(capacity * sizeof(TaskStatus_t)));
     if (tasks == nullptr)
     {
         ESP_LOGE(COMPONENT_NAME, "Cannot allocate memory for task information.");
@@ -331,9 +331,9 @@ void Diagnostics::WriteHeapRegion(const uint32_t sequence, const char *name, con
 {
     multi_heap_info_t information;
     heap_caps_get_info(&information, caps);
-    const uint32_t total = static_cast<uint32_t>(information.total_allocated_bytes + information.total_free_bytes);
-    const uint32_t free = static_cast<uint32_t>(information.total_free_bytes);
-    const uint32_t largest = static_cast<uint32_t>(information.largest_free_block);
+    const auto total = static_cast<uint32_t>(information.total_allocated_bytes + information.total_free_bytes);
+    const auto free = static_cast<uint32_t>(information.total_free_bytes);
+    const auto largest = static_cast<uint32_t>(information.largest_free_block);
     const uint32_t fragmentation = (free > 0) ? static_cast<uint32_t>(100 - ((static_cast<uint64_t>(largest) * 100) / free)) : 0;
     WriteRecord("heap,%" PRIu32 ",%s,%" PRIu32 ",%" PRIu32 ",%" PRIu32 ",%" PRIu32 ",%" PRIu32 ",%" PRIu32, sequence, name, total, free, static_cast<uint32_t>(information.minimum_free_bytes), largest, static_cast<uint32_t>(information.free_blocks), fragmentation);
 }
@@ -387,19 +387,19 @@ void Diagnostics::WriteMetrics(const uint32_t sequence)
 #if defined(CONFIG_MEADOW_METRICS)
     for (size_t index = 0; index < static_cast<size_t>(MetricCounter::NumberOfCounters); index++)
     {
-        const MetricCounter counter = static_cast<MetricCounter>(index);
+        const auto counter = static_cast<MetricCounter>(index);
         WriteRecord("counter,%" PRIu32 ",%s,%" PRIu32, sequence, Metrics::Name(counter), Metrics::Read(counter));
     }
     for (size_t index = 0; index < static_cast<size_t>(MetricGauge::NumberOfGauges); index++)
     {
-        const MetricGauge gauge = static_cast<MetricGauge>(index);
+        const auto gauge = static_cast<MetricGauge>(index);
         uint32_t maximum = 0;
         const uint32_t value = Metrics::Read(gauge, maximum);
         WriteRecord("gauge,%" PRIu32 ",%s,%" PRIu32 ",%" PRIu32, sequence, Metrics::Name(gauge), value, maximum);
     }
     for (size_t index = 0; index < static_cast<size_t>(MetricHistogram::NumberOfHistograms); index++)
     {
-        const MetricHistogram histogram = static_cast<MetricHistogram>(index);
+        const auto histogram = static_cast<MetricHistogram>(index);
         HistogramReading reading;
         Metrics::Read(histogram, reading);
         char buckets[RECORD_SIZE] = "";

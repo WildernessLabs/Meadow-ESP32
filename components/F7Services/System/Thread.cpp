@@ -268,7 +268,7 @@ void Thread::TaskCompleted()
  */
 void Thread::Task(void *taskParameters)
 {
-    Thread *sender = static_cast<Thread *>(taskParameters);
+    auto *sender = static_cast<Thread *>(taskParameters);
     while (true)
     {
         sender->TakeExecutionSemaphore();

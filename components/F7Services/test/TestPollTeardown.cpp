@@ -280,7 +280,7 @@ private:
      */
     static void WorkerTask(void *parameter)
     {
-        WorkerContext *context = static_cast<WorkerContext *>(parameter);
+        auto *context = static_cast<WorkerContext *>(parameter);
         SemaphoreHandle_t done = context->Done;
         WiFiRequestHandler::PollSocket(context->ActivePollPointer);
         xSemaphoreGive(done);

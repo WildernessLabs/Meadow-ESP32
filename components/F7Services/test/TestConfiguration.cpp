@@ -245,7 +245,7 @@ static MockMessageDispatcher *EnsureHandlers()
     //
     if (WiFiRequestHandler::GetCountryCode() == nullptr)
     {
-        WiFiRequestHandler *handler = new WiFiRequestHandler(_dispatcher);
+        auto *handler = new WiFiRequestHandler(_dispatcher);
         TEST_ASSERT_NOT_NULL(handler);
     }
 
@@ -268,7 +268,7 @@ static uint8_t *EncodeConfigurationItem(const uint32_t item, const void *value, 
 {
     *payloadLength = CONFIGURATION_VALUE_HEADER_SIZE + valueLength;
 
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(*payloadLength));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(*payloadLength));
     TEST_ASSERT_NOT_NULL(payload);
 
     Encoders::EncodeUInt32(item, payload);
@@ -296,7 +296,7 @@ static StatusCodes::StatusCodes SendConfigurationItem(uint8_t *payload, const ui
     Message *response = SendRequest(dispatcher, Esp32Interfaces::System, SystemFunction::SetConfigurationItem, payload, payloadLength, RESPONSE_TIMEOUT);
     TEST_ASSERT_NOT_NULL_MESSAGE(response, "The SetConfigurationItem request was never answered.");
 
-    StatusCodes::StatusCodes result = static_cast<StatusCodes::StatusCodes>(response->StatusCode);
+    auto result = static_cast<StatusCodes::StatusCodes>(response->StatusCode);
     //
     //  The response carries the outcome in the status code and nothing else.
     //
@@ -489,7 +489,7 @@ TEST_CASE("A configuration item with a short payload is refused", CLASS_OF_TESTS
     EnsureHandlers();
 
     const uint32_t shortPayloadLength = CONFIGURATION_VALUE_HEADER_SIZE - 1;
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(shortPayloadLength));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(shortPayloadLength));
     TEST_ASSERT_NOT_NULL(payload);
     memset(payload, 0, shortPayloadLength);
 
@@ -552,7 +552,7 @@ TEST_CASE("A configuration item whose value runs past the message is refused", C
     EnsureHandlers();
 
     const uint32_t payloadLength = CONFIGURATION_VALUE_HEADER_SIZE + sizeof(uint32_t);
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(payload);
 
     Encoders::EncodeUInt32(ConfigurationItems::MaximumRetryCount, payload);
@@ -1135,7 +1135,7 @@ struct AlternatingWriterContext
  */
 static void AlternatingWriterTask(void *parameter)
 {
-    AlternatingWriterContext *context = static_cast<AlternatingWriterContext *>(parameter);
+    auto *context = static_cast<AlternatingWriterContext *>(parameter);
     for (uint32_t change = 0; change < ALTERNATING_CHANGES; change++)
     {
         const char *name = ((change % 2) == 0) ? ALTERNATING_ACCESS_POINT_LONG : ALTERNATING_ACCESS_POINT_SHORT;

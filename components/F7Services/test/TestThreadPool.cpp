@@ -115,7 +115,7 @@ TEST_CASE("ThreadPool executes a method", CLASS_OF_TESTS)
 {
     ResetCounters();
 
-    ThreadPool *pool = new ThreadPool();
+    auto *pool = new ThreadPool();
     TEST_ASSERT_NOT_NULL(pool);
 
     pool->Execute(QuickMethod, nullptr);
@@ -134,7 +134,7 @@ TEST_CASE("ThreadPool runs several methods at once", CLASS_OF_TESTS)
 {
     ResetCounters();
 
-    ThreadPool *pool = new ThreadPool();
+    auto *pool = new ThreadPool();
     TEST_ASSERT_NOT_NULL(pool);
 
     for (int index = 0; index < EXPECTED_THREAD_POOL_SIZE; index++)
@@ -172,7 +172,7 @@ TEST_CASE("ThreadPool refuses work when it is full", CLASS_OF_TESTS)
     //
     _occupyingMethodDuration.store(POOL_ACQUIRE_TIMEOUT + (2 * METHOD_SETTLING_TIME));
 
-    ThreadPool *pool = new ThreadPool();
+    auto *pool = new ThreadPool();
     TEST_ASSERT_NOT_NULL(pool);
 
     for (int index = 0; index < EXPECTED_THREAD_POOL_SIZE; index++)
@@ -216,7 +216,7 @@ TEST_CASE("ThreadPool reuses a thread once its method has finished", CLASS_OF_TE
 {
     ResetCounters();
 
-    ThreadPool *pool = new ThreadPool();
+    auto *pool = new ThreadPool();
     TEST_ASSERT_NOT_NULL(pool);
 
     //
@@ -284,7 +284,7 @@ struct SubmitterContext
  */
 static void SubmitterTask(void *parameter)
 {
-    SubmitterContext *context = static_cast<SubmitterContext *>(parameter);
+    auto *context = static_cast<SubmitterContext *>(parameter);
     for (uint32_t index = 0; index < CONCURRENT_SUBMISSIONS; index++)
     {
         try
@@ -389,7 +389,7 @@ TEST_CASE("ThreadPool keeps its token when no thread can be claimed", CLASS_OF_T
     ResetCounters();
     _occupyingMethodDuration.store(2 * METHOD_SETTLING_TIME);
 
-    ThreadPool *pool = new ThreadPool();
+    auto *pool = new ThreadPool();
     TEST_ASSERT_NOT_NULL(pool);
     TEST_ASSERT_EQUAL(EXPECTED_THREAD_POOL_SIZE, TestThreadPoolTokens::Tokens());
 

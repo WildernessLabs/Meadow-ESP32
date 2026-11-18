@@ -284,7 +284,7 @@ TEST_CASE("An attribute that needs MITM protection needs settings that demand it
  */
 TEST_CASE("Subscribing to a protected characteristic needs the security its value does", CLASS_OF_TESTS)
 {
-    const uint16_t plain = static_cast<uint16_t>(CharacteristicPermission::Read | CharacteristicPermission::Write);
+    const auto plain = static_cast<uint16_t>(CharacteristicPermission::Read | CharacteristicPermission::Write);
     BluetoothManager manager;
 
     BluetoothCharacteristic *characteristic = BuildOne(manager, Configuration("", PERMISSION_READ | PERMISSION_WRITE, PROPERTY_READ | PROPERTY_NOTIFY));
@@ -332,7 +332,7 @@ TEST_CASE("Permissions are classified by the security they need", CLASS_OF_TESTS
 
     for (const auto &item: cases)
     {
-        const CharacteristicPermission permission = static_cast<CharacteristicPermission>(item.Permission);
+        const auto permission = static_cast<CharacteristicPermission>(item.Permission);
         TEST_ASSERT_EQUAL_MESSAGE(item.Encryption, BluetoothSecurityConfiguration::PermissionRequiresEncryption(permission), "Encryption was misjudged.");
         TEST_ASSERT_EQUAL_MESSAGE(item.Mitm, BluetoothSecurityConfiguration::PermissionRequiresMitm(permission), "MITM protection was misjudged.");
     }

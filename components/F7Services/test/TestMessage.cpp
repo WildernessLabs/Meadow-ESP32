@@ -34,7 +34,7 @@
  */
 static uint8_t *CreatePatternPayload()
 {
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(TEST_PAYLOAD_LENGTH));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(TEST_PAYLOAD_LENGTH));
     TEST_ASSERT_NOT_NULL(payload);
     for (uint32_t index = 0; index < TEST_PAYLOAD_LENGTH; index++)
     {

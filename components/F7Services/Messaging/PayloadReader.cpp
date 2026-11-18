@@ -141,7 +141,7 @@ uint8_t *PayloadReader::ReadBlock(const uint32_t count)
         return (nullptr);
     }
 
-    uint8_t *block = static_cast<uint8_t *>(pvPortMalloc(count));
+    auto *block = static_cast<uint8_t *>(pvPortMalloc(count));
     if (block == nullptr)
     {
         _failed = true;
@@ -173,7 +173,7 @@ char *PayloadReader::ReadString()
         return (nullptr);
     }
 
-    const uint32_t length = static_cast<uint32_t>(static_cast<const uint8_t *>(terminator) - _buffer);
+    const auto length = static_cast<uint32_t>(static_cast<const uint8_t *>(terminator) - _buffer);
     const uint8_t *field = Take(length + 1);
     if (length == 0)
     {

@@ -270,7 +270,7 @@ static void CheckUnknownFunctionIsAnswered(MessageDispatcher *dispatcher, const 
 
     for (uint32_t attempt = 0; attempt < 2; attempt++)
     {
-        uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(4));
+        auto *payload = static_cast<uint8_t *>(pvPortMalloc(4));
         TEST_ASSERT_NOT_NULL(payload);
         memset(payload, 0xa5, 4);
         Message *request = Message::CreateOnHeap(MessageTypes::Header, interface, UNKNOWN_FUNCTION, StatusCodes::Failure, TEST_MESSAGE_ID + attempt, payload, 4);

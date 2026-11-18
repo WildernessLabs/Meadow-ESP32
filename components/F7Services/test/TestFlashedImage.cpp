@@ -69,7 +69,7 @@
  */
 TEST_CASE("A flashed file system mounts without being reformatted", CLASS_OF_TESTS)
 {
-    FileSystem *fs = new FileSystem(nullptr);
+    auto *fs = new FileSystem(nullptr);
     TEST_ASSERT_NOT_NULL(fs);
 
     TEST_ASSERT_EQUAL_MESSAGE(StatusCodes::CompletedOk, fs->Setup(), "The file system did not mount.");
@@ -91,11 +91,11 @@ TEST_CASE("A flashed file system mounts without being reformatted", CLASS_OF_TES
  */
 TEST_CASE("A flashed file can be read back", CLASS_OF_TESTS)
 {
-    FileSystem *fs = new FileSystem(nullptr);
+    auto *fs = new FileSystem(nullptr);
     TEST_ASSERT_NOT_NULL(fs);
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, fs->Setup());
 
-    uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(FLASHED_FILE_BUFFER_SIZE));
+    auto *buffer = static_cast<uint8_t *>(pvPortMalloc(FLASHED_FILE_BUFFER_SIZE));
     TEST_ASSERT_NOT_NULL(buffer);
     memset(buffer, 0, FLASHED_FILE_BUFFER_SIZE);
 

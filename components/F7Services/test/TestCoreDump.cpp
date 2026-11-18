@@ -236,7 +236,7 @@ TEST_CASE("Get core dump information", CLASS_OF_TESTS)
     MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
     TEST_ASSERT_NOT_NULL(dispatcher);
 
-    CoreDump *coreDump = new CoreDump(dispatcher);
+    auto *coreDump = new CoreDump(dispatcher);
     TEST_ASSERT_NOT_NULL(coreDump);
 
     const uint32_t heapBefore = esp_get_free_heap_size();
@@ -264,7 +264,7 @@ TEST_CASE("Get core dump fragment", CLASS_OF_TESTS)
     MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
     TEST_ASSERT_NOT_NULL(dispatcher);
 
-    CoreDump *coreDump = new CoreDump(dispatcher);
+    auto *coreDump = new CoreDump(dispatcher);
     TEST_ASSERT_NOT_NULL(coreDump);
 
     //
@@ -381,7 +381,7 @@ TEST_CASE("Retrieve the whole core dump", CLASS_OF_TESTS)
     MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
     TEST_ASSERT_NOT_NULL(dispatcher);
 
-    CoreDump *coreDump = new CoreDump(dispatcher);
+    auto *coreDump = new CoreDump(dispatcher);
     TEST_ASSERT_NOT_NULL(coreDump);
 
     //
@@ -477,7 +477,7 @@ TEST_CASE("Erase core dump", CLASS_OF_TESTS)
     MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
     TEST_ASSERT_NOT_NULL(dispatcher);
 
-    CoreDump *coreDump = new CoreDump(dispatcher);
+    auto *coreDump = new CoreDump(dispatcher);
     TEST_ASSERT_NOT_NULL(coreDump);
 
     EraseCoreDump(dispatcher, coreDump);

@@ -114,7 +114,7 @@ static Thread *CreateThread(const char *name, task_completed_method_t completion
     TEST_ASSERT_NOT_NULL(threadName);
     snprintf(threadName, configMAX_TASK_NAME_LEN, "%s", name);
 
-    Thread *thread = new Thread(threadName, completionMethod);
+    auto *thread = new Thread(threadName, completionMethod);
     TEST_ASSERT_NOT_NULL(thread);
 
     return (thread);

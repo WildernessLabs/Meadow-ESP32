@@ -183,7 +183,7 @@ public:
         Esp32Messaging::BTStackConfig stackConfig = {};
         stackConfig.Config = const_cast<char *>(configuration);
         const uint32_t payloadLength = TestEncoders::EncodedBTStackConfigBufferSize(&stackConfig);
-        uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+        auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
         TEST_ASSERT_NOT_NULL(payload);
         TestEncoders::EncodeBTStackConfig(&stackConfig, payload);
 

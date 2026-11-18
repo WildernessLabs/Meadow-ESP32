@@ -217,7 +217,7 @@ TEST_CASE("Run times are remembered for no more tasks than there is room for", C
 {
     TestDiagnostics::Reset();
     const size_t numberOfTasks = TestDiagnostics::MaximumTrackedTasks() + 2;
-    TaskStatus_t *tasks = new TaskStatus_t[numberOfTasks];
+    auto *tasks = new TaskStatus_t[numberOfTasks];
     for (size_t index = 0; index < numberOfTasks; index++)
     {
         tasks[index] = MakeTaskStatus(static_cast<UBaseType_t>(index + 1), 1000);
@@ -228,7 +228,7 @@ TEST_CASE("Run times are remembered for no more tasks than there is room for", C
     //
     //  The last task that fits is remembered, the one after it is not.
     //
-    const UBaseType_t lastRemembered = static_cast<UBaseType_t>(TestDiagnostics::MaximumTrackedTasks());
+    const auto lastRemembered = static_cast<UBaseType_t>(TestDiagnostics::MaximumTrackedTasks());
     TEST_ASSERT_EQUAL_UINT32(500, TestDiagnostics::SinceLastReport(lastRemembered, 1500));
     TEST_ASSERT_EQUAL_UINT32(1500, TestDiagnostics::SinceLastReport(lastRemembered + 1, 1500));
     TestDiagnostics::Reset();

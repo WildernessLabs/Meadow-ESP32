@@ -93,7 +93,7 @@ static void EnsureRequestHandler()
         _dispatcher = new MockMessageDispatcher(nullptr);
         TEST_ASSERT_NOT_NULL(_dispatcher);
 
-        WiFiRequestHandler *handler = new WiFiRequestHandler(_dispatcher);
+        auto *handler = new WiFiRequestHandler(_dispatcher);
         TEST_ASSERT_NOT_NULL(handler);
     }
 

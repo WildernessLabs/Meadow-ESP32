@@ -262,7 +262,7 @@ void UnitTestConfiguration::Load()
     //  tests that work on the file system mount it themselves, and several of them
     //  format it, so nothing is left holding it here.
     //
-    FileSystem *fileSystem = new FileSystem(nullptr);
+    auto *fileSystem = new FileSystem(nullptr);
     if ((fileSystem == nullptr) || (fileSystem->Setup() != StatusCodes::CompletedOk))
     {
         printf("  The file system could not be mounted, so the default settings will be used.\n\n");

@@ -24,7 +24,7 @@
  */
 TEST_CASE("ExtractString decodes a terminated string", CLASS_OF_TESTS)
 {
-    const uint8_t * const buffer = reinterpret_cast<const uint8_t *>("hello");
+    const auto * const buffer = reinterpret_cast<const uint8_t *>("hello");
 
     //
     //  maxLength must cover the terminator itself, so it is strlen("hello") + 1.
@@ -283,7 +283,7 @@ TEST_CASE("ExtractSendMsgRequest refuses a truncated payload", CLASS_OF_TESTS)
     PutUInt32(position, 0);
     PutUInt32(position, 0);
     PutUInt32(position, 0);
-    const uint32_t complete = static_cast<uint32_t>(position - payload);
+    const auto complete = static_cast<uint32_t>(position - payload);
 
     bool malformed = true;
     Esp32Messaging::SendMsgRequest *request = Encoders::ExtractSendMsgRequest(payload, complete, &malformed);
@@ -334,7 +334,7 @@ static void AssertGuardIntact(const uint8_t * const buffer, const uint32_t lengt
  */
 template<typename Encoder> static void CheckEncoderStaysInsideBuffer(const uint32_t requiredLength, Encoder encode, uint8_t * const encoded)
 {
-    uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(requiredLength + GUARD_LENGTH));
+    auto *buffer = static_cast<uint8_t *>(pvPortMalloc(requiredLength + GUARD_LENGTH));
     TEST_ASSERT_NOT_NULL(buffer);
 
     for (uint32_t length = 0; length < requiredLength; length++)
@@ -424,7 +424,7 @@ TEST_CASE("EncodeSystemConfiguration stays inside the buffer it is given", CLASS
     configuration.BuildHash = 0x12345678;
 
     const uint32_t requiredLength = Encoders::EncodedSystemConfigurationBufferSize(&configuration);
-    uint8_t *encoded = static_cast<uint8_t *>(pvPortMalloc(requiredLength));
+    auto *encoded = static_cast<uint8_t *>(pvPortMalloc(requiredLength));
     TEST_ASSERT_NOT_NULL(encoded);
     CheckEncoderStaysInsideBuffer(requiredLength, [&configuration](uint8_t *buffer, const uint32_t bufferLength) { return (Encoders::EncodeSystemConfiguration(&configuration, buffer, bufferLength)); }, encoded);
 
@@ -449,7 +449,7 @@ TEST_CASE("EncodeAccessPointInformation stays inside the buffer it is given", CL
     information.Hidden = 1;
 
     const uint32_t requiredLength = Encoders::EncodedAccessPointInformationBufferSize(&information);
-    uint8_t *encoded = static_cast<uint8_t *>(pvPortMalloc(requiredLength));
+    auto *encoded = static_cast<uint8_t *>(pvPortMalloc(requiredLength));
     TEST_ASSERT_NOT_NULL(encoded);
     CheckEncoderStaysInsideBuffer(requiredLength, [&information](uint8_t *buffer, const uint32_t bufferLength) { return (Encoders::EncodeAccessPointInformation(&information, buffer, bufferLength)); }, encoded);
 
@@ -478,7 +478,7 @@ TEST_CASE("EncodeAddrInfo stays inside the buffer it is given", CLASS_OF_TESTS)
     addrInfo.Next = reinterpret_cast<void *>(0x1234);
 
     const uint32_t requiredLength = Encoders::EncodedAddrInfoBufferSize(&addrInfo);
-    uint8_t *encoded = static_cast<uint8_t *>(pvPortMalloc(requiredLength));
+    auto *encoded = static_cast<uint8_t *>(pvPortMalloc(requiredLength));
     TEST_ASSERT_NOT_NULL(encoded);
     CheckEncoderStaysInsideBuffer(requiredLength, [&addrInfo](uint8_t *buffer, const uint32_t bufferLength) { return (Encoders::EncodeAddrInfo(&addrInfo, buffer, bufferLength)); }, encoded);
 
@@ -503,7 +503,7 @@ TEST_CASE("EncodeFileDetails stays inside the buffer it is given", CLASS_OF_TEST
     details.Length = 0x1234;
 
     const uint32_t requiredLength = Encoders::EncodedFileDetailsBufferSize(&details);
-    uint8_t *encoded = static_cast<uint8_t *>(pvPortMalloc(requiredLength));
+    auto *encoded = static_cast<uint8_t *>(pvPortMalloc(requiredLength));
     TEST_ASSERT_NOT_NULL(encoded);
     CheckEncoderStaysInsideBuffer(requiredLength, [&details](uint8_t *buffer, const uint32_t bufferLength) { return (Encoders::EncodeFileDetails(&details, buffer, bufferLength)); }, encoded);
 
@@ -528,7 +528,7 @@ TEST_CASE("EncodeFileNameAndContents stays inside the buffer it is given", CLASS
     file.ContentsLength = sizeof(contents);
 
     const uint32_t requiredLength = Encoders::EncodedFileNameAndContentsBufferSize(&file);
-    uint8_t *encoded = static_cast<uint8_t *>(pvPortMalloc(requiredLength));
+    auto *encoded = static_cast<uint8_t *>(pvPortMalloc(requiredLength));
     TEST_ASSERT_NOT_NULL(encoded);
     CheckEncoderStaysInsideBuffer(requiredLength, [&file](uint8_t *buffer, const uint32_t bufferLength) { return (Encoders::EncodeFileNameAndContents(&file, buffer, bufferLength)); }, encoded);
 

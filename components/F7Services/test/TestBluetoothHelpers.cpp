@@ -112,7 +112,7 @@ void StartBluetoothService(MockMessageDispatcher *dispatcher, const char * const
     const uint32_t payloadLength = TestEncoders::EncodedBTStackConfigBufferSize(&stackConfig);
     TEST_ASSERT_GREATER_THAN(0, payloadLength);
 
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(payload);
     TestEncoders::EncodeBTStackConfig(&stackConfig, payload);
 
@@ -146,7 +146,7 @@ void QueueServerDataSet(MockMessageDispatcher *dispatcher, const uint16_t handle
     dataSet.SetDataLength = sizeof(dataSetValue);
 
     const uint32_t payloadLength = TestEncoders::EncodedBTServerDataSetBufferSize(&dataSet);
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(payload);
     TestEncoders::EncodeBTServerDataSet(&dataSet, payload);
 

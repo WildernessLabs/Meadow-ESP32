@@ -44,7 +44,7 @@ public:
     static Message *RequestWithNoPayload(const WiFiFunction::WiFiFunction function)
     {
         NvsManager::Setup();
-        MockMessageDispatcher *dispatcher = new MockMessageDispatcher(nullptr);
+        auto *dispatcher = new MockMessageDispatcher(nullptr);
         TEST_ASSERT_NOT_NULL(dispatcher);
 
         WiFiRequestHandler *handler = WiFiRequestHandler::_instance;
