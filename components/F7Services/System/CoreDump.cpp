@@ -106,7 +106,7 @@ void CoreDump::GetInformation(void * const vpMessage)
     {
         return;
     }
-    Message * const message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     Esp32Messaging::CoreDumpInformationResponse response = {};
     esp_partition_iterator_t partitions;
@@ -180,7 +180,7 @@ void CoreDump::GetFragment(void * const vpMessage)
         return;
     }
 
-    Message * const message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
     StatusCodes::StatusCodes result = StatusCodes::Failure;
     Esp32Messaging::CoreDumpFragmentResponse response = {};
     bool malformed = false;
@@ -245,7 +245,7 @@ void CoreDump::GetFragment(void * const vpMessage)
                                 fragmentSize = MAXIMUM_FRAGMENT_SIZE;
                             }
 
-                            uint8_t *data = static_cast<uint8_t *>(pvPortMalloc(fragmentSize));
+                            auto *data = static_cast<uint8_t *>(pvPortMalloc(fragmentSize));
                             if (data == nullptr)
                             {
                                 result = StatusCodes::EspOutOfMemory;
@@ -316,7 +316,7 @@ void CoreDump::Erase(void * const vpMessage)
         return;
     }
 
-    Message * const message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
     StatusCodes::StatusCodes result = StatusCodes::Failure;
 
     esp_partition_iterator_t partitions;

@@ -67,7 +67,7 @@ static void FillFieldData()
  */
 template<typename Encode> static int32_t EncodeIntoFilledBuffer(const char *name, const int32_t length, const uint8_t fill, Encode encode)
 {
-    uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(length + GUARD_LENGTH));
+    auto *buffer = static_cast<uint8_t *>(pvPortMalloc(length + GUARD_LENGTH));
     TEST_ASSERT_NOT_NULL(buffer);
     memset(buffer, fill, length + GUARD_LENGTH);
 

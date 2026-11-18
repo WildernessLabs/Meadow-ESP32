@@ -411,7 +411,7 @@ static void ResetIncomingMessage()
  */
 static Message *BuildPacket(const uint16_t packetLength, const uint32_t payloadLength)
 {
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(packetLength));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(packetLength));
     TEST_ASSERT_NOT_NULL(payload);
     for (uint16_t index = 0; index < packetLength; index++)
     {
@@ -438,7 +438,7 @@ static void DecodeAndFreeAcknowledgement(spi_slave_transaction_t *transaction, u
 {
     TEST_ASSERT_NOT_NULL_MESSAGE(transaction, "ProcessInboundPacket did not return an acknowledgement transaction.");
 
-    uint8_t *txBuffer = static_cast<uint8_t *>(const_cast<void *>(transaction->tx_buffer));
+    auto *txBuffer = static_cast<uint8_t *>(const_cast<void *>(transaction->tx_buffer));
     Message *decoded = Encoders::ExtractMessage(txBuffer, TestSpiTransportProvider::GetHeaderFrameSize(), true);
     TEST_ASSERT_NOT_NULL_MESSAGE(decoded, "The acknowledgement could not be decoded; its CRC did not match.");
 
@@ -551,7 +551,7 @@ TEST_CASE("An acknowledgement transaction holds nothing from the message it was 
 
     const uint32_t MESSAGE_ID = 0x12345678;
     const uint32_t FUNCTION = 0x0a0b0c0d;
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(32));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(32));
     TEST_ASSERT_NOT_NULL(payload);
     memset(payload, 0xa5, 32);
     Message *message = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::WiFi, FUNCTION, StatusCodes::CompletedOk, MESSAGE_ID, payload, 32);
@@ -564,7 +564,7 @@ TEST_CASE("An acknowledgement transaction holds nothing from the message it was 
     TEST_ASSERT_EQUAL_PTR_MESSAGE(TestSpiTransportProvider::GetTransmitBuffer(), transaction->tx_buffer, "The transaction does not transmit from the provider's own buffer.");
     TEST_ASSERT_EQUAL_PTR_MESSAGE(TestSpiTransportProvider::GetReceiveBuffer(), transaction->rx_buffer, "The transaction does not receive into the provider's own buffer.");
 
-    uint8_t *txBuffer = static_cast<uint8_t *>(const_cast<void *>(transaction->tx_buffer));
+    auto *txBuffer = static_cast<uint8_t *>(const_cast<void *>(transaction->tx_buffer));
     Message *decoded = Encoders::ExtractMessage(txBuffer, TestSpiTransportProvider::GetHeaderFrameSize(), true);
     TEST_ASSERT_NOT_NULL_MESSAGE(decoded, "The acknowledgement could not be decoded; its CRC did not match.");
     TEST_ASSERT_EQUAL_UINT8(MessageTypes::Nak, decoded->MessageType);
@@ -592,7 +592,7 @@ static void CheckPacketTransaction(spi_slave_transaction_t *transaction, Message
     TEST_ASSERT_EQUAL_UINT16_MESSAGE(offset, message->PacketOffset, "The packet offset is wrong.");
     TEST_ASSERT_EQUAL_UINT16_MESSAGE(length, message->PacketLength, "The packet length is wrong.");
 
-    uint8_t *expected = static_cast<uint8_t *>(pvPortMalloc(Message::MAXIMUM_SPI_FRAME_SIZE));
+    auto *expected = static_cast<uint8_t *>(pvPortMalloc(Message::MAXIMUM_SPI_FRAME_SIZE));
     TEST_ASSERT_NOT_NULL(expected);
     memset(expected, 0, Message::MAXIMUM_SPI_FRAME_SIZE);
     TEST_ASSERT_TRUE(Encoders::EncodeMessage(message, expected, Message::MAXIMUM_SPI_FRAME_SIZE, false));
@@ -615,7 +615,7 @@ TEST_CASE("Each packet of an outbound message is transmitted as EncodeMessage en
     ResetIncomingMessage();
 
     const uint32_t payloadLength = (2 * Message::MAXIMUM_PACKET_SIZE) + 10;
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(payload);
     for (uint32_t index = 0; index < payloadLength; index++)
     {
@@ -745,7 +745,7 @@ TEST_CASE("The SPI post setup callback does nothing before the task and semaphor
  */
 static Message *CreateOutboundMessage(const uint32_t messageId, const uint32_t payloadLength)
 {
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(payload);
     memset(payload, 0xc3, payloadLength);
     Message *message = Message::CreateOnHeap(MessageTypes::Response, Esp32Interfaces::System, 17, StatusCodes::CompletedOk, messageId, payload, payloadLength);
@@ -859,7 +859,7 @@ TEST_CASE("The packets of a payload are worked out in 32 bits", CLASS_OF_TESTS)
 static spi_slave_transaction_t *SendFirstPacket(SpiTransportProvider *provider, Message **message)
 {
     const uint32_t payloadLength = (2 * Message::MAXIMUM_PACKET_SIZE) + 10;
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(payload);
     memset(payload, 0x3c, payloadLength);
     *message = Message::CreateOnHeap(MessageTypes::Response, Esp32Interfaces::WiFi, 3, StatusCodes::CompletedOk, 99, payload, payloadLength);
@@ -881,7 +881,7 @@ static void ReceiveAcknowledgement(spi_slave_transaction_t *transaction, const u
 {
     Message *acknowledgement = Message::CreateOnHeap(messageType, Esp32Interfaces::Transport, 0, StatusCodes::CompletedOk, 99, nullptr, 0);
     TEST_ASSERT_NOT_NULL(acknowledgement);
-    uint8_t *buffer = static_cast<uint8_t *>(transaction->rx_buffer);
+    auto *buffer = static_cast<uint8_t *>(transaction->rx_buffer);
     memset(buffer, 0, Message::MAXIMUM_SPI_FRAME_SIZE);
     TEST_ASSERT_TRUE(Encoders::EncodeMessage(acknowledgement, buffer, Message::MAXIMUM_SPI_FRAME_SIZE, true));
     Message::DeleteMessage(acknowledgement);
@@ -1191,7 +1191,7 @@ TEST_CASE("The acknowledgements of frames that are not messages are identical to
     //
     Message *reference = Message::CreateOnHeap(MessageTypes::Nak, Esp32Interfaces::Transport, 0, StatusCodes::CrcError);
     TEST_ASSERT_NOT_NULL(reference);
-    uint8_t *expected = static_cast<uint8_t *>(pvPortMalloc(Message::MAXIMUM_SPI_FRAME_SIZE));
+    auto *expected = static_cast<uint8_t *>(pvPortMalloc(Message::MAXIMUM_SPI_FRAME_SIZE));
     TEST_ASSERT_NOT_NULL(expected);
     memset(expected, 0, Message::MAXIMUM_SPI_FRAME_SIZE);
     TEST_ASSERT_TRUE(Encoders::EncodeMessage(reference, expected, Message::MAXIMUM_SPI_FRAME_SIZE, false));

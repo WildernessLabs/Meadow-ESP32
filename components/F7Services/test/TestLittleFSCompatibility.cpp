@@ -162,7 +162,7 @@ TEST_CASE("Write the LittleFS compatibility files", CLASS_OF_TESTS)
     directory += "/" COMPATIBILITY_DIRECTORY;
     TEST_ASSERT_TRUE_MESSAGE((mkdir(directory.c_str(), 0775) == 0) || (errno == EEXIST), "Could not create the compatibility directory.");
 
-    uint8_t *contents = new uint8_t[LARGEST_FILE_SIZE];
+    auto *contents = new uint8_t[LARGEST_FILE_SIZE];
     TEST_ASSERT_NOT_NULL(contents);
     char name[64];
     for (uint32_t index = 0; index < FILE_SIZE_COUNT; index++)
@@ -192,8 +192,8 @@ TEST_CASE("Check the LittleFS compatibility files", CLASS_OF_TESTS)
     FileSystemTestContext context;
     CreateFileSystemTestContext(&context, false);
 
-    uint8_t *expected = new uint8_t[LARGEST_FILE_SIZE];
-    uint8_t *actual = new uint8_t[LARGEST_FILE_SIZE + 1];
+    auto *expected = new uint8_t[LARGEST_FILE_SIZE];
+    auto *actual = new uint8_t[LARGEST_FILE_SIZE + 1];
     TEST_ASSERT_NOT_NULL(expected);
     TEST_ASSERT_NOT_NULL(actual);
 

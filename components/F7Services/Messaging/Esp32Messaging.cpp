@@ -55,7 +55,7 @@
  */
 Message *Message::CreateOnHeap(const uint8_t messageType, const uint8_t interface, const uint32_t function, const uint32_t statusCode, const uint32_t messageId, uint8_t *payload, const uint32_t payloadLength)
 {
-    Message *result = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
+    auto *result = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
 
     if (result != nullptr)
     {

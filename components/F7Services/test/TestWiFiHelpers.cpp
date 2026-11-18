@@ -118,7 +118,7 @@ Message *CreateAccessPointMessage(const uint32_t function, const char *ssid, con
     accessPointInformation.Hidden = hidden;
 
     uint32_t payloadLength = Encoders::EncodedAccessPointInformationBufferSize(&accessPointInformation);
-    uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    auto *buffer = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(buffer);
     memset(buffer, 0, payloadLength);
     TEST_ASSERT_TRUE(Encoders::EncodeAccessPointInformation(&accessPointInformation, buffer, payloadLength));
@@ -305,7 +305,7 @@ void EnsureDisconnected(MockMessageDispatcher *dispatcher)
     //  there is one, so a payload is always sent.  Zero leaves the interface up and
     //  drops only the association, which is all these tests need.
     //
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(sizeof(uint8_t)));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(sizeof(uint8_t)));
     TEST_ASSERT_NOT_NULL(payload);
     payload[0] = 0;
 
@@ -372,7 +372,7 @@ void EnsureDisconnected(MockMessageDispatcher *dispatcher)
  */
 void EnsureWiFiInterfaceStopped(MockMessageDispatcher *dispatcher)
 {
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(sizeof(uint8_t)));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(sizeof(uint8_t)));
     TEST_ASSERT_NOT_NULL(payload);
     payload[0] = 1;
 

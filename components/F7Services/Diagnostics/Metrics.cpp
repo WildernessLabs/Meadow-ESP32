@@ -282,7 +282,7 @@ size_t Metrics::BucketFor(const uint32_t microseconds)
     {
         return (0);
     }
-    const size_t bucket = static_cast<size_t>(32 - __builtin_clz(microseconds));
+    const auto bucket = static_cast<size_t>(32 - __builtin_clz(microseconds));
     return ((bucket < NUMBER_OF_BUCKETS) ? bucket : (NUMBER_OF_BUCKETS - 1));
 }
 

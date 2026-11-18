@@ -60,7 +60,7 @@ public:
         if (WiFiRequestHandler::_instance == nullptr)
         {
             NvsManager::Setup();
-            MockMessageDispatcher *dispatcher = new MockMessageDispatcher(nullptr);
+            auto *dispatcher = new MockMessageDispatcher(nullptr);
             TEST_ASSERT_NOT_NULL(dispatcher);
             TEST_ASSERT_NOT_NULL(new WiFiRequestHandler(dispatcher));
         }
@@ -252,7 +252,7 @@ public:
      */
     static MockMessageDispatcher *Dispatcher(WiFiRequestHandler *handler)
     {
-        MockMessageDispatcher *dispatcher = static_cast<MockMessageDispatcher *>(handler->_messageDispatcher);
+        auto *dispatcher = static_cast<MockMessageDispatcher *>(handler->_messageDispatcher);
         TEST_ASSERT_NOT_NULL(dispatcher);
         return (dispatcher);
     }
@@ -523,7 +523,7 @@ static wifi_event_sta_connected_t MakeRecord(const char fill, const uint8_t leng
  */
 static void WriterTask(void *parameter)
 {
-    EventStateContext *context = static_cast<EventStateContext *>(parameter);
+    auto *context = static_cast<EventStateContext *>(parameter);
     xSemaphoreTake(context->Start, portMAX_DELAY);
     for (uint32_t iteration = 0; iteration < EVENT_STATE_ITERATIONS; iteration++)
     {
@@ -540,7 +540,7 @@ static void WriterTask(void *parameter)
  */
 static void ReaderTask(void *parameter)
 {
-    EventStateContext *context = static_cast<EventStateContext *>(parameter);
+    auto *context = static_cast<EventStateContext *>(parameter);
     xSemaphoreTake(context->Start, portMAX_DELAY);
     for (uint32_t iteration = 0; iteration < EVENT_STATE_ITERATIONS; iteration++)
     {

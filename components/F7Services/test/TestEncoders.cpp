@@ -32,7 +32,7 @@ namespace TestEncoders
      */
     Esp32Messaging::IntegerResponse *ExtractIntegerResponse(const uint8_t *buffer)
     {
-        Esp32Messaging::IntegerResponse *integerResponse = static_cast<Esp32Messaging::IntegerResponse *>(pvPortMalloc(sizeof(Esp32Messaging::IntegerResponse)));
+        auto *integerResponse = static_cast<Esp32Messaging::IntegerResponse *>(pvPortMalloc(sizeof(Esp32Messaging::IntegerResponse)));
 
         if (integerResponse == nullptr)
         {
@@ -54,7 +54,7 @@ namespace TestEncoders
      */
     Esp32Messaging::ConnectEventData *ExtractConnectEventData(const uint8_t *buffer)
     {
-        Esp32Messaging::ConnectEventData *connectEventData = static_cast<Esp32Messaging::ConnectEventData *>(pvPortMalloc(sizeof(Esp32Messaging::ConnectEventData)));
+        auto *connectEventData = static_cast<Esp32Messaging::ConnectEventData *>(pvPortMalloc(sizeof(Esp32Messaging::ConnectEventData)));
 
         if (connectEventData == nullptr)
         {
@@ -89,7 +89,7 @@ namespace TestEncoders
      */
     Esp32Messaging::AccessPointList *ExtractAccessPointList(const uint8_t *buffer)
     {
-        Esp32Messaging::AccessPointList *accessPointList = static_cast<Esp32Messaging::AccessPointList *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointList)));
+        auto *accessPointList = static_cast<Esp32Messaging::AccessPointList *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointList)));
 
         if (accessPointList == nullptr)
         {
@@ -146,7 +146,7 @@ namespace TestEncoders
      */
     Esp32Messaging::AccessPoint *ExtractAccessPoint(const uint8_t *buffer)
     {
-        Esp32Messaging::AccessPoint *accessPoint = static_cast<Esp32Messaging::AccessPoint *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPoint)));
+        auto *accessPoint = static_cast<Esp32Messaging::AccessPoint *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPoint)));
 
         if (accessPoint == nullptr)
         {
@@ -179,7 +179,7 @@ namespace TestEncoders
      */
     Esp32Messaging::FileNameList *ExtractFileNameList(const uint8_t *buffer)
     {
-        Esp32Messaging::FileNameList *fileNameList = static_cast<Esp32Messaging::FileNameList *>(pvPortMalloc(sizeof(Esp32Messaging::FileNameList)));
+        auto *fileNameList = static_cast<Esp32Messaging::FileNameList *>(pvPortMalloc(sizeof(Esp32Messaging::FileNameList)));
 
         if (fileNameList == nullptr)
         {
@@ -238,7 +238,7 @@ namespace TestEncoders
      */
     Esp32Messaging::CoreDumpInformationResponse *ExtractCoreDumpInformation(const uint8_t *buffer)
     {
-        Esp32Messaging::CoreDumpInformationResponse *information = static_cast<Esp32Messaging::CoreDumpInformationResponse *>(pvPortMalloc(sizeof(Esp32Messaging::CoreDumpInformationResponse)));
+        auto *information = static_cast<Esp32Messaging::CoreDumpInformationResponse *>(pvPortMalloc(sizeof(Esp32Messaging::CoreDumpInformationResponse)));
 
         if (information == nullptr)
         {
@@ -290,7 +290,7 @@ namespace TestEncoders
             return (nullptr);
         }
 
-        uint8_t *fragment = static_cast<uint8_t *>(pvPortMalloc(EncodedCoreDumpFragmentRequestBufferSize(request)));
+        auto *fragment = static_cast<uint8_t *>(pvPortMalloc(EncodedCoreDumpFragmentRequestBufferSize(request)));
         if (fragment != nullptr)
         {
             Encoders::EncodeUInt32(request->Offset, fragment);
@@ -315,7 +315,7 @@ namespace TestEncoders
             return (nullptr);
         }
 
-        Esp32Messaging::CoreDumpFragmentResponse *fragmentResponse = static_cast<Esp32Messaging::CoreDumpFragmentResponse *>(pvPortMalloc(sizeof(Esp32Messaging::CoreDumpFragmentResponse)));
+        auto *fragmentResponse = static_cast<Esp32Messaging::CoreDumpFragmentResponse *>(pvPortMalloc(sizeof(Esp32Messaging::CoreDumpFragmentResponse)));
         if (fragmentResponse == nullptr)
         {
             return (nullptr);
@@ -425,7 +425,7 @@ namespace TestEncoders
      */
     uint8_t *EncodeSocketRequest(const int32_t domain, const int32_t type, const int32_t protocol)
     {
-        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_SOCKET_REQUEST_SIZE));
+        auto *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_SOCKET_REQUEST_SIZE));
 
         if (buffer == nullptr)
         {
@@ -452,7 +452,7 @@ namespace TestEncoders
      */
     uint8_t *EncodeConnectRequest(const int32_t socketHandle, const char *address, const uint16_t port)
     {
-        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_CONNECT_REQUEST_SIZE));
+        auto *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_CONNECT_REQUEST_SIZE));
 
         if (buffer == nullptr)
         {
@@ -484,7 +484,7 @@ namespace TestEncoders
     uint8_t *EncodeSendRequest(const int32_t socketHandle, const char *data, const uint32_t length, uint32_t *encodedLength)
     {
         *encodedLength = 4 + 4 + length + 4 + 4;
-        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(*encodedLength));
+        auto *buffer = static_cast<uint8_t *>(pvPortMalloc(*encodedLength));
 
         if (buffer == nullptr)
         {
@@ -516,7 +516,7 @@ namespace TestEncoders
     uint8_t *EncodeSendRequestWithDeclaredLength(const int32_t socketHandle, const char *data, const uint32_t bufferLength, const int32_t declaredLength, uint32_t *encodedLength)
     {
         *encodedLength = 4 + 4 + bufferLength + 4 + 4;
-        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(*encodedLength));
+        auto *buffer = static_cast<uint8_t *>(pvPortMalloc(*encodedLength));
 
         if (buffer == nullptr)
         {
@@ -548,7 +548,7 @@ namespace TestEncoders
     uint8_t *EncodeSendToRequest(const int32_t socketHandle, const char *data, const uint32_t length, const uint8_t *destinationAddress, const uint32_t destinationAddressLength, uint32_t *encodedLength)
     {
         *encodedLength = 4 + 4 + length + 4 + 4 + 4 + destinationAddressLength;
-        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(*encodedLength));
+        auto *buffer = static_cast<uint8_t *>(pvPortMalloc(*encodedLength));
 
         if (buffer == nullptr)
         {
@@ -598,7 +598,7 @@ namespace TestEncoders
     uint8_t *EncodeSendToRequestWithDeclaredLength(const int32_t socketHandle, const char *data, const uint32_t bufferLength, const int32_t declaredLength, const uint8_t *destinationAddress, const uint32_t destinationAddressLength, uint32_t *encodedLength)
     {
         *encodedLength = 4 + 4 + bufferLength + 4 + 4 + 4 + destinationAddressLength;
-        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(*encodedLength));
+        auto *buffer = static_cast<uint8_t *>(pvPortMalloc(*encodedLength));
 
         if (buffer == nullptr)
         {
@@ -645,7 +645,7 @@ namespace TestEncoders
     uint8_t *EncodeSendMsgRequest(const int32_t socketHandle, const uint8_t *name, const uint32_t nameLength, const char *data, const uint32_t length, uint32_t *encodedLength)
     {
         *encodedLength = 4 + 4 + 4 + 4 + nameLength + 4 + 4 + length + 4 + 4;
-        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(*encodedLength));
+        auto *buffer = static_cast<uint8_t *>(pvPortMalloc(*encodedLength));
 
         if (buffer == nullptr)
         {
@@ -693,7 +693,7 @@ namespace TestEncoders
      */
     uint8_t *EncodeRecvFromRequest(const int32_t socketHandle, const int32_t length)
     {
-        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_RECV_FROM_REQUEST_SIZE));
+        auto *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_RECV_FROM_REQUEST_SIZE));
 
         if (buffer == nullptr)
         {
@@ -719,7 +719,7 @@ namespace TestEncoders
      */
     uint8_t *EncodeRecvMsgRequest(const int32_t socketHandle, const int32_t length)
     {
-        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_RECV_MSG_REQUEST_SIZE));
+        auto *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_RECV_MSG_REQUEST_SIZE));
 
         if (buffer == nullptr)
         {
@@ -745,7 +745,7 @@ namespace TestEncoders
      */
     uint8_t *EncodeCloseRequest(const int32_t socketHandle)
     {
-        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_CLOSE_REQUEST_SIZE));
+        auto *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_CLOSE_REQUEST_SIZE));
 
         if (buffer == nullptr)
         {
@@ -769,7 +769,7 @@ namespace TestEncoders
      */
     uint8_t *EncodePollRequest(const int32_t socketHandle, const uint16_t events, const bool setup, const uint32_t setupMessageId)
     {
-        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_POLL_REQUEST_SIZE));
+        auto *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_POLL_REQUEST_SIZE));
 
         if (buffer == nullptr)
         {
@@ -794,7 +794,7 @@ namespace TestEncoders
      */
     uint8_t *EncodeIoctlRequest(const int32_t command)
     {
-        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_IOCTL_REQUEST_SIZE));
+        auto *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_IOCTL_REQUEST_SIZE));
 
         if (buffer == nullptr)
         {
@@ -815,7 +815,7 @@ namespace TestEncoders
      */
     Esp32Messaging::IoctlResponse *ExtractIoctlResponse(const uint8_t *buffer)
     {
-        Esp32Messaging::IoctlResponse *ioctlResponse = static_cast<Esp32Messaging::IoctlResponse *>(pvPortMalloc(sizeof(Esp32Messaging::IoctlResponse)));
+        auto *ioctlResponse = static_cast<Esp32Messaging::IoctlResponse *>(pvPortMalloc(sizeof(Esp32Messaging::IoctlResponse)));
 
         if (ioctlResponse == nullptr)
         {

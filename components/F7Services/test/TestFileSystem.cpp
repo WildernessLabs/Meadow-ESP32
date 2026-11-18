@@ -83,7 +83,7 @@ static Message *CreateFileNameAndContentsMessage(const uint32_t function, const 
     fileData.ContentsLength = contentsLength;
 
     uint32_t payloadLength = Encoders::EncodedFileNameAndContentsBufferSize(&fileData);
-    uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    auto *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(encodedPayload);
     TEST_ASSERT_TRUE(Encoders::EncodeFileNameAndContents(&fileData, encodedPayload, payloadLength));
 
@@ -114,7 +114,7 @@ static void CheckTestFileContents(const char *filename, const char *contents)
 {
     const size_t length = strlen(contents);
 
-    uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(length + 1));
+    auto *buffer = static_cast<uint8_t *>(pvPortMalloc(length + 1));
     TEST_ASSERT_NOT_NULL(buffer);
     memset(buffer, 0, length + 1);
 
@@ -129,7 +129,7 @@ static void CheckTestFileContents(const char *filename, const char *contents)
  */
 TEST_CASE("File System set up", CLASS_OF_TESTS)
 {
-    FileSystem *fs = new FileSystem(nullptr);
+    auto *fs = new FileSystem(nullptr);
     TEST_ASSERT_NOT_NULL(fs);
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, fs->Setup());
     TEST_ASSERT_TRUE(esp_littlefs_mounted(FileSystem::PARTITION_LABEL));
@@ -528,7 +528,7 @@ TEST_CASE("ReadFile does not leak contents sent with the read request", CLASS_OF
     CreateFileSystemTestContext(&context, true);
     WriteTestFileContents(TEST_FILE_NAME, TEST_FILE_CONTENTS);
 
-    uint8_t *requestContents = static_cast<uint8_t *>(pvPortMalloc(REQUEST_CONTENTS_LENGTH));
+    auto *requestContents = static_cast<uint8_t *>(pvPortMalloc(REQUEST_CONTENTS_LENGTH));
     TEST_ASSERT_NOT_NULL(requestContents);
     memset(requestContents, 0xa5, REQUEST_CONTENTS_LENGTH);
 
@@ -656,7 +656,7 @@ TEST_CASE("Delete file", CLASS_OF_TESTS)
     memset(&details, 0, sizeof(details));
     details.Name = const_cast<char *>(TEST_FILE_NAME);
     uint32_t payloadLength = Encoders::EncodedFileDetailsBufferSize(&details);
-    uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    auto *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(encodedPayload);
     TEST_ASSERT_TRUE(Encoders::EncodeFileDetails(&details, encodedPayload, payloadLength));
     Message *deleteMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemDeleteFile, StatusCodes::Failure, TEST_MESSAGE_ID, encodedPayload, payloadLength);
@@ -714,7 +714,7 @@ TEST_CASE("Delete file", CLASS_OF_TESTS)
  */
 TEST_CASE("Mount failure when already mounted", CLASS_OF_TESTS)
 {
-    FileSystem *fs = new FileSystem(nullptr);
+    auto *fs = new FileSystem(nullptr);
     TEST_ASSERT_NOT_NULL(fs);
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, fs->Setup());
     TEST_ASSERT_TRUE(esp_littlefs_mounted(FileSystem::PARTITION_LABEL));
@@ -752,7 +752,7 @@ TEST_CASE("Mount failure when already mounted", CLASS_OF_TESTS)
  */
 TEST_CASE("A request is discarded safely when there is no message dispatcher", CLASS_OF_TESTS)
 {
-    FileSystem *fs = new FileSystem(nullptr);
+    auto *fs = new FileSystem(nullptr);
     TEST_ASSERT_NOT_NULL(fs);
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, fs->Setup());
 
@@ -818,7 +818,7 @@ TEST_CASE("ReadFile returns FileNotFound for non-existent file", CLASS_OF_TESTS)
  */
 static void WritePatternFile(const char *filename, const uint32_t length)
 {
-    uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc((length == 0) ? 1 : length));
+    auto *buffer = static_cast<uint8_t *>(pvPortMalloc((length == 0) ? 1 : length));
     TEST_ASSERT_NOT_NULL(buffer);
     for (uint32_t index = 0; index < length; index++)
     {
@@ -953,7 +953,7 @@ TEST_CASE("WriteFile returns Failure on a full filesystem", SLOW_TESTS)
     //  of free space remains — at that point LittleFS has no room to allocate a new
     //  data block for the file under test.
     //
-    uint8_t *fillBuffer = static_cast<uint8_t *>(pvPortMalloc(LITTLEFS_BLOCK_SIZE));
+    auto *fillBuffer = static_cast<uint8_t *>(pvPortMalloc(LITTLEFS_BLOCK_SIZE));
     TEST_ASSERT_NOT_NULL(fillBuffer);
     memset(fillBuffer, 0xFF, LITTLEFS_BLOCK_SIZE);
 
@@ -980,7 +980,7 @@ TEST_CASE("WriteFile returns Failure on a full filesystem", SLOW_TESTS)
     //  can therefore write at most LITTLEFS_BLOCK_SIZE bytes, which is less than
     //  the requested ContentsLength, so WriteFile must return StatusCodes::Failure.
     //
-    uint8_t *writeBuffer = static_cast<uint8_t *>(pvPortMalloc(2 * LITTLEFS_BLOCK_SIZE));
+    auto *writeBuffer = static_cast<uint8_t *>(pvPortMalloc(2 * LITTLEFS_BLOCK_SIZE));
     TEST_ASSERT_NOT_NULL(writeBuffer);
     memset(writeBuffer, 0xAA, 2 * LITTLEFS_BLOCK_SIZE);
 

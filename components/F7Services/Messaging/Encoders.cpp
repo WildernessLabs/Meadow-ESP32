@@ -745,7 +745,7 @@ int Encoders::EncodedSystemConfigurationBufferSize(const Esp32Messaging::SystemC
 Esp32Messaging::ConfigurationValue *Encoders::ExtractConfigurationValue(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::ConfigurationValue *result = static_cast<Esp32Messaging::ConfigurationValue *>(pvPortMalloc(sizeof(Esp32Messaging::ConfigurationValue)));
+    auto *result = static_cast<Esp32Messaging::ConfigurationValue *>(pvPortMalloc(sizeof(Esp32Messaging::ConfigurationValue)));
 
     if (result == nullptr)
     {
@@ -883,7 +883,7 @@ int Encoders::EncodedAccessPointInformationBufferSize(const Esp32Messaging::Acce
 Esp32Messaging::AccessPointInformation *Encoders::ExtractAccessPointInformation(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::AccessPointInformation *result = static_cast<Esp32Messaging::AccessPointInformation *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointInformation)));
+    auto *result = static_cast<Esp32Messaging::AccessPointInformation *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointInformation)));
 
     if (result == nullptr)
     {
@@ -966,7 +966,7 @@ void Encoders::FreeAccessPointInformation(Esp32Messaging::AccessPointInformation
 Esp32Messaging::DisconnectFromAccessPointRequest *Encoders::ExtractDisconnectFromAccessPointRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::DisconnectFromAccessPointRequest *result = static_cast<Esp32Messaging::DisconnectFromAccessPointRequest *>(pvPortMalloc(sizeof(Esp32Messaging::DisconnectFromAccessPointRequest)));
+    auto *result = static_cast<Esp32Messaging::DisconnectFromAccessPointRequest *>(pvPortMalloc(sizeof(Esp32Messaging::DisconnectFromAccessPointRequest)));
 
     if (result == nullptr)
     {
@@ -1255,7 +1255,7 @@ int Encoders::EncodedSockAddrBufferSize(const Esp32Messaging::SockAddr * const s
 Esp32Messaging::SockAddr *Encoders::ExtractSockAddr(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::SockAddr *result = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
+    auto *result = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
 
     if (result == nullptr)
     {
@@ -1394,7 +1394,7 @@ int Encoders::EncodedAddrInfoBufferSize(const Esp32Messaging::AddrInfo * const a
 Esp32Messaging::AddrInfo *Encoders::ExtractAddrInfo(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::AddrInfo *result = static_cast<Esp32Messaging::AddrInfo *>(pvPortMalloc(sizeof(Esp32Messaging::AddrInfo)));
+    auto *result = static_cast<Esp32Messaging::AddrInfo *>(pvPortMalloc(sizeof(Esp32Messaging::AddrInfo)));
 
     if (result == nullptr)
     {
@@ -1480,7 +1480,7 @@ void Encoders::FreeAddrInfo(Esp32Messaging::AddrInfo **addrInfo)
 Esp32Messaging::GetAddrInfoRequest *Encoders::ExtractGetAddrInfoRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::GetAddrInfoRequest *result = static_cast<Esp32Messaging::GetAddrInfoRequest *>(pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoRequest)));
+    auto *result = static_cast<Esp32Messaging::GetAddrInfoRequest *>(pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoRequest)));
 
     if (result == nullptr)
     {
@@ -1600,7 +1600,7 @@ int Encoders::EncodedGetAddrInfoResponseBufferSize(const Esp32Messaging::GetAddr
 Esp32Messaging::SocketRequest *Encoders::ExtractSocketRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::SocketRequest *result = static_cast<Esp32Messaging::SocketRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SocketRequest)));
+    auto *result = static_cast<Esp32Messaging::SocketRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SocketRequest)));
 
     if (result == nullptr)
     {
@@ -1720,7 +1720,7 @@ int Encoders::EncodedIntegerAndErrnoResponseBufferSize(const Esp32Messaging::Int
 Esp32Messaging::ConnectRequest *Encoders::ExtractConnectRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::ConnectRequest *result = static_cast<Esp32Messaging::ConnectRequest *>(pvPortMalloc(sizeof(Esp32Messaging::ConnectRequest)));
+    auto *result = static_cast<Esp32Messaging::ConnectRequest *>(pvPortMalloc(sizeof(Esp32Messaging::ConnectRequest)));
 
     if (result == nullptr)
     {
@@ -1796,7 +1796,7 @@ void Encoders::FreeConnectRequest(Esp32Messaging::ConnectRequest **connectReques
 Esp32Messaging::FreeAddrInfoRequest *Encoders::ExtractFreeAddrInfoRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::FreeAddrInfoRequest *result = static_cast<Esp32Messaging::FreeAddrInfoRequest *>(pvPortMalloc(sizeof(Esp32Messaging::FreeAddrInfoRequest)));
+    auto *result = static_cast<Esp32Messaging::FreeAddrInfoRequest *>(pvPortMalloc(sizeof(Esp32Messaging::FreeAddrInfoRequest)));
 
     if (result == nullptr)
     {
@@ -1882,7 +1882,7 @@ int Encoders::EncodedTimeValBufferSize(const Esp32Messaging::TimeVal * const tim
 Esp32Messaging::TimeVal *Encoders::ExtractTimeVal(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::TimeVal *result = static_cast<Esp32Messaging::TimeVal *>(pvPortMalloc(sizeof(Esp32Messaging::TimeVal)));
+    auto *result = static_cast<Esp32Messaging::TimeVal *>(pvPortMalloc(sizeof(Esp32Messaging::TimeVal)));
 
     if (result == nullptr)
     {
@@ -1938,7 +1938,7 @@ Esp32Messaging::TimeVal *Encoders::ExtractTimeVal(const uint8_t *buffer, const u
 Esp32Messaging::SetSockOptRequest *Encoders::ExtractSetSockOptRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::SetSockOptRequest *result = static_cast<Esp32Messaging::SetSockOptRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SetSockOptRequest)));
+    auto *result = static_cast<Esp32Messaging::SetSockOptRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SetSockOptRequest)));
 
     if (result == nullptr)
     {
@@ -2017,7 +2017,7 @@ void Encoders::FreeSetSockOptRequest(Esp32Messaging::SetSockOptRequest **setSock
 Esp32Messaging::GetSockOptRequest *Encoders::ExtractGetSockOptRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::GetSockOptRequest *result = static_cast<Esp32Messaging::GetSockOptRequest *>(pvPortMalloc(sizeof(Esp32Messaging::GetSockOptRequest)));
+    auto *result = static_cast<Esp32Messaging::GetSockOptRequest *>(pvPortMalloc(sizeof(Esp32Messaging::GetSockOptRequest)));
 
     if (result == nullptr)
     {
@@ -2149,7 +2149,7 @@ int Encoders::EncodedLingerBufferSize(const Esp32Messaging::Linger * const linge
 Esp32Messaging::WriteRequest *Encoders::ExtractWriteRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::WriteRequest *result = static_cast<Esp32Messaging::WriteRequest *>(pvPortMalloc(sizeof(Esp32Messaging::WriteRequest)));
+    auto *result = static_cast<Esp32Messaging::WriteRequest *>(pvPortMalloc(sizeof(Esp32Messaging::WriteRequest)));
 
     if (result == nullptr)
     {
@@ -2226,7 +2226,7 @@ void Encoders::FreeWriteRequest(Esp32Messaging::WriteRequest **writeRequest)
 Esp32Messaging::ReadRequest *Encoders::ExtractReadRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::ReadRequest *result = static_cast<Esp32Messaging::ReadRequest *>(pvPortMalloc(sizeof(Esp32Messaging::ReadRequest)));
+    auto *result = static_cast<Esp32Messaging::ReadRequest *>(pvPortMalloc(sizeof(Esp32Messaging::ReadRequest)));
 
     if (result == nullptr)
     {
@@ -2322,7 +2322,7 @@ int Encoders::EncodedReadResponseBufferSize(const Esp32Messaging::ReadResponse *
 Esp32Messaging::CloseRequest *Encoders::ExtractCloseRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::CloseRequest *result = static_cast<Esp32Messaging::CloseRequest *>(pvPortMalloc(sizeof(Esp32Messaging::CloseRequest)));
+    auto *result = static_cast<Esp32Messaging::CloseRequest *>(pvPortMalloc(sizeof(Esp32Messaging::CloseRequest)));
 
     if (result == nullptr)
     {
@@ -2407,7 +2407,7 @@ int Encoders::EncodedGetBatteryChargeLevelResponseBufferSize(const Esp32Messagin
 Esp32Messaging::SendRequest *Encoders::ExtractSendRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::SendRequest *result = static_cast<Esp32Messaging::SendRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SendRequest)));
+    auto *result = static_cast<Esp32Messaging::SendRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SendRequest)));
 
     if (result == nullptr)
     {
@@ -2486,7 +2486,7 @@ void Encoders::FreeSendRequest(Esp32Messaging::SendRequest **sendRequest)
 Esp32Messaging::SendToRequest *Encoders::ExtractSendToRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::SendToRequest *result = static_cast<Esp32Messaging::SendToRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SendToRequest)));
+    auto *result = static_cast<Esp32Messaging::SendToRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SendToRequest)));
 
     if (result == nullptr)
     {
@@ -2568,7 +2568,7 @@ void Encoders::FreeSendToRequest(Esp32Messaging::SendToRequest **sendToRequest)
 Esp32Messaging::RecvFromRequest *Encoders::ExtractRecvFromRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::RecvFromRequest *result = static_cast<Esp32Messaging::RecvFromRequest *>(pvPortMalloc(sizeof(Esp32Messaging::RecvFromRequest)));
+    auto *result = static_cast<Esp32Messaging::RecvFromRequest *>(pvPortMalloc(sizeof(Esp32Messaging::RecvFromRequest)));
 
     if (result == nullptr)
     {
@@ -2711,7 +2711,7 @@ Esp32Messaging::SendMsgRequest *Encoders::ExtractSendMsgRequest(const uint8_t *b
         return (nullptr);
     }
 
-    Esp32Messaging::SendMsgRequest *sendMsgRequest = static_cast<Esp32Messaging::SendMsgRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SendMsgRequest)));
+    auto *sendMsgRequest = static_cast<Esp32Messaging::SendMsgRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SendMsgRequest)));
     if (sendMsgRequest == nullptr)
     {
         return (nullptr);
@@ -2874,7 +2874,7 @@ void Encoders::FreeSendMsgRequest(Esp32Messaging::SendMsgRequest **sendMsgReques
 Esp32Messaging::RecvMsgRequest *Encoders::ExtractRecvMsgRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::RecvMsgRequest *result = static_cast<Esp32Messaging::RecvMsgRequest *>(pvPortMalloc(sizeof(Esp32Messaging::RecvMsgRequest)));
+    auto *result = static_cast<Esp32Messaging::RecvMsgRequest *>(pvPortMalloc(sizeof(Esp32Messaging::RecvMsgRequest)));
 
     if (result == nullptr)
     {
@@ -3022,7 +3022,7 @@ int Encoders::EncodedRecvMsgResponseBufferSize(const Esp32Messaging::RecvMsgResp
 Esp32Messaging::PollRequest *Encoders::ExtractPollRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::PollRequest *result = static_cast<Esp32Messaging::PollRequest *>(pvPortMalloc(sizeof(Esp32Messaging::PollRequest)));
+    auto *result = static_cast<Esp32Messaging::PollRequest *>(pvPortMalloc(sizeof(Esp32Messaging::PollRequest)));
 
     if (result == nullptr)
     {
@@ -3152,7 +3152,7 @@ int Encoders::EncodedInterruptPollResponseBufferSize(const Esp32Messaging::Inter
 Esp32Messaging::ListenRequest *Encoders::ExtractListenRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::ListenRequest *result = static_cast<Esp32Messaging::ListenRequest *>(pvPortMalloc(sizeof(Esp32Messaging::ListenRequest)));
+    auto *result = static_cast<Esp32Messaging::ListenRequest *>(pvPortMalloc(sizeof(Esp32Messaging::ListenRequest)));
 
     if (result == nullptr)
     {
@@ -3207,7 +3207,7 @@ Esp32Messaging::ListenRequest *Encoders::ExtractListenRequest(const uint8_t *buf
 Esp32Messaging::ShutdownRequest *Encoders::ExtractShutdownRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::ShutdownRequest *result = static_cast<Esp32Messaging::ShutdownRequest *>(pvPortMalloc(sizeof(Esp32Messaging::ShutdownRequest)));
+    auto *result = static_cast<Esp32Messaging::ShutdownRequest *>(pvPortMalloc(sizeof(Esp32Messaging::ShutdownRequest)));
 
     if (result == nullptr)
     {
@@ -3263,7 +3263,7 @@ Esp32Messaging::ShutdownRequest *Encoders::ExtractShutdownRequest(const uint8_t 
 Esp32Messaging::BindRequest *Encoders::ExtractBindRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::BindRequest *result = static_cast<Esp32Messaging::BindRequest *>(pvPortMalloc(sizeof(Esp32Messaging::BindRequest)));
+    auto *result = static_cast<Esp32Messaging::BindRequest *>(pvPortMalloc(sizeof(Esp32Messaging::BindRequest)));
 
     if (result == nullptr)
     {
@@ -3339,7 +3339,7 @@ void Encoders::FreeBindRequest(Esp32Messaging::BindRequest **bindRequest)
 Esp32Messaging::AcceptRequest *Encoders::ExtractAcceptRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::AcceptRequest *result = static_cast<Esp32Messaging::AcceptRequest *>(pvPortMalloc(sizeof(Esp32Messaging::AcceptRequest)));
+    auto *result = static_cast<Esp32Messaging::AcceptRequest *>(pvPortMalloc(sizeof(Esp32Messaging::AcceptRequest)));
 
     if (result == nullptr)
     {
@@ -3434,7 +3434,7 @@ int Encoders::EncodedAcceptResponseBufferSize(const Esp32Messaging::AcceptRespon
 Esp32Messaging::IoctlRequest *Encoders::ExtractIoctlRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::IoctlRequest *result = static_cast<Esp32Messaging::IoctlRequest *>(pvPortMalloc(sizeof(Esp32Messaging::IoctlRequest)));
+    auto *result = static_cast<Esp32Messaging::IoctlRequest *>(pvPortMalloc(sizeof(Esp32Messaging::IoctlRequest)));
 
     if (result == nullptr)
     {
@@ -3531,7 +3531,7 @@ int Encoders::EncodedIoctlResponseBufferSize(const Esp32Messaging::IoctlResponse
 Esp32Messaging::GetSockPeerNameRequest *Encoders::ExtractGetSockPeerNameRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::GetSockPeerNameRequest *result = static_cast<Esp32Messaging::GetSockPeerNameRequest *>(pvPortMalloc(sizeof(Esp32Messaging::GetSockPeerNameRequest)));
+    auto *result = static_cast<Esp32Messaging::GetSockPeerNameRequest *>(pvPortMalloc(sizeof(Esp32Messaging::GetSockPeerNameRequest)));
 
     if (result == nullptr)
     {
@@ -3701,7 +3701,7 @@ int Encoders::EncodedEventDataPayloadBufferSize(const Esp32Messaging::EventDataP
 Esp32Messaging::SetAntennaRequest *Encoders::ExtractSetAntennaRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::SetAntennaRequest *result = static_cast<Esp32Messaging::SetAntennaRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SetAntennaRequest)));
+    auto *result = static_cast<Esp32Messaging::SetAntennaRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SetAntennaRequest)));
 
     if (result == nullptr)
     {
@@ -3757,7 +3757,7 @@ Esp32Messaging::SetAntennaRequest *Encoders::ExtractSetAntennaRequest(const uint
 Esp32Messaging::BTStackConfig *Encoders::ExtractBTStackConfig(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::BTStackConfig *result = static_cast<Esp32Messaging::BTStackConfig *>(pvPortMalloc(sizeof(Esp32Messaging::BTStackConfig)));
+    auto *result = static_cast<Esp32Messaging::BTStackConfig *>(pvPortMalloc(sizeof(Esp32Messaging::BTStackConfig)));
 
     if (result == nullptr)
     {
@@ -3910,7 +3910,7 @@ int Encoders::EncodedBTGetHandlesResponseBufferSize(const Esp32Messaging::BTGetH
 Esp32Messaging::BTServerDataSet *Encoders::ExtractBTServerDataSet(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::BTServerDataSet *result = static_cast<Esp32Messaging::BTServerDataSet *>(pvPortMalloc(sizeof(Esp32Messaging::BTServerDataSet)));
+    auto *result = static_cast<Esp32Messaging::BTServerDataSet *>(pvPortMalloc(sizeof(Esp32Messaging::BTServerDataSet)));
 
     if (result == nullptr)
     {
@@ -3981,7 +3981,7 @@ void Encoders::FreeBTServerDataSet(Esp32Messaging::BTServerDataSet **bTServerDat
 Esp32Messaging::BTDeviceAddress *Encoders::ExtractBTDeviceAddress(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::BTDeviceAddress *result = static_cast<Esp32Messaging::BTDeviceAddress *>(pvPortMalloc(sizeof(Esp32Messaging::BTDeviceAddress)));
+    auto *result = static_cast<Esp32Messaging::BTDeviceAddress *>(pvPortMalloc(sizeof(Esp32Messaging::BTDeviceAddress)));
 
     if (result == nullptr)
     {
@@ -4030,7 +4030,7 @@ Esp32Messaging::BTDeviceAddress *Encoders::ExtractBTDeviceAddress(const uint8_t 
 Esp32Messaging::BTPairingReply *Encoders::ExtractBTPairingReply(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::BTPairingReply *result = static_cast<Esp32Messaging::BTPairingReply *>(pvPortMalloc(sizeof(Esp32Messaging::BTPairingReply)));
+    auto *result = static_cast<Esp32Messaging::BTPairingReply *>(pvPortMalloc(sizeof(Esp32Messaging::BTPairingReply)));
 
     if (result == nullptr)
     {
@@ -4243,7 +4243,7 @@ int Encoders::EncodedFileDetailsBufferSize(const Esp32Messaging::FileDetails * c
 Esp32Messaging::FileDetails *Encoders::ExtractFileDetails(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::FileDetails *result = static_cast<Esp32Messaging::FileDetails *>(pvPortMalloc(sizeof(Esp32Messaging::FileDetails)));
+    auto *result = static_cast<Esp32Messaging::FileDetails *>(pvPortMalloc(sizeof(Esp32Messaging::FileDetails)));
 
     if (result == nullptr)
     {
@@ -4375,7 +4375,7 @@ int Encoders::EncodedFileNameAndContentsBufferSize(const Esp32Messaging::FileNam
 Esp32Messaging::FileNameAndContents *Encoders::ExtractFileNameAndContents(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::FileNameAndContents *result = static_cast<Esp32Messaging::FileNameAndContents *>(pvPortMalloc(sizeof(Esp32Messaging::FileNameAndContents)));
+    auto *result = static_cast<Esp32Messaging::FileNameAndContents *>(pvPortMalloc(sizeof(Esp32Messaging::FileNameAndContents)));
 
     if (result == nullptr)
     {
@@ -4489,7 +4489,7 @@ int Encoders::EncodedFileNameListBufferSize(const Esp32Messaging::FileNameList *
 Esp32Messaging::LoggingConfiguration *Encoders::ExtractLoggingConfiguration(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::LoggingConfiguration *result = static_cast<Esp32Messaging::LoggingConfiguration *>(pvPortMalloc(sizeof(Esp32Messaging::LoggingConfiguration)));
+    auto *result = static_cast<Esp32Messaging::LoggingConfiguration *>(pvPortMalloc(sizeof(Esp32Messaging::LoggingConfiguration)));
 
     if (result == nullptr)
     {
@@ -4562,7 +4562,7 @@ void Encoders::FreeLoggingConfiguration(Esp32Messaging::LoggingConfiguration **l
 Esp32Messaging::LogMessage *Encoders::ExtractLogMessage(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::LogMessage *result = static_cast<Esp32Messaging::LogMessage *>(pvPortMalloc(sizeof(Esp32Messaging::LogMessage)));
+    auto *result = static_cast<Esp32Messaging::LogMessage *>(pvPortMalloc(sizeof(Esp32Messaging::LogMessage)));
 
     if (result == nullptr)
     {
@@ -4697,7 +4697,7 @@ int Encoders::EncodedCoreDumpInformationBufferSize(const Esp32Messaging::CoreDum
 Esp32Messaging::CoreDumpFragmentRequest *Encoders::ExtractCoreDumpFragmentRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
     PayloadReader reader(buffer, length);
-    Esp32Messaging::CoreDumpFragmentRequest *result = static_cast<Esp32Messaging::CoreDumpFragmentRequest *>(pvPortMalloc(sizeof(Esp32Messaging::CoreDumpFragmentRequest)));
+    auto *result = static_cast<Esp32Messaging::CoreDumpFragmentRequest *>(pvPortMalloc(sizeof(Esp32Messaging::CoreDumpFragmentRequest)));
 
     if (result == nullptr)
     {

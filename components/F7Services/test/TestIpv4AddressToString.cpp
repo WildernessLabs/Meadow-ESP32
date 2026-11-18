@@ -103,7 +103,7 @@ struct FormatContext
  */
 static void FormatTask(void *parameter)
 {
-    FormatContext *context = static_cast<FormatContext *>(parameter);
+    auto *context = static_cast<FormatContext *>(parameter);
     const uint32_t task = context->NextTask.fetch_add(1);
     xSemaphoreTake(context->Start, portMAX_DELAY);
     for (uint32_t iteration = 0; iteration < FORMAT_ITERATIONS; iteration++)

@@ -41,7 +41,7 @@
  */
 static Message *CreateMessage()
 {
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(PAYLOAD_LENGTH));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(PAYLOAD_LENGTH));
     TEST_ASSERT_NOT_NULL(payload);
     for (uint32_t index = 0; index < PAYLOAD_LENGTH; index++)
     {
@@ -63,7 +63,7 @@ static Message *CreateMessage()
  */
 static uint8_t *CreateBuffer(const uint32_t length)
 {
-    uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(length));
+    auto *buffer = static_cast<uint8_t *>(pvPortMalloc(length));
     TEST_ASSERT_NOT_NULL(buffer);
     memset(buffer, SENTINEL, length);
     return (buffer);
@@ -236,7 +236,7 @@ TEST_CASE("ExtractMessage refuses a packet that declares more payload than the b
     //  Raise the packet length past what the buffer holds and recompute the CRC over the new header, as a
     //  peer that wanted to read past the end would.  The packet length is at offset 7 (protocol, CRC, offset).
     //
-    const uint16_t declared = static_cast<uint16_t>(needed);
+    const auto declared = static_cast<uint16_t>(needed);
     Encoders::EncodeUInt16(declared, buffer + 7);
     Encoders::EncodeUInt32(0, buffer + Message::CRC_OFFSET);
     Encoders::EncodeUInt32(Encoders::CRC32(buffer, needed - Message::SPI_MESSAGE_OVERHEAD), buffer + Message::CRC_OFFSET);
@@ -310,7 +310,7 @@ TEST_CASE("ExtractMessage refuses a packet length of 0xFFFF in a full frame", CL
 
 TEST_CASE("ExtractMessage accepts the longest packet the protocol allows and refuses one byte more", CLASS_OF_TESTS)
 {
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(Message::MAXIMUM_PACKET_SIZE + 1));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(Message::MAXIMUM_PACKET_SIZE + 1));
     TEST_ASSERT_NOT_NULL(payload);
     for (uint32_t index = 0; index < Message::MAXIMUM_PACKET_SIZE + 1; index++)
     {

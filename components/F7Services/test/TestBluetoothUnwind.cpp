@@ -147,7 +147,7 @@ public:
         IMessageDispatcher * const savedDispatcher = BluetoothRequestHandler::_messageDispatcher;
         BluetoothRequestHandler::_instance = nullptr;
         BluetoothRequestHandler::_instantiated = false;
-        BluetoothRequestHandler * const handler = new BluetoothRequestHandler(savedDispatcher);
+        auto * const handler = new BluetoothRequestHandler(savedDispatcher);
         TEST_ASSERT_NOT_NULL(handler);
 
         BringUp(state);

@@ -73,7 +73,7 @@ public:
         _savedDispatcher = BluetoothRequestHandler::_messageDispatcher;
         BluetoothRequestHandler::_instance = nullptr;
         BluetoothRequestHandler::_instantiated = false;
-        BluetoothRequestHandler *handler = new BluetoothRequestHandler(nullptr);
+        auto *handler = new BluetoothRequestHandler(nullptr);
         TEST_ASSERT_NOT_NULL(handler);
         handler->GenerateAdvertisingData();
         return (handler);

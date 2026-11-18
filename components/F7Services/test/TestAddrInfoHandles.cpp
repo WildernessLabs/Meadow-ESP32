@@ -131,14 +131,14 @@ struct HandleTaskArguments
  */
 static void HandleTask(void *parameter)
 {
-    HandleTaskArguments *arguments = static_cast<HandleTaskArguments *>(parameter);
+    auto *arguments = static_cast<HandleTaskArguments *>(parameter);
     HandleTaskContext *context = arguments->Context;
     const uintptr_t base = 0x10000000u + (arguments->Index * 0x01000000u);
     xSemaphoreTake(context->Start, portMAX_DELAY);
 
     for (uint32_t iteration = 0; iteration < HANDLES_PER_TASK; iteration++)
     {
-        struct addrinfo * const recorded = reinterpret_cast<struct addrinfo *>(base + ((iteration + 1) * 4));
+        auto * const recorded = reinterpret_cast<struct addrinfo *>(base + ((iteration + 1) * 4));
         const uint32_t handle = TestAddrInfoHandles::Add(recorded);
         if (TestAddrInfoHandles::Take(handle) != recorded)
         {

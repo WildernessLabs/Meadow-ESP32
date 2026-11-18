@@ -644,7 +644,7 @@ TEST_CASE("FreeAddrInfo refuses a handle it never issued", CLASS_OF_TESTS)
     MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
     TEST_ASSERT_NOT_NULL(dispatcher);
 
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(sizeof(uint32_t)));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(sizeof(uint32_t)));
     TEST_ASSERT_NOT_NULL(payload);
     Encoders::EncodeUInt32(0xdeadbeef, payload);
 
@@ -1048,7 +1048,7 @@ TEST_CASE("SendMsg refuses an iovec count its payload cannot hold", CLASS_OF_TES
     const int32_t socketHandle = OpenUdpSocket(dispatcher);
 
     static constexpr uint32_t PAYLOAD_LENGTH = 32;
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(PAYLOAD_LENGTH));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(PAYLOAD_LENGTH));
     TEST_ASSERT_NOT_NULL(payload);
     memset(payload, 0, PAYLOAD_LENGTH);
     Encoders::EncodeInt32(socketHandle, payload);
@@ -1092,7 +1092,7 @@ static void QueueLocalhostGetAddrInfo(MockMessageDispatcher *dispatcher, const b
     const uint32_t hintsLength = withHints ? static_cast<uint32_t>(Encoders::EncodedAddrInfoBufferSize(&hints)) : 0;
     const uint32_t hintsOffset = sizeof(NODE_NAME) + sizeof(SERVICE_NAME) + 4;
     const uint32_t payloadLength = hintsOffset + hintsLength;
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(payload);
     memcpy(payload, NODE_NAME, sizeof(NODE_NAME));
     memcpy(payload + sizeof(NODE_NAME), SERVICE_NAME, sizeof(SERVICE_NAME));
@@ -1115,7 +1115,7 @@ static void QueueLocalhostGetAddrInfo(MockMessageDispatcher *dispatcher, const b
  */
 static void QueueFreeAddrInfo(MockMessageDispatcher *dispatcher, const uint32_t handle)
 {
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(sizeof(uint32_t)));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(sizeof(uint32_t)));
     TEST_ASSERT_NOT_NULL(payload);
     Encoders::EncodeUInt32(handle, payload);
 

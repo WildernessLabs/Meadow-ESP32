@@ -384,7 +384,7 @@ spi_slave_transaction_t *SpiTransportProvider::CreateTransportAcknowledgement(St
 spi_slave_transaction_t *SpiTransportProvider::CreateSpiTransaction(Message *message)
 {
     TRACE_MESSAGE("CreateSpiTransaction: Enter");
-    spi_slave_transaction_t *transaction = static_cast<spi_slave_transaction_t *>(pvPortMalloc(sizeof(spi_slave_transaction_t)));
+    auto *transaction = static_cast<spi_slave_transaction_t *>(pvPortMalloc(sizeof(spi_slave_transaction_t)));
     if (transaction == nullptr)
     {
         ERROR_MESSAGE("CreateSpiTransaction: Cannot allocate a transaction, using the fallback one.");
@@ -690,7 +690,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessInboundPacket(Message *pac
             }
             else
             {
-                uint8_t *payloadBuffer = static_cast<uint8_t *>(pvPortMalloc(packet->PayloadLength));
+                auto *payloadBuffer = static_cast<uint8_t *>(pvPortMalloc(packet->PayloadLength));
                 if (payloadBuffer == nullptr)
                 {
                     messageType = MessageTypes::Nak;
@@ -1166,7 +1166,7 @@ spi_slave_transaction_t *SpiTransportProvider::RecoverFromUnknownState(spi_slave
  */
 void SpiTransportProvider::Task(void *pvParameters)
 {
-    SpiTransportProvider *sender = static_cast<SpiTransportProvider *>(pvParameters);
+    auto *sender = static_cast<SpiTransportProvider *>(pvParameters);
 
     //
     //  It is important to wait for the outbound message queue to be
@@ -1221,7 +1221,7 @@ void SpiTransportProvider::Task(void *pvParameters)
  */
 void SpiTransportProvider::SynchronisationTask(void *pvParameters)
 {
-    SpiTransportProvider *sender = static_cast<SpiTransportProvider *>(pvParameters);
+    auto *sender = static_cast<SpiTransportProvider *>(pvParameters);
     //
     //  It is important to wait for the outbound message queue to be
     //  created before we try to process any messages.

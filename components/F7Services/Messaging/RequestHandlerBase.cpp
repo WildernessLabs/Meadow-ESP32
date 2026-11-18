@@ -111,7 +111,7 @@ void RequestHandlerBase::Setup()
  */
 void RequestHandlerBase::Task(void *pvParameters)
 {
-    RequestHandlerBase *sender = static_cast<RequestHandlerBase *>(pvParameters);
+    auto *sender = static_cast<RequestHandlerBase *>(pvParameters);
     while (true)
     {
         Message *message;
@@ -246,7 +246,7 @@ void RequestHandlerBase::SendIntegerResult(const uint8_t interface, const uint32
     Esp32Messaging::IntegerResponse response = {};
     response.Result = value;
     const uint32_t payloadLength = Encoders::EncodedIntegerResponseBufferSize(&response);
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
 
     if (payload != nullptr)
     {

@@ -849,7 +849,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
 bool BluetoothRequestHandler::ApplySecurityParameters(const BluetoothSecurityConfiguration &security)
 {
     esp_ble_auth_req_t authenticationRequirement = security.AuthenticationRequirement();
-    esp_ble_io_cap_t ioCapability = static_cast<esp_ble_io_cap_t>(security.Capability);
+    auto ioCapability = static_cast<esp_ble_io_cap_t>(security.Capability);
     uint8_t keySize = BluetoothSecurityConfiguration::KEY_SIZE;
     uint8_t onlyAcceptSpecified = security.OnlyAcceptSpecifiedAuthentication();
     uint8_t outOfBand = ESP_BLE_OOB_DISABLE;
@@ -1295,7 +1295,7 @@ void BluetoothRequestHandler::RaisePairingEvent(const BluetoothFunction::Bluetoo
     memcpy(data.Address, address, sizeof(data.Address));
     data.Passkey = passkey;
     const int payloadLength = Encoders::EncodedBTPairingEventDataBufferSize(&data);
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     if (payload == nullptr)
     {
         ERROR_MESSAGE("RaisePairingEvent: Failed to allocate memory for the event payload.");
@@ -1344,7 +1344,7 @@ void BluetoothRequestHandler::OnAuthenticationComplete(const esp_ble_auth_cmpl_t
         return;
     }
     const int payloadLength = Encoders::EncodedBTAuthenticationCompleteEventDataBufferSize(&data);
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     if (payload == nullptr)
     {
         ERROR_MESSAGE("OnAuthenticationComplete: Failed to allocate memory for the event payload.");
@@ -1620,7 +1620,7 @@ void BluetoothRequestHandler::OnDataWriteRequest(const uint16_t handle, uint8_t 
         return;
     }
 
-    Esp32Messaging::BTDataWriteRequest *request = static_cast<Esp32Messaging::BTDataWriteRequest *>(pvPortMalloc(sizeof(Esp32Messaging::BTDataWriteRequest)));
+    auto *request = static_cast<Esp32Messaging::BTDataWriteRequest *>(pvPortMalloc(sizeof(Esp32Messaging::BTDataWriteRequest)));
     if (request == nullptr)
     {
         ERROR_MESSAGE("OnDataWriteRequest: Failed to allocate memory for the write request.");
@@ -1631,7 +1631,7 @@ void BluetoothRequestHandler::OnDataWriteRequest(const uint16_t handle, uint8_t 
     request->Data = data;
 
     int payload_length = Encoders::EncodedBTDataWriteRequestBufferSize(request);
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payload_length));
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(payload_length));
     if (payload == nullptr)
     {
         ERROR_MESSAGE("OnDataWriteRequest: Failed to allocate memory for the event payload.");
