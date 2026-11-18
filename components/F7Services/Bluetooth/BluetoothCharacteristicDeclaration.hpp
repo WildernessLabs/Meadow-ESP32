@@ -62,7 +62,7 @@ public:
      * @return true The UUID is a 128-bit UUID.
      * @return false The UUID is a 16-bit UUID.
      */
-    bool Is128();
+    bool Is128() const;
 
     /**
      * @brief 16-bit UUID for this characteristic.

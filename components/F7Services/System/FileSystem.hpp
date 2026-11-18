@@ -151,7 +151,7 @@ public:
      * @return true If the file system is mounted OK.
      * @return false If the file is not mounted.
      */
-    bool IsMounted();
+    bool IsMounted() const;
 
     /**
      * @brief Format the file system.

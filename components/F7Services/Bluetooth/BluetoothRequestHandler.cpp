@@ -330,7 +330,7 @@ esp_ble_adv_data_t *BluetoothRequestHandler::GetScanResponseData()
  *
  * @return uint16_t Length of the attributes table.
  */
-uint16_t BluetoothRequestHandler::GetAttributeTableLength()
+uint16_t BluetoothRequestHandler::GetAttributeTableLength() const
 {
     return _attributeTableLength;
 }
@@ -340,7 +340,7 @@ uint16_t BluetoothRequestHandler::GetAttributeTableLength()
  *
  * @return int Number of handles.
  */
-int BluetoothRequestHandler::GetHandleCount()
+int BluetoothRequestHandler::GetHandleCount() const
 {
     return _attributeTableLength;
 }

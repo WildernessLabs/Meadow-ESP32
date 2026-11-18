@@ -59,7 +59,7 @@ public:
 
     void SetControlSignalMessage(const ControlMessageType);
 
-    TickType_t GetControlSignalDelay();
+    TickType_t GetControlSignalDelay() const;
 
     void SetControlSignalDelay(const TickType_t);
 

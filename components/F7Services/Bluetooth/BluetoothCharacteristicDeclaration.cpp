@@ -61,7 +61,7 @@ BluetoothCharacteristicDeclaration::~BluetoothCharacteristicDeclaration()
  * @return true The UUID is a 128-bit UUID.
  * @return false The UUID is a 16-bit UUID.
  */
-bool BluetoothCharacteristicDeclaration::Is128()
+bool BluetoothCharacteristicDeclaration::Is128() const
 {
     return _is128;
 }

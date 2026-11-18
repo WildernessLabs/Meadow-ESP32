@@ -111,7 +111,7 @@ Message *Message::CreateOnHeap(const uint8_t messageType, const uint8_t interfac
  *  @returns
  *      New copy of the message.
  */
-Message *Message::CreateCopyOnHeap(const bool copyPayload)
+Message *Message::CreateCopyOnHeap(const bool copyPayload) const
 {
     uint8_t *payload = nullptr;
     uint32_t payloadLength = 0;

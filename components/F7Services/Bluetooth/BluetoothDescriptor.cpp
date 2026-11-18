@@ -113,7 +113,7 @@ void BluetoothDescriptor::SetValue(const uint32_t length, const uint8_t * const 
  * @return true If the UUID is 128 bits.
  * @return false If the UUID is 16 bits.
  */
-bool BluetoothDescriptor::Is128()
+bool BluetoothDescriptor::Is128() const
 {
     return _is128;
 }

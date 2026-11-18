@@ -319,7 +319,7 @@ public:
     /**
      * @brief Get the Company Identifier.
      */
-    uint16_t GetCompanyIdentifier()
+    uint16_t GetCompanyIdentifier() const
     {
         return _companyIdentifier;
     }

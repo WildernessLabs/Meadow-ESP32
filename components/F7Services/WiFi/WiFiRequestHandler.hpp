@@ -828,7 +828,7 @@ private:
      *
      * @return Esp32Messaging::AccessPointInformation*
      */
-    Esp32Messaging::AccessPointInformation *ExtractAndValidateAccessPointInformation(uint8_t *, uint32_t, StatusCodes::StatusCodes &status);
+    Esp32Messaging::AccessPointInformation *ExtractAndValidateAccessPointInformation(uint8_t *, uint32_t, StatusCodes::StatusCodes &status) const;
 
     /**
      * @brief Is this a passphrase the soft-AP can be started with, for a mode that has one?

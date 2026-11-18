@@ -155,7 +155,7 @@ struct Message
     /**
      *  @brief Make a copy of the message.
      */
-    Message *CreateCopyOnHeap(bool copyPayload);
+    Message *CreateCopyOnHeap(bool copyPayload) const;
 
     /**
      *  @brief Create a new message on the heap with the specified values.
