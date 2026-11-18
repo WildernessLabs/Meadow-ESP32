@@ -706,6 +706,14 @@ private:
     void DispatchRequest(Message *request) override;
 
     /**
+     *  @brief Answer a request that the thread pool could not take.
+     *
+     *  @param request
+     *      Request that was refused.  It becomes the response and is queued for the STM32.
+     */
+    void RespondThreadPoolIsFull(Message *request);
+
+    /**
      *  @brief Instance helper method for the static EventHandler method.
      */
     void EventHandlerHelper(esp_event_base_t eventBase, int32_t eventId, void *eventData);
