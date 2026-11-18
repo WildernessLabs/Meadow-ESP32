@@ -1089,7 +1089,7 @@ static void QueueLocalhostGetAddrInfo(MockMessageDispatcher *dispatcher, const b
     static const char NODE_NAME[] = "localhost";
     static const char SERVICE_NAME[] = "80";
     const Esp32Messaging::AddrInfo hints = {};
-    const uint32_t hintsLength = withHints ? static_cast<uint32_t>(Encoders::EncodedAddrInfoBufferSize(&hints)) : 0;
+    const uint32_t hintsLength = withHints ? Encoders::EncodedAddrInfoBufferSize(&hints) : 0;
     const uint32_t hintsOffset = sizeof(NODE_NAME) + sizeof(SERVICE_NAME) + 4;
     const uint32_t payloadLength = hintsOffset + hintsLength;
     auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));

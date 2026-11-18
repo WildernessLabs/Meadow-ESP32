@@ -858,7 +858,7 @@ static uint32_t LongestReadableFile(const char *filename)
 {
     Esp32Messaging::FileNameAndContents nameOnly = {};
     nameOnly.Name = const_cast<char *>(filename);
-    return (Message::MAXIMUM_PAYLOAD_LENGTH - static_cast<uint32_t>(Encoders::EncodedFileNameAndContentsBufferSize(&nameOnly)));
+    return (Message::MAXIMUM_PAYLOAD_LENGTH - Encoders::EncodedFileNameAndContentsBufferSize(&nameOnly));
 }
 
 /**

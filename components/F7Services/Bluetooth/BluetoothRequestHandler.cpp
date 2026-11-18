@@ -1294,7 +1294,7 @@ void BluetoothRequestHandler::RaisePairingEvent(const BluetoothFunction::Bluetoo
     Esp32Messaging::BTPairingEventData data;
     memcpy(data.Address, address, sizeof(data.Address));
     data.Passkey = passkey;
-    const int payloadLength = Encoders::EncodedBTPairingEventDataBufferSize(&data);
+    const uint32_t payloadLength = Encoders::EncodedBTPairingEventDataBufferSize(&data);
     auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     if (payload == nullptr)
     {
@@ -1343,7 +1343,7 @@ void BluetoothRequestHandler::OnAuthenticationComplete(const esp_ble_auth_cmpl_t
     {
         return;
     }
-    const int payloadLength = Encoders::EncodedBTAuthenticationCompleteEventDataBufferSize(&data);
+    const uint32_t payloadLength = Encoders::EncodedBTAuthenticationCompleteEventDataBufferSize(&data);
     auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     if (payload == nullptr)
     {
@@ -1630,8 +1630,8 @@ void BluetoothRequestHandler::OnDataWriteRequest(const uint16_t handle, uint8_t 
     request->DataLength = dataLength;
     request->Data = data;
 
-    int payload_length = Encoders::EncodedBTDataWriteRequestBufferSize(request);
-    auto *payload = static_cast<uint8_t *>(pvPortMalloc(payload_length));
+    const uint32_t payloadLength = Encoders::EncodedBTDataWriteRequestBufferSize(request);
+    auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     if (payload == nullptr)
     {
         ERROR_MESSAGE("OnDataWriteRequest: Failed to allocate memory for the event payload.");
@@ -1641,7 +1641,7 @@ void BluetoothRequestHandler::OnDataWriteRequest(const uint16_t handle, uint8_t 
     Encoders::EncodeBTDataWriteRequest(request, payload);
     Utils::DeleteAndNullifyPointer(request);
 
-    instance->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientWriteRequestEvent, StatusCodes::CompletedOk, payload, payload_length);
+    instance->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientWriteRequestEvent, StatusCodes::CompletedOk, payload, payloadLength);
 
     TRACE_MESSAGE("OnDataWriteRequest: Exit");
 }

@@ -711,9 +711,9 @@ bool Encoders::EncodeSystemConfiguration(const Esp32Messaging::SystemConfigurati
  *  @returns
  *      Number of bytes required to hold the encoded SystemConfiguration object.
  */
-int Encoders::EncodedSystemConfigurationBufferSize(const Esp32Messaging::SystemConfiguration * const systemConfiguration)
+uint32_t Encoders::EncodedSystemConfigurationBufferSize(const Esp32Messaging::SystemConfiguration * const systemConfiguration)
 {
-    int result = 0;
+    uint32_t result = 0;
     result += Encoders::StringLength(systemConfiguration->DeviceName);
     result += Encoders::StringLength(systemConfiguration->DefaultAccessPoint);
     result += Encoders::StringLength(systemConfiguration->BuildBranchName);
@@ -850,9 +850,9 @@ bool Encoders::EncodeAccessPointInformation(const Esp32Messaging::AccessPointInf
  *  @returns
  *      Number of bytes required to hold the encoded AccessPointInformation object.
  */
-int Encoders::EncodedAccessPointInformationBufferSize(const Esp32Messaging::AccessPointInformation * const accessPointInformation)
+uint32_t Encoders::EncodedAccessPointInformationBufferSize(const Esp32Messaging::AccessPointInformation * const accessPointInformation)
 {
-    int result = 0;
+    uint32_t result = 0;
     result += Encoders::StringLength(accessPointInformation->NetworkName);
     result += Encoders::StringLength(accessPointInformation->Password);
     return (result + 17);
@@ -1035,7 +1035,7 @@ void Encoders::EncodeConnectEventData(const Esp32Messaging::ConnectEventData * c
  *  @returns
  *      Number of bytes required to hold the encoded ConnectEventData object.
  */
-int Encoders::EncodedConnectEventDataBufferSize(const Esp32Messaging::ConnectEventData * const connectEventData)
+uint32_t Encoders::EncodedConnectEventDataBufferSize(const Esp32Messaging::ConnectEventData * const connectEventData)
 {
     return (57);
 }
@@ -1073,7 +1073,7 @@ void Encoders::EncodeDisconnectEventData(const Esp32Messaging::DisconnectEventDa
  *  @returns
  *      Number of bytes required to hold the encoded DisconnectEventData object.
  */
-int Encoders::EncodedDisconnectEventDataBufferSize(const Esp32Messaging::DisconnectEventData * const disconnectEventData)
+uint32_t Encoders::EncodedDisconnectEventDataBufferSize(const Esp32Messaging::DisconnectEventData * const disconnectEventData)
 {
     return (42);
 }
@@ -1105,7 +1105,7 @@ void Encoders::EncodeNodeConnectionChangeEventData(const Esp32Messaging::NodeCon
  *  @returns
  *      Number of bytes required to hold the encoded NodeConnectionChangeEventData object.
  */
-int Encoders::EncodedNodeConnectionChangeEventDataBufferSize(const Esp32Messaging::NodeConnectionChangeEventData * const nodeConnectionChangeEventData)
+uint32_t Encoders::EncodedNodeConnectionChangeEventDataBufferSize(const Esp32Messaging::NodeConnectionChangeEventData * const nodeConnectionChangeEventData)
 {
     return (10);
 }
@@ -1147,7 +1147,7 @@ void Encoders::EncodeAccessPoint(const Esp32Messaging::AccessPoint * const acces
  *  @returns
  *      Number of bytes required to hold the encoded AccessPoint object.
  */
-int Encoders::EncodedAccessPointBufferSize(const Esp32Messaging::AccessPoint * const accessPoint)
+uint32_t Encoders::EncodedAccessPointBufferSize(const Esp32Messaging::AccessPoint * const accessPoint)
 {
     return (47);
 }
@@ -1184,9 +1184,9 @@ void Encoders::EncodeAccessPointList(const Esp32Messaging::AccessPointList * con
  *  @returns
  *      Number of bytes required to hold the encoded AccessPointList object.
  */
-int Encoders::EncodedAccessPointListBufferSize(const Esp32Messaging::AccessPointList * const accessPointList)
+uint32_t Encoders::EncodedAccessPointListBufferSize(const Esp32Messaging::AccessPointList * const accessPointList)
 {
-    int result = 0;
+    uint32_t result = 0;
     result += accessPointList->AccessPointsLength;
     return (result + 8);
 }
@@ -1226,7 +1226,7 @@ void Encoders::EncodeSockAddr(const Esp32Messaging::SockAddr * const sockAddr, u
  *  @returns
  *      Number of bytes required to hold the encoded SockAddr object.
  */
-int Encoders::EncodedSockAddrBufferSize(const Esp32Messaging::SockAddr * const sockAddr)
+uint32_t Encoders::EncodedSockAddrBufferSize(const Esp32Messaging::SockAddr * const sockAddr)
 {
     return (31);
 }
@@ -1361,9 +1361,9 @@ bool Encoders::EncodeAddrInfo(const Esp32Messaging::AddrInfo * const addrInfo, u
  *  @returns
  *      Number of bytes required to hold the encoded AddrInfo object.
  */
-int Encoders::EncodedAddrInfoBufferSize(const Esp32Messaging::AddrInfo * const addrInfo)
+uint32_t Encoders::EncodedAddrInfoBufferSize(const Esp32Messaging::AddrInfo * const addrInfo)
 {
-    int result = 0;
+    uint32_t result = 0;
     result += addrInfo->AddrLength;
     result += Encoders::StringLength(addrInfo->CanonName);
     return (result + 33);
@@ -1569,9 +1569,9 @@ void Encoders::EncodeGetAddrInfoResponse(const Esp32Messaging::GetAddrInfoRespon
  *  @returns
  *      Number of bytes required to hold the encoded GetAddrInfoResponse object.
  */
-int Encoders::EncodedGetAddrInfoResponseBufferSize(const Esp32Messaging::GetAddrInfoResponse * const getAddrInfoResponse)
+uint32_t Encoders::EncodedGetAddrInfoResponseBufferSize(const Esp32Messaging::GetAddrInfoResponse * const getAddrInfoResponse)
 {
-    int result = 0;
+    uint32_t result = 0;
     result += getAddrInfoResponse->ResLength;
     return (result + 8);
 }
@@ -1658,7 +1658,7 @@ void Encoders::EncodeIntegerResponse(const Esp32Messaging::IntegerResponse * con
  *  @returns
  *      Number of bytes required to hold the encoded IntegerResponse object.
  */
-int Encoders::EncodedIntegerResponseBufferSize(const Esp32Messaging::IntegerResponse * const integerResponse)
+uint32_t Encoders::EncodedIntegerResponseBufferSize(const Esp32Messaging::IntegerResponse * const integerResponse)
 {
     return (4);
 }
@@ -1690,7 +1690,7 @@ void Encoders::EncodeIntegerAndErrnoResponse(const Esp32Messaging::IntegerAndErr
  *  @returns
  *      Number of bytes required to hold the encoded IntegerAndErrnoResponse object.
  */
-int Encoders::EncodedIntegerAndErrnoResponseBufferSize(const Esp32Messaging::IntegerAndErrnoResponse * const integerAndErrnoResponse)
+uint32_t Encoders::EncodedIntegerAndErrnoResponseBufferSize(const Esp32Messaging::IntegerAndErrnoResponse * const integerAndErrnoResponse)
 {
     return (8);
 }
@@ -1853,7 +1853,7 @@ void Encoders::EncodeTimeVal(const Esp32Messaging::TimeVal * const timeVal, uint
  *  @returns
  *      Number of bytes required to hold the encoded TimeVal object.
  */
-int Encoders::EncodedTimeValBufferSize(const Esp32Messaging::TimeVal * const timeVal)
+uint32_t Encoders::EncodedTimeValBufferSize(const Esp32Messaging::TimeVal * const timeVal)
 {
     return (8);
 }
@@ -2085,9 +2085,9 @@ void Encoders::EncodeGetSockOptResponse(const Esp32Messaging::GetSockOptResponse
  *  @returns
  *      Number of bytes required to hold the encoded GetSockOptResponse object.
  */
-int Encoders::EncodedGetSockOptResponseBufferSize(const Esp32Messaging::GetSockOptResponse * const getSockOptResponse)
+uint32_t Encoders::EncodedGetSockOptResponseBufferSize(const Esp32Messaging::GetSockOptResponse * const getSockOptResponse)
 {
-    int result = 0;
+    uint32_t result = 0;
     result += getSockOptResponse->OptionValueLength;
     return (result + 16);
 }
@@ -2119,7 +2119,7 @@ void Encoders::EncodeLinger(const Esp32Messaging::Linger * const linger, uint8_t
  *  @returns
  *      Number of bytes required to hold the encoded Linger object.
  */
-int Encoders::EncodedLingerBufferSize(const Esp32Messaging::Linger * const linger)
+uint32_t Encoders::EncodedLingerBufferSize(const Esp32Messaging::Linger * const linger)
 {
     return (8);
 }
@@ -2291,9 +2291,9 @@ void Encoders::EncodeReadResponse(const Esp32Messaging::ReadResponse * const rea
  *  @returns
  *      Number of bytes required to hold the encoded ReadResponse object.
  */
-int Encoders::EncodedReadResponseBufferSize(const Esp32Messaging::ReadResponse * const readResponse)
+uint32_t Encoders::EncodedReadResponseBufferSize(const Esp32Messaging::ReadResponse * const readResponse)
 {
-    int result = 0;
+    uint32_t result = 0;
     result += readResponse->BufferLength;
     return (result + 12);
 }
@@ -2377,7 +2377,7 @@ void Encoders::EncodeGetBatteryChargeLevelResponse(const Esp32Messaging::GetBatt
  *  @returns
  *      Number of bytes required to hold the encoded GetBatteryChargeLevelResponse object.
  */
-int Encoders::EncodedGetBatteryChargeLevelResponseBufferSize(const Esp32Messaging::GetBatteryChargeLevelResponse * const getBatteryChargeLevelResponse)
+uint32_t Encoders::EncodedGetBatteryChargeLevelResponseBufferSize(const Esp32Messaging::GetBatteryChargeLevelResponse * const getBatteryChargeLevelResponse)
 {
     return (4);
 }
@@ -2644,9 +2644,9 @@ void Encoders::EncodeRecvFromResponse(const Esp32Messaging::RecvFromResponse * c
  *  @returns
  *      Number of bytes required to hold the encoded RecvFromResponse object.
  */
-int Encoders::EncodedRecvFromResponseBufferSize(const Esp32Messaging::RecvFromResponse * const recvFromResponse)
+uint32_t Encoders::EncodedRecvFromResponseBufferSize(const Esp32Messaging::RecvFromResponse * const recvFromResponse)
 {
-    int result = 0;
+    uint32_t result = 0;
     result += recvFromResponse->BufferLength;
     result += recvFromResponse->SourceAddressLength;
     return (result + 20);
@@ -2918,7 +2918,7 @@ Esp32Messaging::RecvMsgRequest *Encoders::ExtractRecvMsgRequest(const uint8_t *b
  *      Number of bytes required to hold the encoded RecvMsgRequest object.
  */
 // cppcheck-suppress unusedFunction symbolName=EncodedRecvMsgRequestBufferSize
-int Encoders::EncodedRecvMsgRequestBufferSize(const Esp32Messaging::RecvMsgRequest * const recvMsgRequest)
+uint32_t Encoders::EncodedRecvMsgRequestBufferSize(const Esp32Messaging::RecvMsgRequest * const recvMsgRequest)
 {
     return (20);
 }
@@ -2989,9 +2989,9 @@ void Encoders::EncodeRecvMsgResponse(const Esp32Messaging::RecvMsgResponse * con
  *      Number of bytes required to hold the encoded RecvMsgResponse object.
  */
 // cppcheck-suppress unusedFunction symbolName=EncodedRecvMsgResponseBufferSize
-int Encoders::EncodedRecvMsgResponseBufferSize(const Esp32Messaging::RecvMsgResponse * const recvMsgResponse)
+uint32_t Encoders::EncodedRecvMsgResponseBufferSize(const Esp32Messaging::RecvMsgResponse * const recvMsgResponse)
 {
-    int result = 0;
+    uint32_t result = 0;
     result += recvMsgResponse->BufferLength;
     result += recvMsgResponse->SourceAddressLength;
     result += recvMsgResponse->ControlLength;
@@ -3085,7 +3085,7 @@ void Encoders::EncodePollResponse(const Esp32Messaging::PollResponse * const pol
  *  @returns
  *      Number of bytes required to hold the encoded PollResponse object.
  */
-int Encoders::EncodedPollResponseBufferSize(const Esp32Messaging::PollResponse * const pollResponse)
+uint32_t Encoders::EncodedPollResponseBufferSize(const Esp32Messaging::PollResponse * const pollResponse)
 {
     return (10);
 }
@@ -3123,7 +3123,7 @@ void Encoders::EncodeInterruptPollResponse(const Esp32Messaging::InterruptPollRe
  *  @returns
  *      Number of bytes required to hold the encoded InterruptPollResponse object.
  */
-int Encoders::EncodedInterruptPollResponseBufferSize(const Esp32Messaging::InterruptPollResponse * const interruptPollResponse)
+uint32_t Encoders::EncodedInterruptPollResponseBufferSize(const Esp32Messaging::InterruptPollResponse * const interruptPollResponse)
 {
     return (18);
 }
@@ -3403,9 +3403,9 @@ void Encoders::EncodeAcceptResponse(const Esp32Messaging::AcceptResponse * const
  *  @returns
  *      Number of bytes required to hold the encoded AcceptResponse object.
  */
-int Encoders::EncodedAcceptResponseBufferSize(const Esp32Messaging::AcceptResponse * const acceptResponse)
+uint32_t Encoders::EncodedAcceptResponseBufferSize(const Esp32Messaging::AcceptResponse * const acceptResponse)
 {
-    int result = 0;
+    uint32_t result = 0;
     result += acceptResponse->AddrLength;
     return (result + 12);
 }
@@ -3500,9 +3500,9 @@ void Encoders::EncodeIoctlResponse(const Esp32Messaging::IoctlResponse * const i
  *  @returns
  *      Number of bytes required to hold the encoded IoctlResponse object.
  */
-int Encoders::EncodedIoctlResponseBufferSize(const Esp32Messaging::IoctlResponse * const ioctlResponse)
+uint32_t Encoders::EncodedIoctlResponseBufferSize(const Esp32Messaging::IoctlResponse * const ioctlResponse)
 {
-    int result = 0;
+    uint32_t result = 0;
     result += ioctlResponse->AddrLength;
     return (result + 16);
 }
@@ -3595,9 +3595,9 @@ void Encoders::EncodeGetSockPeerNameResponse(const Esp32Messaging::GetSockPeerNa
  *  @returns
  *      Number of bytes required to hold the encoded GetSockPeerNameResponse object.
  */
-int Encoders::EncodedGetSockPeerNameResponseBufferSize(const Esp32Messaging::GetSockPeerNameResponse * const getSockPeerNameResponse)
+uint32_t Encoders::EncodedGetSockPeerNameResponseBufferSize(const Esp32Messaging::GetSockPeerNameResponse * const getSockPeerNameResponse)
 {
-    int result = 0;
+    uint32_t result = 0;
     result += getSockPeerNameResponse->AddrLength;
     return (result + 12);
 }
@@ -3633,7 +3633,7 @@ void Encoders::EncodeEventData(const Esp32Messaging::EventData * const eventData
  *  @returns
  *      Number of bytes required to hold the encoded EventData object.
  */
-int Encoders::EncodedEventDataBufferSize(const Esp32Messaging::EventData * const eventData)
+uint32_t Encoders::EncodedEventDataBufferSize(const Esp32Messaging::EventData * const eventData)
 {
     return (13);
 }
@@ -3670,9 +3670,9 @@ void Encoders::EncodeEventDataPayload(const Esp32Messaging::EventDataPayload * c
  *  @returns
  *      Number of bytes required to hold the encoded EventDataPayload object.
  */
-int Encoders::EncodedEventDataPayloadBufferSize(const Esp32Messaging::EventDataPayload * const eventDataPayload)
+uint32_t Encoders::EncodedEventDataPayloadBufferSize(const Esp32Messaging::EventDataPayload * const eventDataPayload)
 {
-    int result = 0;
+    uint32_t result = 0;
     result += eventDataPayload->PayloadLength;
     return (result + 8);
 }
@@ -3839,9 +3839,9 @@ void Encoders::EncodeBTDataWriteRequest(const Esp32Messaging::BTDataWriteRequest
  *  @returns
  *      Number of bytes required to hold the encoded BTDataWriteRequest object.
  */
-int Encoders::EncodedBTDataWriteRequestBufferSize(const Esp32Messaging::BTDataWriteRequest * const bTDataWriteRequest)
+uint32_t Encoders::EncodedBTDataWriteRequestBufferSize(const Esp32Messaging::BTDataWriteRequest * const bTDataWriteRequest)
 {
-    int result = 0;
+    uint32_t result = 0;
     result += bTDataWriteRequest->DataLength;
     return (result + 6);
 }
@@ -3878,9 +3878,9 @@ void Encoders::EncodeBTGetHandlesResponse(const Esp32Messaging::BTGetHandlesResp
  *  @returns
  *      Number of bytes required to hold the encoded BTGetHandlesResponse object.
  */
-int Encoders::EncodedBTGetHandlesResponseBufferSize(const Esp32Messaging::BTGetHandlesResponse * const bTGetHandlesResponse)
+uint32_t Encoders::EncodedBTGetHandlesResponseBufferSize(const Esp32Messaging::BTGetHandlesResponse * const bTGetHandlesResponse)
 {
-    int result = 0;
+    uint32_t result = 0;
     result += bTGetHandlesResponse->HandlesLength;
     return (result + 6);
 }
@@ -4089,7 +4089,7 @@ void Encoders::EncodeBTPairingEventData(const Esp32Messaging::BTPairingEventData
  *  @returns
  *      Number of bytes required to hold the encoded BTPairingEventData object.
  */
-int Encoders::EncodedBTPairingEventDataBufferSize(const Esp32Messaging::BTPairingEventData * const bTPairingEventData)
+uint32_t Encoders::EncodedBTPairingEventDataBufferSize(const Esp32Messaging::BTPairingEventData * const bTPairingEventData)
 {
     return (Esp32Messaging::BT_ADDRESS_LENGTH + 4);
 }
@@ -4126,7 +4126,7 @@ void Encoders::EncodeBTAuthenticationCompleteEventData(const Esp32Messaging::BTA
  *  @returns
  *      Number of bytes required to hold the encoded object.
  */
-int Encoders::EncodedBTAuthenticationCompleteEventDataBufferSize(const Esp32Messaging::BTAuthenticationCompleteEventData * const bTAuthenticationCompleteEventData)
+uint32_t Encoders::EncodedBTAuthenticationCompleteEventDataBufferSize(const Esp32Messaging::BTAuthenticationCompleteEventData * const bTAuthenticationCompleteEventData)
 {
     return (Esp32Messaging::BT_ADDRESS_LENGTH + 4);
 }
@@ -4163,9 +4163,9 @@ void Encoders::EncodeBTBondedDevicesResponse(const Esp32Messaging::BTBondedDevic
  *  @returns
  *      Number of bytes required to hold the encoded BTBondedDevicesResponse object.
  */
-int Encoders::EncodedBTBondedDevicesResponseBufferSize(const Esp32Messaging::BTBondedDevicesResponse * const bTBondedDevicesResponse)
+uint32_t Encoders::EncodedBTBondedDevicesResponseBufferSize(const Esp32Messaging::BTBondedDevicesResponse * const bTBondedDevicesResponse)
 {
-    return (static_cast<int>(bTBondedDevicesResponse->DevicesLength) + 6);
+    return (bTBondedDevicesResponse->DevicesLength + 6);
 }
 
 /**
@@ -4211,9 +4211,9 @@ bool Encoders::EncodeFileDetails(const Esp32Messaging::FileDetails * const fileD
  *  @returns
  *      Number of bytes required to hold the encoded FileDetails object.
  */
-int Encoders::EncodedFileDetailsBufferSize(const Esp32Messaging::FileDetails * const fileDetails)
+uint32_t Encoders::EncodedFileDetailsBufferSize(const Esp32Messaging::FileDetails * const fileDetails)
 {
-    int result = 0;
+    uint32_t result = 0;
     result += Encoders::StringLength(fileDetails->Name);
     return (result + 3);
 }
@@ -4342,9 +4342,9 @@ bool Encoders::EncodeFileNameAndContents(const Esp32Messaging::FileNameAndConten
  *  @returns
  *      Number of bytes required to hold the encoded FileNameAndContents object.
  */
-int Encoders::EncodedFileNameAndContentsBufferSize(const Esp32Messaging::FileNameAndContents * const fileNameAndContents)
+uint32_t Encoders::EncodedFileNameAndContentsBufferSize(const Esp32Messaging::FileNameAndContents * const fileNameAndContents)
 {
-    int result = 0;
+    uint32_t result = 0;
     result += Encoders::StringLength(fileNameAndContents->Name);
     result += fileNameAndContents->ContentsLength;
     return (result + 5);
@@ -4461,9 +4461,9 @@ void Encoders::EncodeFileNameList(const Esp32Messaging::FileNameList * const fil
  *  @returns
  *      Number of bytes required to hold the encoded FileNameList object.
  */
-int Encoders::EncodedFileNameListBufferSize(const Esp32Messaging::FileNameList * const fileNameList)
+uint32_t Encoders::EncodedFileNameListBufferSize(const Esp32Messaging::FileNameList * const fileNameList)
 {
-    int result = 0;
+    uint32_t result = 0;
     result += fileNameList->FileDetailsLength;
     return (result + 6);
 }
@@ -4638,7 +4638,7 @@ void Encoders::EncodeGotIpEventData(const Esp32Messaging::GotIpEventData * const
  *  @returns
  *      Number of bytes required to hold the encoded GotIpEventData object.
  */
-int Encoders::EncodedGotIpEventDataBufferSize(const Esp32Messaging::GotIpEventData * const gotIpEventData)
+uint32_t Encoders::EncodedGotIpEventDataBufferSize(const Esp32Messaging::GotIpEventData * const gotIpEventData)
 {
     return (4);
 }
@@ -4667,13 +4667,13 @@ void Encoders::EncodeCoreDumpInformation(const Esp32Messaging::CoreDumpInformati
  * @brief Get the size of the encoded CoreDumpInformation.
  *
  * @param coreDumpInfo Pointer to the CoreDumpInformation.
- * @return int Size of the encoded CoreDumpInformation.
+ * @return uint32_t Size of the encoded CoreDumpInformation, 0 if coreDumpInfo is nullptr.
  */
-int Encoders::EncodedCoreDumpInformationBufferSize(const Esp32Messaging::CoreDumpInformationResponse * const coreDumpInfo)
+uint32_t Encoders::EncodedCoreDumpInformationBufferSize(const Esp32Messaging::CoreDumpInformationResponse * const coreDumpInfo)
 {
     if (coreDumpInfo == nullptr)
     {
-        return -1;
+        return (0);
     }
 
     return (9);
@@ -4750,13 +4750,13 @@ void Encoders::EncodeCoreDumpFragmentResponse(const Esp32Messaging::CoreDumpFrag
  * @brief Get the size of the encoded CoreDumpFragment.
  *
  * @param fragment Pointer to the CoreDumpFragment.
- * @return int Size of the encoded CoreDumpFragment.
+ * @return uint32_t Size of the encoded CoreDumpFragment, 0 if fragment is nullptr.
  */
-int Encoders::EncodedCoreDumpFragmentResponseBufferSize(const Esp32Messaging::CoreDumpFragmentResponse * const fragment)
+uint32_t Encoders::EncodedCoreDumpFragmentResponseBufferSize(const Esp32Messaging::CoreDumpFragmentResponse * const fragment)
 {
     if (fragment == nullptr)
     {
-        return -1;
+        return (0);
     }
 
     return (CORE_DUMP_FRAGMENT_RESPONSE_HEADER_SIZE + fragment->Size);
