@@ -13,8 +13,8 @@
 
 #include <fcntl.h>
 #include <sys/poll.h>
-#include <stdint.h>
-#include <string.h>
+#include <cstdint>
+#include <cstring>
 #include "esp_heap_caps.h"
 #include "esp_netif.h"
 #include "freertos/FreeRTOS.h"

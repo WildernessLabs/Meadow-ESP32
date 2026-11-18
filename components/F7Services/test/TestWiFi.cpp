@@ -16,12 +16,12 @@
 
 #include "sdkconfig.h"
 
-#include <limits.h>
-#include <stdio.h>
+#include <climits>
+#include <cstdio>
 #include <sys/types.h>
 #include <dirent.h>
 #include <string>
-#include <string.h>
+#include <cstring>
 #include "unity.h"
 #include "esp_system.h"
 #include "psa/crypto.h"

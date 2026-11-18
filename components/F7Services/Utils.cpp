@@ -11,15 +11,15 @@
 
 #include "freertos/FreeRTOS.h"
 
-#include <inttypes.h>
-#include <stdint.h>
-#include <string.h>
+#include <cinttypes>
+#include <cstdint>
+#include <cstring>
 #include <string>
 
 #include "Utils.hpp"
 #include "Logging.hpp"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include "esp_err.h"
 #include "lwip/sockets.h"
 

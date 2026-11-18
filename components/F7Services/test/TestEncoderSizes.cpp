@@ -6,10 +6,10 @@
 
 #include "sdkconfig.h"
 
-#include <inttypes.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
+#include <cinttypes>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
 #include "freertos/FreeRTOS.h"
 #include "unity.h"
 

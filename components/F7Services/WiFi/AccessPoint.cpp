@@ -13,7 +13,7 @@
 #include "esp_event.h"
 #include "esp_mac.h"
 #include "esp_netif.h"
-#include <string.h>
+#include <cstring>
 
 #include "WiFiRequestHandler.hpp"
 #include "Logging.hpp"

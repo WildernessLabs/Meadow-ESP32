@@ -11,7 +11,7 @@
 
 #include "sdkconfig.h"
 
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 
 #include "freertos/FreeRTOS.h"

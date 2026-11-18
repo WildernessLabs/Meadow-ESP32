@@ -9,7 +9,7 @@
 
 #include "sdkconfig.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "esp_heap_caps.h"
 

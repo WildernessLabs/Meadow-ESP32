@@ -7,7 +7,7 @@
  * @copyright Copyright (c) 2026 Wilderness Labs
  */
 
-#include <string.h>
+#include <cstring>
 
 #include "BluetoothPairing.hpp"
 #include "MutexLock.hpp"

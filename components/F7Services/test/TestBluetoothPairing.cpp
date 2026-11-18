@@ -9,8 +9,8 @@
 
 #include "sdkconfig.h"
 
-#include <stdint.h>
-#include <string.h>
+#include <cstdint>
+#include <cstring>
 #include <vector>
 #include "esp_bt_main.h"
 #include "unity.h"

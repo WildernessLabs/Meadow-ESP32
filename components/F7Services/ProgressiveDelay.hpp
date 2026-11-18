@@ -11,7 +11,7 @@
 
 #include "sdkconfig.h"
 
-#include <stdint.h>
+#include <cstdint>
 
 /**
  * @brief Provide a mechanism for implementing a progressive delay for retry events.

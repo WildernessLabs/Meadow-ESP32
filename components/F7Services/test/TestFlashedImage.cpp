@@ -10,8 +10,8 @@
 
 #include "sdkconfig.h"
 
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 #include "unity.h"
 
 #include "esp_littlefs.h"

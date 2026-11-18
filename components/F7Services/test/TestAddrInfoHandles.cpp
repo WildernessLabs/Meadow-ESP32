@@ -8,9 +8,9 @@
 #include "sdkconfig.h"
 
 #include <atomic>
-#include <inttypes.h>
-#include <stdint.h>
-#include <stdio.h>
+#include <cinttypes>
+#include <cstdint>
+#include <cstdio>
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"

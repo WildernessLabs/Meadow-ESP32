@@ -8,7 +8,7 @@
 #include "sdkconfig.h"
 
 #include <string>
-#include <string.h>
+#include <cstring>
 #include <type_traits>
 #include "esp_gatt_defs.h"
 #include "unity.h"

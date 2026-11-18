@@ -10,8 +10,8 @@
 
 #include "sdkconfig.h"
 
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 #include <sys/types.h>
 #include "unity.h"
 

@@ -18,8 +18,8 @@
     //
     #include "esp_sysview_heap_trace_module.h"
 #endif
-#include <string.h>
-#include <limits.h>
+#include <cstring>
+#include <climits>
 
 #include "SharedEnums.hpp"
 #include "Logging.hpp"

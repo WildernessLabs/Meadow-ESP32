@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "cJSON.h"
 #include "esp_gap_ble_api.h"

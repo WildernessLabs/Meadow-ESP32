@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <inttypes.h>
+#include <cinttypes>
 
 /*
  *  Messages between the ESP32 and the STM32 will be encoded and

@@ -9,7 +9,7 @@
 
 #include "freertos/FreeRTOS.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "Encoders.hpp"
 #include "PayloadReader.hpp"

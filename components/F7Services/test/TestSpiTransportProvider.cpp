@@ -7,7 +7,7 @@
 
 #include "sdkconfig.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "esp_memory_utils.h"
 #include "unity.h"

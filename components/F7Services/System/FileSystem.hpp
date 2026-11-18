@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <stdio.h>
+#include <cstdio>
 
 #include "esp_littlefs.h"
 

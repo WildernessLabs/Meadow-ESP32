@@ -15,7 +15,7 @@
 #include "SpiTransportProvider.hpp"
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
-#include <string.h>
+#include <cstring>
 #include "TestBluetoothServiceJson.hpp"
 
 #endif // _TEST_BLUETOOTH_HPP_

@@ -12,7 +12,7 @@
 #include "freertos/FreeRTOS.h"
 #include "esp_system.h"
 #include "esp_log.h"
-#include <string.h>
+#include <cstring>
 
 #include "Esp32Messaging.hpp"
 #include "Logging.hpp"

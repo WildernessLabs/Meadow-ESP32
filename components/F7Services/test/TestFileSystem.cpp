@@ -6,13 +6,13 @@
 
 #include "sdkconfig.h"
 
-#include <limits.h>
-#include <stdio.h>
+#include <climits>
+#include <cstdio>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <string>
-#include <string.h>
+#include <cstring>
 #include "esp_system.h"
 #include "unity.h"
 

@@ -12,7 +12,7 @@
 
 #include "sdkconfig.h"
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "MockMessageDispatcher.hpp"
 #include "FileSystem.hpp"

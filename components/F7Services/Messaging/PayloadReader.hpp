@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 /**
  *  @brief Reads the fields of a payload one at a time, never reading past the end of it.

@@ -8,9 +8,9 @@
 
 #include "sdkconfig.h"
 
-#include <stdio.h>
+#include <cstdio>
 #include <string>
-#include <string.h>
+#include <cstring>
 #include "esp_gap_ble_api.h"
 #include "unity.h"
 

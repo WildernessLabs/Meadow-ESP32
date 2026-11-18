@@ -3,7 +3,7 @@
  */
 #include "sdkconfig.h"
 
-#include <string.h>
+#include <cstring>
 #include <ctime>
 
 #include "freertos/FreeRTOS.h"

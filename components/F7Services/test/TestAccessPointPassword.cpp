@@ -7,8 +7,8 @@
 
 #include "sdkconfig.h"
 
-#include <stdint.h>
-#include <string.h>
+#include <cstdint>
+#include <cstring>
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "unity.h"

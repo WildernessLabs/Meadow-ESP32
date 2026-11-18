@@ -20,9 +20,9 @@
 #include "esp_timer.h"
 #include "driver/uart.h"
 #include "soc/uart_struct.h"
-#include <stdarg.h>
-#include <string.h>
-#include <stdlib.h>
+#include <cstdarg>
+#include <cstring>
+#include <cstdlib>
 #include "Gpio.hpp"
 
 #include "SharedEnums.hpp"

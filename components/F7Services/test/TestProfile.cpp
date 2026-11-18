@@ -9,7 +9,7 @@
 
 #include "sdkconfig.h"
 
-#include <stdint.h>
+#include <cstdint>
 #include "unity.h"
 
 #include "Profile.hpp"

@@ -10,8 +10,8 @@
 
 #include "sdkconfig.h"
 
-#include <inttypes.h>
-#include <stdio.h>
+#include <cinttypes>
+#include <cstdio>
 #include "esp_system.h"
 #include "unity.h"
 
