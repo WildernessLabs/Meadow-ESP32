@@ -6,8 +6,8 @@
  *
  * @copyright Copyright (c) 2025
  */
-#ifndef _TEST_BLUETOOTH_SERVICE_JSON_HPP_
-#define _TEST_BLUETOOTH_SERVICE_JSON_HPP_
+
+#pragma once
 
 //
 //  Company identifier is for Espressif (0x02e5).
@@ -361,5 +361,3 @@ const char *meadow_pair_json = R"({
         }
     ]
 })";
-
-#endif // _TEST_BLUETOOTH_SERVICE_JSON_HPP_

@@ -7,8 +7,8 @@
  *
  * @copyright Copyright (c) 2026 Wilderness Labs
  */
-#ifndef _TEST_ASSERTIONS_HPP_
-#define _TEST_ASSERTIONS_HPP_
+
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -109,5 +109,3 @@ void AssertOutboundQueueLength(MockMessageDispatcher *dispatcher, int expectedLe
  * @brief Check the number of messages waiting to be sent to the STM32.
  */
 #define ASSERT_OUTBOUND_QUEUE_LENGTH(dispatcher, expectedLength) AssertOutboundQueueLength(dispatcher, expectedLength, __LINE__)
-
-#endif // _TEST_ASSERTIONS_HPP_

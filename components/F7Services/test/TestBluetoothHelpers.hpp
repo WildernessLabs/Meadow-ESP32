@@ -7,8 +7,8 @@
  *
  * @copyright Copyright (c) 2026 Wilderness Labs
  */
-#ifndef _TEST_BLUETOOTH_HELPERS_HPP_
-#define _TEST_BLUETOOTH_HELPERS_HPP_
+
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -69,5 +69,3 @@ void StopBluetoothService(MockMessageDispatcher *dispatcher);
  * @param value Value to write to the characteristic.
  */
 void QueueServerDataSet(MockMessageDispatcher *dispatcher, uint16_t handle, uint32_t value);
-
-#endif // _TEST_BLUETOOTH_HELPERS_HPP_

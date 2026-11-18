@@ -7,8 +7,8 @@
  *
  * @copyright Copyright (c) 2024
  */
-#ifndef _TEST_BLUETOOTH_HPP_
-#define _TEST_BLUETOOTH_HPP_
+
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -17,5 +17,3 @@
 #include "Encoders.hpp"
 #include <cstring>
 #include "TestBluetoothServiceJson.hpp"
-
-#endif // _TEST_BLUETOOTH_HPP_
