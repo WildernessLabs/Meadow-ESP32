@@ -106,12 +106,12 @@ private:
     /**
      *  @brief Get the system configuration.
      */
-    void GetConfiguration(Message *request);
+    static void GetConfiguration(Message *request);
 
     /**
      *  @brief Set a system configuration item.
      */
-    void SetConfigurationItem(Message *request);
+    static void SetConfigurationItem(Message *request);
 
     /**
      * @brief Check that a buffer holds a NUL terminator within a given number of bytes.
@@ -145,12 +145,12 @@ private:
     /**
      * @brief Process the logging configuration.
      */
-    void LoggingConfiguration(Message *request);
+    static void LoggingConfiguration(Message *request);
 
     /**
      * @brief Process the log message
      */
-    void LogMessage(Message *request);
+    static void LogMessage(Message *request);
 
     /**
      *  @brief Populate the configuration object with the current configuration.

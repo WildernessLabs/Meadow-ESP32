@@ -189,7 +189,7 @@ private:
      *
      * @return Number of characteristic and descriptor entries rejected.
      */
-    uint32_t AddCharacteristics(const cJSON *json, BluetoothService *service);
+    static uint32_t AddCharacteristics(const cJSON *json, BluetoothService *service);
 
     /**
      * @brief Add descriptors from the JSON configuration.
@@ -199,7 +199,7 @@ private:
      *
      * @return Number of descriptor entries rejected.
      */
-    uint32_t AddDescriptors(const cJSON *json, BluetoothCharacteristic *characteristic);
+    static uint32_t AddDescriptors(const cJSON *json, BluetoothCharacteristic *characteristic);
 
     /**
      * @brief Give a notifying or indicating characteristic a Client Characteristic Configuration descriptor.
@@ -212,7 +212,7 @@ private:
      * @param characteristic Characteristic that has had its configured descriptors added.
      * @param properties Properties the configuration gave the characteristic.
      */
-    void AddClientCharacteristicConfiguration(BluetoothCharacteristic *characteristic, uint16_t properties);
+    static void AddClientCharacteristicConfiguration(BluetoothCharacteristic *characteristic, uint16_t properties);
 
     /**
      * @brief Make subscribing to a characteristic need the same security as reading its value.
@@ -225,7 +225,7 @@ private:
      * @param characteristic Characteristic that has all its descriptors.
      * @param permission Permission the configuration gave the characteristic.
      */
-    void ProtectClientCharacteristicConfiguration(BluetoothCharacteristic *characteristic, uint16_t permission);
+    static void ProtectClientCharacteristicConfiguration(BluetoothCharacteristic *characteristic, uint16_t permission);
 
     /**
      * @brief Count the characteristics and descriptors that need a pairing protected against a man in the middle.
@@ -247,7 +247,7 @@ private:
      * @param uuid128 Reference to Uuid128 to be set if UUID is 128-bit.
      * @param is128 Reference to bool to indicate if UUID is 128-bit.
      */
-    void ParseUuid(const cJSON *json, Uuid16 &uuid16, Uuid128 &uuid128, bool &is128);
+    static void ParseUuid(const cJSON *json, Uuid16 &uuid16, Uuid128 &uuid128, bool &is128);
 
     /**
      * @brief 16-bit assigned number for the company identifier.

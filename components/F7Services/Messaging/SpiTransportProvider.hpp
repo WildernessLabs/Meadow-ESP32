@@ -129,7 +129,7 @@ private:
      *  The transaction is self-contained: it refers only to _txBuffer and _rxBuffer, so
      *  message can be released once this returns (issue #235).
      */
-    spi_slave_transaction_t *CreateAcknowledgementTransaction(Message *message, StatusCodes::StatusCodes code, uint8_t messageType);
+    static spi_slave_transaction_t *CreateAcknowledgementTransaction(Message *message, StatusCodes::StatusCodes code, uint8_t messageType);
 
     /**
      *  @brief FreeRTOS task handler for this class.
@@ -149,19 +149,19 @@ private:
     /**
      *  @brief Convert the current state into a string message for debugging.
      */
-    const char *SpiStateString(SpiStates state);
+    static const char *SpiStateString(SpiStates state);
 
     /**
      *  @brief Check to see if the specified buffer looks to contain valid
      *  (non-zero) data.
      */
-    bool MessageContainsData(const uint8_t *, uint32_t);
+    static bool MessageContainsData(const uint8_t *, uint32_t);
 
     /**
      *  @brief Check to see if the state we are in indicates that we should be
      *  receiving data from the STM32.
      */
-    bool SendingData();
+    static bool SendingData();
 
     /**
      *  @brief Process an inbound transport request.
@@ -212,17 +212,17 @@ private:
     /**
      *  @brief Setup a new transaction using the information in the message.
      */
-    spi_slave_transaction_t *CreateSpiTransaction(Message *message);
+    static spi_slave_transaction_t *CreateSpiTransaction(Message *message);
 
     /**
      *  @brief Create a transaction that sends an acknowledgement that is not for a particular message.
      */
-    spi_slave_transaction_t *CreateTransportAcknowledgement(StatusCodes::StatusCodes code, uint8_t messageType);
+    static spi_slave_transaction_t *CreateTransportAcknowledgement(StatusCodes::StatusCodes code, uint8_t messageType);
 
     /**
      *  @brief Clear the data buffers used to send and receive data.
      */
-    void ClearTransmitAndReceiveBuffers();
+    static void ClearTransmitAndReceiveBuffers();
 
     /**
      *  @brief Free any memory allocated for the transaction but keep the
@@ -232,12 +232,12 @@ private:
      *      Pointer to the transaction (on the heap), taken by reference so the
      *      caller's pointer is nullified along with the storage it points to.
      */
-    void DeleteTransaction(spi_slave_transaction_t *&transaction);
+    static void DeleteTransaction(spi_slave_transaction_t *&transaction);
 
     /**
      *  @brief Update the packet information in the message to prepare the message for the next transmission.
      */
-    void UpdatePacketInformation(Message *message);
+    static void UpdatePacketInformation(Message *message);
 
 public:
     /**

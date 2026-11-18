@@ -63,17 +63,17 @@ protected:
     /**
      *  @brief Create a new event message and add to the outbound message queue.
      */
-    void RaiseEvent(uint8_t interface, uint32_t eventType, uint32_t statusCode, uint8_t *payload, uint32_t payloadLength);
+    static void RaiseEvent(uint8_t interface, uint32_t eventType, uint32_t statusCode, uint8_t *payload, uint32_t payloadLength);
 
     /**
      *  @brief Create a new event message and add to the outbound message queue.
      */
-    void RaiseEvent(uint8_t interface, uint32_t eventType, uint32_t statusCode);
+    static void RaiseEvent(uint8_t interface, uint32_t eventType, uint32_t statusCode);
 
     /**
      *  @brief Create a new event message and add to the outbound message queue.
      */
-    void RaiseEvent(uint8_t interface, uint32_t eventType);
+    static void RaiseEvent(uint8_t interface, uint32_t eventType);
 
     /**
      * @brief Send an IntegerResponse to the STM32.
@@ -83,7 +83,7 @@ protected:
      * @param statusCode - The status code of the response.
      * @param result - Value to send.
      */
-    void SendIntegerResult(uint8_t interface, uint32_t eventType, uint32_t statusCode, uint32_t value);
+    static void SendIntegerResult(uint8_t interface, uint32_t eventType, uint32_t statusCode, uint32_t value);
 
     /**
      * @brief Answer a request whose function code this handler does not recognise.
@@ -93,7 +93,7 @@ protected:
      *
      * @param request - Request carrying the unrecognised function code.
      */
-    void RespondToUnknownFunction(Message *request);
+    static void RespondToUnknownFunction(Message *request);
 
 public:
     /**

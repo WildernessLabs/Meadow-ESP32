@@ -36,7 +36,7 @@ public:
      *  @note This method takes ownership of the message.  The message is deleted
      *        if it cannot be queued, so the caller must not use it afterwards.
      */
-    bool QueueMessageForStm32(Message *message);
+    static bool QueueMessageForStm32(Message *message);
 
     /**
      *  @brief Bit that will be used to indicate that a the STM32 has just
@@ -130,23 +130,23 @@ protected:
     /**
      *  @brief Get the number of messages in the outbound message queue.
      */
-    int OutboundMessageQueueLength();
+    static int OutboundMessageQueueLength();
 
     /**
      *  @brief Get the next message from the outbound message queue.
      */
-    Message *GetOutboundMessage();
+    static Message *GetOutboundMessage();
 
     /**
      *  @brief Send a control message to the STM32.
      */
-    void SendControlMessageToStm32(const ControlMessageType);
+    static void SendControlMessageToStm32(const ControlMessageType);
 
     /**
      *  @brief Method used for debugging, this will dump the message at the head
      *  of the message queue as LOGI informaiton.
      */
-    void DumpMessageAtHeadOfQueue();
+    static void DumpMessageAtHeadOfQueue();
 
 public:
     /**

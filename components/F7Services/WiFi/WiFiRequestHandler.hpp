@@ -705,7 +705,7 @@ private:
      *  @param request
      *      Request that was refused.  It becomes the response and is queued for the STM32.
      */
-    void RespondThreadPoolIsFull(Message *request);
+    static void RespondThreadPoolIsFull(Message *request);
 
     /**
      *  @brief Instance helper method for the static EventHandler method.
@@ -819,7 +819,7 @@ private:
     /**
      *  @brief Stop the access point if it is running.
      */
-    void StopAccessPoint(Message *message);
+    static void StopAccessPoint(Message *message);
 
     /**
      * @brief Extract and validate the access point information.
@@ -873,7 +873,7 @@ private:
     /**
      * @brief Raise a node connect / disconnect event for the C# code.
      */
-    void RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFunction eventType, Esp32Messaging::NodeConnectionChangeEventData *data);
+    static void RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFunction eventType, Esp32Messaging::NodeConnectionChangeEventData *data);
 
     /**
      *  @brief Get a list of available access points.
@@ -965,7 +965,7 @@ private:
     /**
      *  @brief Process the access point stopped event (WIFI_EVENT_AP_START).
      */
-    void AccessPointStartedEvent();
+    static void AccessPointStartedEvent();
 
     /**
      *  @brief Process the access point stopped event (WIFI_EVENT_AP_STOP).
@@ -1020,7 +1020,7 @@ private:
     /**
      * @brief Processes when the IP address is obtained from the access point event.
      */
-    void RaiseNetworkGotIpEvent();
+    static void RaiseNetworkGotIpEvent();
 
     /**
      * @brief Lock the _connectedNodes object.

@@ -294,14 +294,14 @@ private:
      *
      * @param request Request from the STM32, a BTPairingReply.
      */
-    void PasskeyReply(Message *request);
+    static void PasskeyReply(Message *request);
 
     /**
      * @brief Answer a NumericComparisonRequestEvent (NumericComparisonReply).
      *
      * @param request Request from the STM32, a BTPairingReply.
      */
-    void NumericComparisonReply(Message *request);
+    static void NumericComparisonReply(Message *request);
 
     /**
      * @brief Pass the STM32's answer to a question about pairing to the stack.
@@ -309,14 +309,14 @@ private:
      * @param request Request from the STM32, a BTPairingReply.
      * @param reply Kind of reply the request is.
      */
-    void ReplyToPairing(Message *request, BluetoothPairing::PendingReply reply);
+    static void ReplyToPairing(Message *request, BluetoothPairing::PendingReply reply);
 
     /**
      * @brief Send the STM32 the addresses of the bonded devices (GetBondedDevices).
      *
      * @param request Request from the STM32.
      */
-    void GetBondedDevices(Message *request);
+    static void GetBondedDevices(Message *request);
 
     /**
      * @brief Remove the bond with one device (RemoveBond).
@@ -431,17 +431,17 @@ private:
      *
      * @return true if everything that was up has been taken down.
      */
-    bool TearDownStack();
+    static bool TearDownStack();
 
     /**
      * @brief Shutdown the Bluetooth stack.
      */
-    bool StopBluetoothService();
+    static bool StopBluetoothService();
 
     /**
      * @brief Set the current value for the specified attribute handle.
      */
-    void SetCurrentValueForAttributeHandle(Message *request);
+    static void SetCurrentValueForAttributeHandle(Message *request);
 
     /**
      * @brief Write request event handler (this has to be static as it is called from C APIs).
