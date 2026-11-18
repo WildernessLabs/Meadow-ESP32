@@ -7,8 +7,8 @@
  *
  * @copyright Copyright (c) 2026 Wilderness Labs
  */
-#ifndef _TEST_ENCODERS_HPP_
-#define _TEST_ENCODERS_HPP_
+
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -462,5 +462,3 @@ namespace TestEncoders
      */
     Esp32Messaging::IoctlResponse *ExtractIoctlResponse(const uint8_t *buffer);
 } // namespace TestEncoders
-
-#endif // _TEST_ENCODERS_HPP_

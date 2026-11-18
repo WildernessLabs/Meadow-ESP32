@@ -7,8 +7,8 @@
  *
  * @copyright Copyright (c) 2026 Wilderness Labs
  */
-#ifndef _UNIT_TEST_CONFIGURATION_HPP_
-#define _UNIT_TEST_CONFIGURATION_HPP_
+
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -204,5 +204,3 @@ public:
  * @note app_main is C, so it reaches UnitTestConfiguration::Load() through this.
  */
 extern "C" void UnitTestConfigurationLoad(void);
-
-#endif // _UNIT_TEST_CONFIGURATION_HPP_

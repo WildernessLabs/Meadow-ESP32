@@ -7,8 +7,8 @@
  *
  * @copyright Copyright (c) 2026 Wilderness Labs
  */
-#ifndef _TEST_FILE_SYSTEM_HELPERS_HPP_
-#define _TEST_FILE_SYSTEM_HELPERS_HPP_
+
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -78,5 +78,3 @@ int WriteTestFile(const char *filename, const uint8_t *buffer, int length);
  * @return Number of bytes read, -1 if the file cannot be opened.
  */
 int ReadTestFile(const char *filename, uint8_t *buffer, int maxLength);
-
-#endif // _TEST_FILE_SYSTEM_HELPERS_HPP_

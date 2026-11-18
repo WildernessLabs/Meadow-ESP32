@@ -7,8 +7,8 @@
  *
  * @copyright Copyright (c) 2026 Wilderness Labs
  */
-#ifndef _TEST_WIFI_HELPERS_HPP_
-#define _TEST_WIFI_HELPERS_HPP_
+
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -181,5 +181,3 @@ void EnsureWiFiInterfaceStopped(MockMessageDispatcher *dispatcher);
  * @return True if the connection was made.
  */
 bool ConnectToTestAccessPoint(MockMessageDispatcher *dispatcher);
-
-#endif // _TEST_WIFI_HELPERS_HPP_

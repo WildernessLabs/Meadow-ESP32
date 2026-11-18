@@ -7,8 +7,8 @@
  *
  * @copyright Copyright (c) 2026 Wilderness Labs
  */
-#ifndef _TEST_HARNESS_HPP_
-#define _TEST_HARNESS_HPP_
+
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -145,5 +145,3 @@ bool SendRequestForResultAndErrno(MockMessageDispatcher *dispatcher, Esp32Interf
  * @param settlingTime Milliseconds to wait for any further messages after each one found.
  */
 void DrainOutboundQueue(MockMessageDispatcher *dispatcher, uint32_t settlingTime);
-
-#endif // _TEST_HARNESS_HPP_

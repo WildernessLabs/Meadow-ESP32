@@ -6,11 +6,9 @@
  *
  * @copyright Copyright (c) 2025
  */
-#ifndef __LOGGING_HPP__
-#define __LOGGING_HPP__
+
+#pragma once
 
 #define TRACE_MESSAGE trace_message
 
 extern "C" void trace_message(const char *format, ...);
-
-#endif // __LOGGING_HPP__

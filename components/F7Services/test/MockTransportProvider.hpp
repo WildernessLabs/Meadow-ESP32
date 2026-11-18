@@ -4,8 +4,7 @@
  *  Mock up of the TransportProvider for unit testing.
  */
 
-#ifndef _MOCK_TRANSPORT_PROVIDER_HPP_
-#define _MOCK_TRANSPORT_PROVIDER_HPP_
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -61,5 +60,3 @@ public:
      */
     static Message *GetOutboundMessage();
 };
-
-#endif // _MOCK_TRANSPORT_PROVIDER_HPP_

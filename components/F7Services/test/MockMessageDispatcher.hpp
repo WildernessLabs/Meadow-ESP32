@@ -6,8 +6,7 @@
  *  send messages between the ESP32 and the STM32.
  */
 
-#ifndef _MOCK_MESSAGE_DISPATCHER_HPP_
-#define _MOCK_MESSAGE_DISPATCHER_HPP_
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -137,5 +136,3 @@ public:
      */
     Message *GetOutboundMessage();
 };
-
-#endif /* _MOCK_MESSAGE_DISPATCHER_HPP_ */

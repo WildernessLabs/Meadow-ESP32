@@ -4,8 +4,7 @@
  *  Hold the version information for the application.
  */
 
-#ifndef __VERSION__H
-#define __VERSION__H
+#pragma once
 
 #include <cstdlib>
 
@@ -86,5 +85,3 @@ struct meadow_version_s
 typedef struct meadow_version_s meadow_version_t;
 
 extern meadow_version_t g_application_version;
-
-#endif  // __VERSION__H
