@@ -51,7 +51,7 @@ public:
      *
      *  @return Number of messages in the outbound queue, -1 if it cannot be read.
      */
-    int OutboundMessageQueueLength();
+    static int OutboundMessageQueueLength();
 
     /**
      *  @brief Get the next message waiting to be sent to the STM32.
@@ -59,7 +59,7 @@ public:
      *  @return Pointer to the message, which the caller owns, or nullptr if the queue
      *          is empty.
      */
-    Message *GetOutboundMessage();
+    static Message *GetOutboundMessage();
 };
 
 #endif // _MOCK_TRANSPORT_PROVIDER_HPP_

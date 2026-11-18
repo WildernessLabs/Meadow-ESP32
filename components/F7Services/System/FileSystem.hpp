@@ -54,7 +54,7 @@ private:
     /**
      * @brief Display the list of files on the file system to the console.
      */
-    void ShowFiles();
+    static void ShowFiles();
 
     /**
      * @brief Reject a file name that could escape the littlefs mount point or that the
@@ -72,7 +72,7 @@ private:
      * @returns
      *      true if name is safe to concatenate onto PARTITION_PATH_NAME.
      */
-    bool IsValidFileName(const char *name);
+    static bool IsValidFileName(const char *name);
 
     /**
      * @brief Turn a request into its response and hand it to the dispatcher.
@@ -110,7 +110,7 @@ private:
      *      CompletedOk if the whole file was read and encoded, EspOutOfMemory if memory ran
      *      out, otherwise Failure.
      */
-    StatusCodes::StatusCodes ReadOpenFile(FILE *file, uint32_t length, Esp32Messaging::FileNameAndContents *fileData, Message *message);
+    static StatusCodes::StatusCodes ReadOpenFile(FILE *file, uint32_t length, Esp32Messaging::FileNameAndContents *fileData, Message *message);
 
 public:
     /**
