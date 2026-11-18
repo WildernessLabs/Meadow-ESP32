@@ -165,13 +165,13 @@ TEST_CASE("Write the LittleFS compatibility files", CLASS_OF_TESTS)
     auto *contents = new uint8_t[LARGEST_FILE_SIZE];
     TEST_ASSERT_NOT_NULL(contents);
     char name[64];
-    for (uint32_t index = 0; index < FILE_SIZE_COUNT; index++)
+    for (const uint32_t fileSize: FILE_SIZES)
     {
         for (uint32_t copy = 0; copy < 2; copy++)
         {
-            CompatibilityFileName(ESP_IDF_VERSION_MAJOR, FILE_SIZES[index], copy == 1, name, sizeof(name));
-            FillExpectedContents(name, contents, FILE_SIZES[index]);
-            TEST_ASSERT_EQUAL_INT_MESSAGE(static_cast<int>(FILE_SIZES[index]), WriteTestFile(name, contents, FILE_SIZES[index]), name);
+            CompatibilityFileName(ESP_IDF_VERSION_MAJOR, fileSize, copy == 1, name, sizeof(name));
+            FillExpectedContents(name, contents, fileSize);
+            TEST_ASSERT_EQUAL_INT_MESSAGE(static_cast<int>(fileSize), WriteTestFile(name, contents, fileSize), name);
         }
     }
     Utils::DeleteAndNullifyPointer(contents);
@@ -216,13 +216,13 @@ TEST_CASE("Check the LittleFS compatibility files", CLASS_OF_TESTS)
 
         setsFound++;
         uint32_t setFailures = 0;
-        for (uint32_t index = 0; index < FILE_SIZE_COUNT; index++)
+        for (const uint32_t fileSize: FILE_SIZES)
         {
             for (uint32_t copy = 0; copy < 2; copy++)
             {
-                CompatibilityFileName(idfMajor, FILE_SIZES[index], copy == 1, name, sizeof(name));
+                CompatibilityFileName(idfMajor, fileSize, copy == 1, name, sizeof(name));
                 filesChecked++;
-                if (!CheckCompatibilityFile(name, FILE_SIZES[index], expected, actual))
+                if (!CheckCompatibilityFile(name, fileSize, expected, actual))
                 {
                     setFailures++;
                 }

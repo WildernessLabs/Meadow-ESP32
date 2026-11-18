@@ -1160,9 +1160,9 @@ static void RunAddrInfoRound(MockMessageDispatcher *dispatcher)
         Message::DeleteMessage(response);
     }
 
-    for (uint32_t index = 0; index < ADDRINFO_BURST; index++)
+    for (const uint32_t handle: handles)
     {
-        QueueFreeAddrInfo(dispatcher, handles[index]);
+        QueueFreeAddrInfo(dispatcher, handle);
     }
     for (uint32_t index = 0; index < ADDRINFO_BURST; index++)
     {

@@ -520,10 +520,10 @@ TEST_CASE("Configuration items that are not implemented are refused", CLASS_OF_T
 
     const uint32_t unimplemented[] = {ConfigurationItems::NtpServer, ConfigurationItems::GetTimeAtStartup, ConfigurationItems::BluetoothMacAddress};
 
-    for (uint32_t index = 0; index < (sizeof(unimplemented) / sizeof(unimplemented[0])); index++)
+    for (const uint32_t item: unimplemented)
     {
-        printf("Checking that configuration item %" PRIu32 " is refused\n", unimplemented[index]);
-        TEST_ASSERT_EQUAL(StatusCodes::UnknownConfigurationItem, SetUInt32Item(unimplemented[index], 0));
+        printf("Checking that configuration item %" PRIu32 " is refused\n", item);
+        TEST_ASSERT_EQUAL(StatusCodes::UnknownConfigurationItem, SetUInt32Item(item, 0));
     }
 }
 

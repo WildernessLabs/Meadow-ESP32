@@ -43,9 +43,9 @@ BluetoothService::~BluetoothService()
 {
     TRACE_MESSAGE("~BluetoothService: Enter");
 
-    for (auto it = _characteristics.begin(); it != _characteristics.end(); ++it)
+    for (const auto * const characteristic: _characteristics)
     {
-        delete *it;
+        delete characteristic;
     }
     _characteristics.clear();
 

@@ -42,11 +42,9 @@ BluetoothService &BluetoothServiceCollection::Add(BluetoothService * const servi
     // Do we already know about this service?  If so, ignore
     bool exists = false;
 
-    for (auto it = _services.begin(); it != _services.end(); ++it)
+    for (const auto * const existing: _services)
     {
-        auto svc = static_cast<BluetoothService *>(*it);
-
-        if (svc->Uuid == service->Uuid)
+        if (existing->Uuid == service->Uuid)
         {
             TRACE_MESSAGE("Already exists.  Skipping");
             exists = true;
@@ -87,9 +85,8 @@ bool BluetoothServiceCollection::DeleteAllServices()
 {
     TRACE_MESSAGE("DeleteAllServices: Enter");
 
-    for (auto it = _services.begin(); it != _services.end(); ++it)
+    for (const auto * const service: _services)
     {
-        auto service = static_cast<BluetoothService *>(*it);
         delete service;
     }
 
@@ -168,14 +165,12 @@ BluetoothService *BluetoothServiceCollection::Find(const Uuid16 uuid)
 {
     TRACE_MESSAGE("Find: Enter");
 
-    for (auto it = _services.begin(); it != _services.end(); ++it)
+    for (auto * const service: _services)
     {
-        auto svc = static_cast<BluetoothService *>(*it);
-
-        if (svc->Uuid == uuid)
+        if (service->Uuid == uuid)
         {
             TRACE_MESSAGE("Found service with matching UUID");
-            return svc;
+            return service;
         }
     }
 

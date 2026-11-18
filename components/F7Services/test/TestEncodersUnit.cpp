@@ -384,9 +384,9 @@ TEST_CASE("EncodeString writes nothing when the terminator does not fit", CLASS_
     TEST_ASSERT_FALSE(Encoders::EncodeString("hello", position, remaining));
     TEST_ASSERT_EQUAL_PTR(buffer, position);
     TEST_ASSERT_EQUAL_UINT32(5, remaining);
-    for (uint32_t index = 0; index < sizeof(buffer); index++)
+    for (const uint8_t value: buffer)
     {
-        TEST_ASSERT_EQUAL_HEX8(GUARD_BYTE, buffer[index]);
+        TEST_ASSERT_EQUAL_HEX8(GUARD_BYTE, value);
     }
 }
 
