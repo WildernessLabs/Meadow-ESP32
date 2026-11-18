@@ -59,7 +59,7 @@ void WiFiRequestHandler::UnlockConnectedNodesMap()
  * @return Esp32Messaging::AccessPointInformation*
  *      Pointer to validated access point information, nullptr if there is a problem.
  */
-Esp32Messaging::AccessPointInformation *WiFiRequestHandler::ExtractAndValidateAccessPointInformation(uint8_t *data, const uint32_t dataLength, StatusCodes::StatusCodes &status)
+Esp32Messaging::AccessPointInformation *WiFiRequestHandler::ExtractAndValidateAccessPointInformation(uint8_t *data, const uint32_t dataLength, StatusCodes::StatusCodes &status) const
 {
     Esp32Messaging::AccessPointInformation *result = nullptr;
     status = StatusCodes::CannotStartAccessPoint;

@@ -514,10 +514,10 @@ private:
     esp_ble_adv_data_t *GetAdvertisingData();
     esp_ble_adv_data_t *GetScanResponseData();
     esp_ble_adv_params_t *GetAdvertisingParameters();
-    uint16_t GetAttributeTableLength();
+    uint16_t GetAttributeTableLength() const;
     void GenerateAdvertisingData();
     void GenerateAttributeTable();
-    int GetHandleCount();
+    int GetHandleCount() const;
 
 public:
     virtual ~BluetoothRequestHandler() override;

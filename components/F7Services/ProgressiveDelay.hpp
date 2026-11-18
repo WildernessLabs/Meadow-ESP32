@@ -49,7 +49,7 @@ public:
      *
      * @return uint32_t Delay in milliseconds.
      */
-    uint32_t GetCurrentDelayPeriod()
+    uint32_t GetCurrentDelayPeriod() const
     {
         return _delayPeriods[_currentPeriod];
     }

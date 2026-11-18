@@ -113,7 +113,7 @@ public:
      *
      *  @return True if the UUID value is 128-bit, false otherwise.
      */
-    bool Is128()
+    bool Is128() const
     {
         return _is128;
     }

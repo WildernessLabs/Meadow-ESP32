@@ -67,7 +67,7 @@ public:
      * @return true If the UUID is 128 bits.
      * @return false If the UUID is 16 bits.
      */
-    bool Is128();
+    bool Is128() const;
 
     /**
      * @brief 16-bit UUID for this descriptor.

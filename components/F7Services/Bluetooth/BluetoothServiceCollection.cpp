@@ -135,7 +135,7 @@ void BluetoothServiceCollection::HandleServiceCharacteristicAdded(BluetoothChara
  *
  * @param characteristic Characteristic that has had its value changed.
  */
-void BluetoothServiceCollection::HandleServiceValueChanged(BluetoothCharacteristic * const characteristic)
+void BluetoothServiceCollection::HandleServiceValueChanged(BluetoothCharacteristic * const characteristic) const
 {
     TRACE_MESSAGE("HandleServiceValueChanged: Enter");
 

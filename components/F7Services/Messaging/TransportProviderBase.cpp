@@ -341,7 +341,7 @@ void IRAM_ATTR TransportProviderBase::SetControlSignalMessage(const ControlMessa
  * @return TickType_t
  *      Number of ticks delay in the attempt to acquire the semaphore.
  */
-TickType_t TransportProviderBase::GetControlSignalDelay()
+TickType_t TransportProviderBase::GetControlSignalDelay() const
 {
     return (_controlSignalDelay);
 }

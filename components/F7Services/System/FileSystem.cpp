@@ -153,7 +153,7 @@ void FileSystem::ShowFiles()
  * @return true If the file system is mounted OK.
  * @return false If the file is not mounted.
  */
-bool FileSystem::IsMounted()
+bool FileSystem::IsMounted() const
 {
     return (esp_littlefs_mounted(_config.partition_label));
 }

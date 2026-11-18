@@ -35,7 +35,7 @@ private:
     BluetoothHandleManager *_handleManager;
 
     void HandleServiceCharacteristicAdded(BluetoothCharacteristic *characteristic);
-    void HandleServiceValueChanged(BluetoothCharacteristic *characteristic);
+    void HandleServiceValueChanged(BluetoothCharacteristic *characteristic) const;
 
 public:
     /**
