@@ -13,9 +13,9 @@
 
 #include "sdkconfig.h"
 
-#include <inttypes.h>
-#include <stdarg.h>
-#include <stdio.h>
+#include <cinttypes>
+#include <cstdarg>
+#include <cstdio>
 
 #include "esp_log.h"
 #include "esp_system.h"

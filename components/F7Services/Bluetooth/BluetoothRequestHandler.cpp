@@ -18,8 +18,8 @@
 #include "esp_mac.h"
 #include "driver/uart.h"
 #include "soc/uart_struct.h"
-#include <string.h>
-#include <stdlib.h>
+#include <cstring>
+#include <cstdlib>
 
 #include "Globals.hpp"
 #include "Logging.hpp"

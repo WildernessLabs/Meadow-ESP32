@@ -7,10 +7,10 @@
  * @copyright Copyright (c) 2022 Wilderness Labs
  */
 
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 #include <unistd.h>
-#include <inttypes.h>
+#include <cinttypes>
 
 #include "WiFiRequestHandler.hpp"
 #include "Mapping.hpp"

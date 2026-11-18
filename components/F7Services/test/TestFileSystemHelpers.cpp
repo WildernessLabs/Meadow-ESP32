@@ -10,7 +10,7 @@
 
 #include "sdkconfig.h"
 
-#include <stdio.h>
+#include <cstdio>
 #include <string>
 #include <sys/types.h>
 #include <dirent.h>

@@ -4,12 +4,12 @@
  *  Implementation of the test methods for the BluetoothRequestHandler class.
  */
 
-#include <limits.h>
-#include <stdio.h>
+#include <climits>
+#include <cstdio>
 #include <sys/types.h>
 #include <dirent.h>
 #include <string>
-#include <string.h>
+#include <cstring>
 #include <vector>
 #include "esp_heap_caps.h"
 #include "esp_system.h"

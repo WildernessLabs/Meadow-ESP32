@@ -14,10 +14,10 @@
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_mac.h"
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 #include <unistd.h>
-#include <inttypes.h>
+#include <cinttypes>
 
 #include "Globals.hpp"
 #include "NvsManager.hpp"

@@ -7,7 +7,7 @@
 
 #include "sdkconfig.h"
 
-#include <string.h>
+#include <cstring>
 #include <sys/socket.h>
 #include "esp_log.h"
 #include "esp_netif.h"

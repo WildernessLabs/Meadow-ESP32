@@ -6,8 +6,8 @@
 
 #include "sdkconfig.h"
 
-#include <stdint.h>
-#include <string.h>
+#include <cstdint>
+#include <cstring>
 #include "unity.h"
 
 #include "BluetoothRequestHandler.hpp"

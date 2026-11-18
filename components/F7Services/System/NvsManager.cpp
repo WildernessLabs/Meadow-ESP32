@@ -9,7 +9,7 @@
 
 #include "sdkconfig.h"
 
-#include <inttypes.h>
+#include <cinttypes>
 
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
@@ -18,7 +18,7 @@
 #include "nvs_flash.h"
 #include "nvs.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "NvsManager.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"

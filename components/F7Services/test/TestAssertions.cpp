@@ -10,7 +10,7 @@
 
 #include "sdkconfig.h"
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "SharedEnums.hpp"
 

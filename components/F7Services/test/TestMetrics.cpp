@@ -7,7 +7,7 @@
 
 #include "sdkconfig.h"
 
-#include <stdint.h>
+#include <cstdint>
 #include "esp_heap_caps.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"

@@ -12,7 +12,7 @@
 
 #include "sdkconfig.h"
 
-#include <stdint.h>
+#include <cstdint>
 
 /**
  * @brief Settings the tests need, read from a file written to the board.

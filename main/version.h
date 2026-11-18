@@ -7,7 +7,7 @@
 #ifndef __VERSION__H
 #define __VERSION__H
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "build_info.h"
 

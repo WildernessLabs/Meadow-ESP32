@@ -15,7 +15,7 @@
 
 #include "sdkconfig.h"
 
-#include <stdint.h>
+#include <cstdint>
 
 /**
  * @brief Events the firmware records.

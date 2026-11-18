@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <inttypes.h>
+#include <cinttypes>
 
 /**
  *  @brief Manage the non-volatile storage.

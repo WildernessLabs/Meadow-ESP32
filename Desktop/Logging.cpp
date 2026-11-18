@@ -1,5 +1,5 @@
-#include <stdio.h>
-#include <stdarg.h>
+#include <cstdio>
+#include <cstdarg>
 
 static char buffer[256];
 

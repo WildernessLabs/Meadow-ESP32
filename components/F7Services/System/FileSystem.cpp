@@ -10,7 +10,7 @@
 #include "sdkconfig.h"
 
 #include <string>
-#include <string.h>
+#include <cstring>
 #include <dirent.h>
 #include <sys/stat.h>
 

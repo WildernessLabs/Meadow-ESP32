@@ -18,14 +18,14 @@
 
 #include "sdkconfig.h"
 
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 #include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
-#include <errno.h>
-#include <inttypes.h>
+#include <cerrno>
+#include <cinttypes>
 
 #include "esp_idf_version.h"
 #include "unity.h"

@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <array>
 #include <map>
 #include <vector>

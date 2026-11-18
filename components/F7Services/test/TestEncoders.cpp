@@ -10,7 +10,7 @@
 
 #include "sdkconfig.h"
 
-#include <string.h>
+#include <cstring>
 #include <arpa/inet.h>
 
 #include "freertos/FreeRTOS.h"

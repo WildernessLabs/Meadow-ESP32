@@ -10,7 +10,7 @@
 
 #include "sdkconfig.h"
 
-#include <stdint.h>
+#include <cstdint>
 #include "esp_bt.h"
 #include "esp_bt_main.h"
 #include "unity.h"

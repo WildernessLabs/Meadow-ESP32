@@ -15,7 +15,7 @@
 
 #include "sdkconfig.h"
 
-#include <inttypes.h>
+#include <cinttypes>
 #include <string>
 
 #include "Heap.hpp"

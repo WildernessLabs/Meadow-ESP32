@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 /**
  * @brief Property type of this characteristic
