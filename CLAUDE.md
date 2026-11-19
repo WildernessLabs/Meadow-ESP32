@@ -28,6 +28,10 @@ idf.py menuconfig
 idf.py monitor
 ```
 
+### Static Analysis
+
+`./clang-tidy.sh [--checks=LIST] [--summary] [--fix] ['FILE_REGEX']` lists clang-tidy issues, one per line.  It needs ESP-IDF activated and a build (test and/or main) for the compile commands; details in `Documentation/Tools.md`.
+
 ### Diagnostic Build Flags
 
 | Flag | Effect |

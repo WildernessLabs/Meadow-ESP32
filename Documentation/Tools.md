@@ -38,6 +38,34 @@ For quick reference, it is recommended that the system should be built using the
 
 See [Building the System](Building.md) for complete details.
 
+### Static Analysis with clang-tidy
+
+`clang-tidy.sh` runs clang-tidy over the C++ sources and lists what it finds, one issue per line, ordered by file and line.  It uses the clang-tidy from the ESP-IDF `esp-clang` package, so activate ESP-IDF first (`source ~/.espressif/tools/activate_idf_v6.1.sh`).
+
+clang-tidy needs the compile commands of a build.  The test build covers `components/F7Services` and the tests, and the main build adds `main/`, so build first:
+
+```bash
+(cd test && ./build.sh --build)
+./build.sh --build
+```
+
+Then:
+
+```bash
+./clang-tidy.sh --summary                                             # Everything, with counts by check and by file
+./clang-tidy.sh --output=bluetooth.txt 'Bluetooth/'                   # One area, issue list to a file
+./clang-tidy.sh --checks='-*,readability-make-member-function-const' '(WiFi|System)/'
+./clang-tidy.sh --checks='-*,modernize-use-auto' --fix 'Messaging/Encoders\.cpp'
+./clang-tidy.sh --help                                                # All options
+```
+
+- The file argument is a regular expression matched against each source file's full path.  Quote it.  Headers are checked through the sources that include them.
+- `--checks` takes clang-tidy's form: `-*` turns everything off, then each name or wildcard turns checks on, and a leading `-` turns one off again.  `clang-tidy --list-checks -checks='*'` lists them all.  Without `--checks`, the checks in `.clang-tidy` at the root are run; that file also says why each check it leaves out is off.  `--checks` is added to that list, so start it with `-*` to run only the checks you name.
+- CLion reads the same `.clang-tidy` file, through Settings › Editor › Inspections › C/C++ › Static Analysis Tools › Clang-Tidy, "Prefer .clang-tidy files over IDE settings", which is on by default.  CLion runs its own, newer, clang-tidy, so it may show a few issues from checks that the ESP-IDF one does not have.
+- `--fix` applies the fixes clang-tidy offers.  Read them before keeping them: they do not know the project conventions (for example, `modernize-use-nullptr` replaces the `NULL` that `memchr` and the other standard C functions are compared against), loop conversion picks poor variable names, and making one method `static` or `const` often lets another follow, so run the check again until it reports nothing.
+
+The compile commands ESP-IDF writes are for the xtensa GCC compiler, which clang cannot use as they stand.  `tools/clang-tidy/make_database.py` rewrites them into `build/clang-tidy-database`: it drops the GCC-only options and names the picolibc headers that the toolchain's `-specs` file would otherwise select.  `clang-tidy.sh` remakes it whenever a build has changed the commands; `--database` forces it.  `tools/clang-tidy/apply_fixes.py` applies the fixes, as `clang-apply-replacements` is not part of `esp-clang`.
+
 ## Unit Testing
 
 The project includes comprehensive unit tests for all subsystems. For complete testing instructions, including test setup, execution, and advanced features like heap tracing, see the [Testing Guide](Testing.md).
