@@ -394,7 +394,9 @@ void BluetoothRequestHandler::GenerateAttributeTable()
     {
         TRACE_MESSAGE("ATTRIBUTE TABLE SERVICE AT %" PRId32, index);
         // service attribute - all services are primary for now
-        _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, reinterpret_cast<uint8_t *>(const_cast<uint16_t *>(&primary_service_uuid)), ESP_GATT_PERM_READ, sizeof(uint16_t), sizeof(svc->Uuid), reinterpret_cast<uint8_t *>(&svc->Uuid)}};
+        _attribute_table[index++] = {
+            .attr_control = {.auto_rsp = ESP_GATT_AUTO_RSP},
+            .att_desc = {.uuid_length = ESP_UUID_LEN_16, .uuid_p = reinterpret_cast<uint8_t *>(const_cast<uint16_t *>(&primary_service_uuid)), .perm = ESP_GATT_PERM_READ, .max_length = sizeof(uint16_t), .length = sizeof(svc->Uuid), .value = reinterpret_cast<uint8_t *>(&svc->Uuid)}};
 
         TRACE_MESSAGE("CONTAINS %" PRIu32 " CHARACTERISTICS", svc->GetCharacteristicDefinitions().size());
         for (const auto &characteristic: svc->GetCharacteristicDefinitions())
@@ -406,7 +408,15 @@ void BluetoothRequestHandler::GenerateAttributeTable()
             //  characteristic that needs encryption could not even be found by a client that had
             //  not yet paired, and the client never learnt it had to pair (issue #398).
             //
-            _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, reinterpret_cast<uint8_t *>(&characteristic->GetDeclaration().Uuid), ESP_GATT_PERM_READ, CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, reinterpret_cast<uint8_t *>(&characteristic->GetDeclaration().Properties)}};
+            _attribute_table[index++] = {
+                .attr_control = {.auto_rsp = ESP_GATT_AUTO_RSP},
+                .att_desc = {
+                    .uuid_length = ESP_UUID_LEN_16,
+                    .uuid_p = reinterpret_cast<uint8_t *>(&characteristic->GetDeclaration().Uuid),
+                    .perm = ESP_GATT_PERM_READ,
+                    .max_length = CHAR_DECLARATION_SIZE,
+                    .length = CHAR_DECLARATION_SIZE,
+                    .value = reinterpret_cast<uint8_t *>(&characteristic->GetDeclaration().Properties)}};
 
             TRACE_MESSAGE("ATTRIBUTE TABLE VALUE AT %" PRId32, index);
             // value attribute
@@ -415,14 +425,26 @@ void BluetoothRequestHandler::GenerateAttributeTable()
             if (characteristic->GetValue().Is128())
             {
                 _attribute_table[index++] = {
-                    {ESP_GATT_RSP_BY_APP},
-                    {ESP_UUID_LEN_128, reinterpret_cast<uint8_t *>(&characteristic->GetValue().uuid128), static_cast<uint16_t>(characteristic->GetValue().Permission), characteristic->GetValue().MaxLength, 0, nullptr}}; // <- 0, nullptr means "current value length is 0, current value data is null"
+                    .attr_control = {.auto_rsp = ESP_GATT_RSP_BY_APP},
+                    .att_desc = {
+                        .uuid_length = ESP_UUID_LEN_128,
+                        .uuid_p = reinterpret_cast<uint8_t *>(&characteristic->GetValue().uuid128),
+                        .perm = static_cast<uint16_t>(characteristic->GetValue().Permission),
+                        .max_length = characteristic->GetValue().MaxLength,
+                        .length = 0,
+                        .value = nullptr}}; // <- 0, nullptr means "current value length is 0, current value data is null"
             }
             else
             {
                 _attribute_table[index++] = {
-                    {ESP_GATT_RSP_BY_APP},
-                    {ESP_UUID_LEN_16, reinterpret_cast<uint8_t *>(&characteristic->GetValue().uuid16), static_cast<uint16_t>(characteristic->GetValue().Permission), characteristic->GetValue().MaxLength, 0, nullptr}}; // <- 0, nullptr means "current value length is 0, current value data is null"
+                    .attr_control = {.auto_rsp = ESP_GATT_RSP_BY_APP},
+                    .att_desc = {
+                        .uuid_length = ESP_UUID_LEN_16,
+                        .uuid_p = reinterpret_cast<uint8_t *>(&characteristic->GetValue().uuid16),
+                        .perm = static_cast<uint16_t>(characteristic->GetValue().Permission),
+                        .max_length = characteristic->GetValue().MaxLength,
+                        .length = 0,
+                        .value = nullptr}}; // <- 0, nullptr means "current value length is 0, current value data is null"
             }
 
             for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
@@ -430,11 +452,27 @@ void BluetoothRequestHandler::GenerateAttributeTable()
                 TRACE_MESSAGE("ATTRIBUTE TABLE DESCRIPTOR AT %" PRId32, index);
                 if (descriptor->Is128())
                 {
-                    _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_128, reinterpret_cast<uint8_t *>(&descriptor->uuid128), static_cast<uint16_t>(descriptor->Permission), descriptor->MaxLength, descriptor->CurrentLength, const_cast<uint8_t *>(descriptor->GetValue())}};
+                    _attribute_table[index++] = {
+                        .attr_control = {.auto_rsp = ESP_GATT_AUTO_RSP},
+                        .att_desc = {
+                            .uuid_length = ESP_UUID_LEN_128,
+                            .uuid_p = reinterpret_cast<uint8_t *>(&descriptor->uuid128),
+                            .perm = static_cast<uint16_t>(descriptor->Permission),
+                            .max_length = descriptor->MaxLength,
+                            .length = descriptor->CurrentLength,
+                            .value = const_cast<uint8_t *>(descriptor->GetValue())}};
                 }
                 else
                 {
-                    _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, reinterpret_cast<uint8_t *>(&descriptor->uuid16), static_cast<uint16_t>(descriptor->Permission), descriptor->MaxLength, descriptor->CurrentLength, const_cast<uint8_t *>(descriptor->GetValue())}};
+                    _attribute_table[index++] = {
+                        .attr_control = {.auto_rsp = ESP_GATT_AUTO_RSP},
+                        .att_desc = {
+                            .uuid_length = ESP_UUID_LEN_16,
+                            .uuid_p = reinterpret_cast<uint8_t *>(&descriptor->uuid16),
+                            .perm = static_cast<uint16_t>(descriptor->Permission),
+                            .max_length = descriptor->MaxLength,
+                            .length = descriptor->CurrentLength,
+                            .value = const_cast<uint8_t *>(descriptor->GetValue())}};
                 }
             }
         }
@@ -867,14 +905,14 @@ bool BluetoothRequestHandler::ApplySecurityParameters(const BluetoothSecurityCon
         void *Value;
         const char *Name;
     } const parameters[] = {
-        {ESP_BLE_SM_AUTHEN_REQ_MODE, &authenticationRequirement, "authentication requirement"},
-        {ESP_BLE_SM_IOCAP_MODE, &ioCapability, "input and output capability"},
-        {ESP_BLE_SM_MAX_KEY_SIZE, &keySize, "maximum key size"},
-        {ESP_BLE_SM_MIN_KEY_SIZE, &keySize, "minimum key size"},
-        {ESP_BLE_SM_ONLY_ACCEPT_SPECIFIED_SEC_AUTH, &onlyAcceptSpecified, "only accept the specified authentication"},
-        {ESP_BLE_SM_OOB_SUPPORT, &outOfBand, "out of band support"},
-        {ESP_BLE_SM_SET_INIT_KEY, &initiatorKeys, "initiator keys"},
-        {ESP_BLE_SM_SET_RSP_KEY, &responderKeys, "responder keys"},
+        {.Parameter = ESP_BLE_SM_AUTHEN_REQ_MODE, .Value = &authenticationRequirement, .Name = "authentication requirement"},
+        {.Parameter = ESP_BLE_SM_IOCAP_MODE, .Value = &ioCapability, .Name = "input and output capability"},
+        {.Parameter = ESP_BLE_SM_MAX_KEY_SIZE, .Value = &keySize, .Name = "maximum key size"},
+        {.Parameter = ESP_BLE_SM_MIN_KEY_SIZE, .Value = &keySize, .Name = "minimum key size"},
+        {.Parameter = ESP_BLE_SM_ONLY_ACCEPT_SPECIFIED_SEC_AUTH, .Value = &onlyAcceptSpecified, .Name = "only accept the specified authentication"},
+        {.Parameter = ESP_BLE_SM_OOB_SUPPORT, .Value = &outOfBand, .Name = "out of band support"},
+        {.Parameter = ESP_BLE_SM_SET_INIT_KEY, .Value = &initiatorKeys, .Name = "initiator keys"},
+        {.Parameter = ESP_BLE_SM_SET_RSP_KEY, .Value = &responderKeys, .Name = "responder keys"},
     };
 
     bool applied = true;

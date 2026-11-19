@@ -327,7 +327,12 @@ TEST_CASE("Permissions are classified by the security they need", CLASS_OF_TESTS
         bool Encryption;
         bool Mitm;
     } const cases[] = {
-        {PERMISSION_READ | PERMISSION_WRITE, false, false}, {PERMISSION_READ_ENCRYPTED, true, false}, {PERMISSION_WRITE_ENCRYPTED, true, false}, {PERMISSION_READ_MITM, true, true}, {PERMISSION_WRITE_MITM, true, true}, {static_cast<uint16_t>(CharacteristicPermission::WriteSignedMITM), true, true},
+        {.Permission = PERMISSION_READ | PERMISSION_WRITE, .Encryption = false, .Mitm = false},
+        {.Permission = PERMISSION_READ_ENCRYPTED, .Encryption = true, .Mitm = false},
+        {.Permission = PERMISSION_WRITE_ENCRYPTED, .Encryption = true, .Mitm = false},
+        {.Permission = PERMISSION_READ_MITM, .Encryption = true, .Mitm = true},
+        {.Permission = PERMISSION_WRITE_MITM, .Encryption = true, .Mitm = true},
+        {.Permission = static_cast<uint16_t>(CharacteristicPermission::WriteSignedMITM), .Encryption = true, .Mitm = true},
     };
 
     for (const auto &item: cases)

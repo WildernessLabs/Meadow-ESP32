@@ -427,8 +427,9 @@ void Diagnostics::WriteNetwork(const uint32_t sequence)
     {
         const char *name;
         const struct stats_proto *statistics;
-    } protocols[] = {{"link", &lwip_stats.link}, {"ip", &lwip_stats.ip}, {"tcp", &lwip_stats.tcp}, {"udp", &lwip_stats.udp}};
-    for (const auto &protocol : protocols)
+    } protocols[] = {{.name = "link", .statistics = &lwip_stats.link}, {.name = "ip", .statistics = &lwip_stats.ip}, {.name = "tcp", .statistics = &lwip_stats.tcp}, {.name = "udp", .statistics = &lwip_stats.udp}};
+
+    for (const auto &protocol: protocols)
     {
         const struct stats_proto &statistics = *protocol.statistics;
         const uint32_t errors = static_cast<uint32_t>(statistics.chkerr) + statistics.lenerr + statistics.rterr + statistics.proterr + statistics.opterr + statistics.err;
