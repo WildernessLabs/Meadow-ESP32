@@ -56,14 +56,14 @@ struct ConnectionProgress
  *
  * @return Pointer to the dispatcher the tests should use.
  */
-MockMessageDispatcher *SetupWiFiDispatcher(void);
+MockMessageDispatcher *SetupWiFiDispatcher();
 
 /**
  * @brief Milliseconds to allow for a request that has to wait for the radio.
  *
  * @return Number of milliseconds to wait.
  */
-unsigned RadioTimeout(void);
+unsigned RadioTimeout();
 
 /**
  * @brief Create a message carrying an encoded AccessPointInformation object.

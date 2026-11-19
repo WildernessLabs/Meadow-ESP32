@@ -209,7 +209,7 @@ void DrainOutboundQueue(MockMessageDispatcher *dispatcher, const uint32_t settli
  *
  * @return Head of the chain of blocks taken, for ReleaseHeap.
  */
-void *ExhaustHeap(void)
+void *ExhaustHeap()
 {
     void *chain = nullptr;
     for (size_t size = 32768; size >= sizeof(void *); size /= 2)

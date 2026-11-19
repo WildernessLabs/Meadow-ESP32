@@ -54,7 +54,7 @@ struct SocketCallResult
  *
  * @return Pointer to the shared message dispatcher, nullptr if it cannot be created.
  */
-MockMessageDispatcher *SetupMessageDispatcher(void);
+MockMessageDispatcher *SetupMessageDispatcher();
 
 /**
  * @brief Return the shared message dispatcher to a known state between tests.
@@ -64,7 +64,7 @@ MockMessageDispatcher *SetupMessageDispatcher(void);
  *       and stack callbacks, so destroying it would leave those references dangling.
  *       This releases the messages left in the outbound queue instead.
  */
-void ResetMessageDispatcher(void);
+void ResetMessageDispatcher();
 
 /**
  * @brief Take every block of heap that can still be allocated, so the next allocation fails.
@@ -74,7 +74,7 @@ void ResetMessageDispatcher(void);
  *
  * @return Head of the chain of blocks taken, for ReleaseHeap.
  */
-void *ExhaustHeap(void);
+void *ExhaustHeap();
 
 /**
  * @brief Give back every block taken by ExhaustHeap.

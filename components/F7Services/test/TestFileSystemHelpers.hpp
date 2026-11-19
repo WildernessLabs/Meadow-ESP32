@@ -55,7 +55,7 @@ void ReleaseFileSystemTestContext(FileSystemTestContext *context);
  *
  * @return Number of files present, -1 if the directory cannot be opened.
  */
-int CountFiles(void);
+int CountFiles();
 
 /**
  * @brief Write a file to the file system using C stdio.
