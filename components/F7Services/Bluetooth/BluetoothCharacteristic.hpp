@@ -28,22 +28,22 @@ class BluetoothCharacteristicDeclaration;
 /**
  * @brief Prototype for the ServiceAdded event.
  */
-typedef std::function<void(BluetoothService *)> ServiceAdded;
+using ServiceAdded = std::function<void(BluetoothService *)>;
 
 /**
  * @brief Prototype for the CharacteristicAdded event.
  */
-typedef std::function<void(BluetoothCharacteristic *)> CharacteristicAdded;
+using CharacteristicAdded = std::function<void(BluetoothCharacteristic *)>;
 
 /**
  * @brief Prototype for the ValueChanged event.
  */
-typedef std::function<void(BluetoothCharacteristic *)> ValueChanged;
+using ValueChanged = std::function<void(BluetoothCharacteristic *)>;
 
 /**
  * @brief Prototype for the DescriptorAdded event.
  */
-typedef std::function<void(BluetoothDescriptor *)> DescriptorAdded;
+using DescriptorAdded = std::function<void(BluetoothDescriptor *)>;
 
 /**
  * @brief Class holding a Bluetooth characteristic.

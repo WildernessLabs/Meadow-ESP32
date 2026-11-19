@@ -17,12 +17,12 @@
 /**
  *  @brief Type definition for the method that will be called by the Task method.
  */
-typedef void (*method_t)(void *);
+using method_t = void (*)(void *);
 
 /**
  *  @brief ThreadPool method that will be called to indicate that this Thread has completed the execution of the method.
  */
-typedef void (*task_completed_method_t)();
+using task_completed_method_t = void (*)();
 
 /**
  *  @brief Thread class used by ThreadPool to execute tasks/methods.

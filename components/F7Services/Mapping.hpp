@@ -43,7 +43,7 @@ private:
         int32_t stm;
         int32_t esp;
     };
-    typedef struct int_mapping_s int_mapping_t;
+    using int_mapping_t = struct int_mapping_s;
 
     /**
      *  @brief Hold an integer key and the string value representing the key.
@@ -53,7 +53,7 @@ private:
         int32_t key;
         const char *value;
     };
-    typedef struct str_mapping_s str_mapping_t;
+    using str_mapping_t = struct str_mapping_s;
 
     /**
      *  @brief Table of address families (AF_ constants).

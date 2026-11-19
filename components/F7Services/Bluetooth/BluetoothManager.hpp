@@ -115,7 +115,7 @@ private:
     /**
      * @brief Type definition for the length_val_s structure.
      */
-    typedef struct length_val_s length_val_t;
+    using length_val_t = struct length_val_s;
 
     /**
      * @brief Handle manager for the BluetoothManager.

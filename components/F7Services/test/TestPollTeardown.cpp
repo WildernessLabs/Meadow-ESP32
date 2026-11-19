@@ -66,7 +66,7 @@ public:
     /**
      * @brief A poll request, a type that only the friends of WiFiRequestHandler can name.
      */
-    typedef WiFiRequestHandler::ActivePoll Poll;
+    using Poll = WiFiRequestHandler::ActivePoll;
 
     /**
      * @brief Lock the list of poll requests, as the handler does.
