@@ -14,7 +14,7 @@
 /**
  * @brief Property type of this characteristic
  */
-enum class CharacteristicProperty : unsigned char { Broadcast = 1 << 0, Read = 1 << 1, WriteNoResponse = 1 << 2, Write = 1 << 3, Notify = 1 << 4, Indicate = 1 << 5, SignedWrite = 1 << 6, ExtendedProp = 1 << 7 };
+enum class CharacteristicProperty : unsigned char { Broadcast = 1U << 0U, Read = 1U << 1U, WriteNoResponse = 1U << 2U, Write = 1U << 3U, Notify = 1U << 4U, Indicate = 1U << 5U, SignedWrite = 1U << 6U, ExtendedProp = 1U << 7U };
 
 /**
  * @brief Overload the bitwise OR operator to allow for combining characteristic properties.
@@ -27,7 +27,7 @@ enum class CharacteristicProperty : unsigned char { Broadcast = 1 << 0, Read = 1
  */
 inline CharacteristicProperty operator|(CharacteristicProperty a, CharacteristicProperty b)
 {
-    return static_cast<CharacteristicProperty>(static_cast<int>(a) | static_cast<int>(b));
+    return static_cast<CharacteristicProperty>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
 }
 
 /**
@@ -41,22 +41,22 @@ inline CharacteristicProperty operator|(CharacteristicProperty a, Characteristic
  */
 inline CharacteristicProperty operator&(CharacteristicProperty a, CharacteristicProperty b)
 {
-    return static_cast<CharacteristicProperty>(static_cast<int>(a) & static_cast<int>(b));
+    return static_cast<CharacteristicProperty>(static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
 }
 
 /**
  * @brief Permissions for a characteristic.
  */
 enum class CharacteristicPermission : unsigned short {
-    Read = 1 << 0,
-    ReadEncrypted = 1 << 1,
-    ReadEncMITM = 1 << 2,
+    Read = 1U << 0U,
+    ReadEncrypted = 1U << 1U,
+    ReadEncMITM = 1U << 2U,
     // WHERE IS 1 << 3?
-    Write = 1 << 4,
-    WriteEncrypted = 1 << 5,
-    WriteEncMITM = 1 << 6,
-    WriteSigned = 1 << 7,
-    WriteSignedMITM = 1 << 8
+    Write = 1U << 4U,
+    WriteEncrypted = 1U << 5U,
+    WriteEncMITM = 1U << 6U,
+    WriteSigned = 1U << 7U,
+    WriteSignedMITM = 1U << 8U
 };
 
 /**
@@ -70,7 +70,7 @@ enum class CharacteristicPermission : unsigned short {
  */
 inline CharacteristicPermission operator|(CharacteristicPermission a, CharacteristicPermission b)
 {
-    return static_cast<CharacteristicPermission>(static_cast<int>(a) | static_cast<int>(b));
+    return static_cast<CharacteristicPermission>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
 }
 
 /**

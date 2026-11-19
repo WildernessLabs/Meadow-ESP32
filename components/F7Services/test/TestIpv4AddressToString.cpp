@@ -46,7 +46,7 @@
  */
 static uint32_t MakeAddress(const uint8_t first, const uint8_t second, const uint8_t third, const uint8_t fourth)
 {
-    return (htonl((static_cast<uint32_t>(first) << 24) | (static_cast<uint32_t>(second) << 16) | (static_cast<uint32_t>(third) << 8) | fourth));
+    return (htonl((static_cast<uint32_t>(first) << 24U) | (static_cast<uint32_t>(second) << 16U) | (static_cast<uint32_t>(third) << 8U) | fourth));
 }
 
 TEST_CASE("Ipv4AddressToString formats addresses in dotted decimal", CLASS_OF_TESTS)

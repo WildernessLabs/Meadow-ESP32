@@ -231,9 +231,9 @@ TEST_CASE("BuildGraphFromJson refuses a device name too long for the scan respon
 /**
  * @brief Properties of a characteristic that notifies, indicates, both, or neither.
  */
-#define PROPERTIES_NOTIFY 0x10
-#define PROPERTIES_INDICATE 0x20
-#define PROPERTIES_READ_WRITE 0x0a
+#define PROPERTIES_NOTIFY 0x10U
+#define PROPERTIES_INDICATE 0x20U
+#define PROPERTIES_READ_WRITE 0x0aU
 
 /**
  * @brief JSON for a characteristic with the given properties and one descriptor of the given UUID, length and value.

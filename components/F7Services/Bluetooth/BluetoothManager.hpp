@@ -405,7 +405,7 @@ public:
      */
     static bool ClientConfigurationEnablesNotifications(uint16_t configuration)
     {
-        return ((configuration & 0x0001) != 0);
+        return ((configuration & 0x0001U) != 0);
     }
 
     /**

@@ -21,7 +21,7 @@
 /**
  * @brief 16-bit UUID of the service in the test configuration.
  */
-#define ADVERTISING_TEST_SERVICE_UUID 254
+#define ADVERTISING_TEST_SERVICE_UUID 254U
 
 /**
  * @brief Length of a 16-bit UUID in an advertising structure.
@@ -247,8 +247,8 @@ TEST_CASE("Advertising packet carries the configured service UUID", CLASS_OF_TES
     TestBluetoothAdvertising::Release(handler);
 
     TEST_ASSERT_EQUAL_UINT16_MESSAGE(ESP_UUID_LEN_128, uuidLength, "The advertising packet does not carry exactly one service UUID.");
-    TEST_ASSERT_EQUAL_UINT8_MESSAGE(ADVERTISING_TEST_SERVICE_UUID & 0xff, uuid[12], "The advertised service UUID is not the configured one.");
-    TEST_ASSERT_EQUAL_UINT8_MESSAGE((ADVERTISING_TEST_SERVICE_UUID >> 8) & 0xff, uuid[13], "The advertised service UUID is not the configured one.");
+    TEST_ASSERT_EQUAL_UINT8_MESSAGE(ADVERTISING_TEST_SERVICE_UUID & 0xffU, uuid[12], "The advertised service UUID is not the configured one.");
+    TEST_ASSERT_EQUAL_UINT8_MESSAGE((ADVERTISING_TEST_SERVICE_UUID >> 8U) & 0xffU, uuid[13], "The advertised service UUID is not the configured one.");
     TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, uuid[14], "The advertised service UUID is not a 16-bit UUID.");
     TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, uuid[15], "The advertised service UUID is not a 16-bit UUID.");
 }

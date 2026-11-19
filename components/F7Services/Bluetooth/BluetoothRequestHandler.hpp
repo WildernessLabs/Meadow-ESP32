@@ -92,13 +92,13 @@ private:
      *  StartBluetoothService() has returned, so Start() waits for this bit or for
      *  BT_SERVICE_START_FAILED_BIT before it answers the STM32.
      */
-    static const int BT_SERVICE_STARTED_BIT = BIT1;
+    static const EventBits_t BT_SERVICE_STARTED_BIT = BIT1;
 
     /**
      *  @brief Set by the GATT event handler when registering the application, creating the
      *  attribute table or starting the service fails.
      */
-    static const int BT_SERVICE_START_FAILED_BIT = BIT2;
+    static const EventBits_t BT_SERVICE_START_FAILED_BIT = BIT2;
 
     /**
      *  @brief Milliseconds Start() waits for the service to start or fail before it gives up.
@@ -111,12 +111,12 @@ private:
      *  Removing a bond finishes asynchronously, so RemoveBond and RemoveAllBonds wait for this bit
      *  or BT_BOND_REMOVE_FAILED_BIT before they answer the STM32.
      */
-    static const int BT_BOND_REMOVED_BIT = BIT3;
+    static const EventBits_t BT_BOND_REMOVED_BIT = BIT3;
 
     /**
      *  @brief Set by the GAP event handler when the stack could not remove a bond.
      */
-    static const int BT_BOND_REMOVE_FAILED_BIT = BIT4;
+    static const EventBits_t BT_BOND_REMOVE_FAILED_BIT = BIT4;
 
     /**
      *  @brief Milliseconds to wait for the stack to remove one bond.

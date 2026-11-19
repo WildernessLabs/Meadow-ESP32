@@ -230,8 +230,8 @@ void BluetoothRequestHandler::GenerateAdvertisingData()
     TRACE_MESSAGE("GenerateAdvertisingData: Enter");
 
     uint16_t companyIdentifier = _manager.GetCompanyIdentifier();
-    _manufacturerData[0] = static_cast<uint8_t>((companyIdentifier & 0x00FF));
-    _manufacturerData[1] = static_cast<uint8_t>(((companyIdentifier & 0xFF00) >> 8));
+    _manufacturerData[0] = static_cast<uint8_t>((companyIdentifier & 0x00FFU));
+    _manufacturerData[1] = static_cast<uint8_t>(((companyIdentifier & 0xFF00U) >> 8U));
 
     //
     //  The advertising packet and the scan response are 31 bytes each (issue #345).  The
@@ -248,8 +248,8 @@ void BluetoothRequestHandler::GenerateAdvertisingData()
     {
         const uint16_t serviceUuid = services.front()->Uuid;
         memcpy(_advertisingServiceUuid, BLUETOOTH_BASE_UUID, sizeof(_advertisingServiceUuid));
-        _advertisingServiceUuid[12] = static_cast<uint8_t>(serviceUuid & 0x00ff);
-        _advertisingServiceUuid[13] = static_cast<uint8_t>((serviceUuid & 0xff00) >> 8);
+        _advertisingServiceUuid[12] = static_cast<uint8_t>(serviceUuid & 0x00ffU);
+        _advertisingServiceUuid[13] = static_cast<uint8_t>((serviceUuid & 0xff00U) >> 8U);
         advertisedUuidLength = sizeof(_advertisingServiceUuid);
     }
 
@@ -583,7 +583,7 @@ bool BluetoothRequestHandler::NotificationsEnabled(const uint16_t valueHandle)
     {
         return (false);
     }
-    return (BluetoothManager::ClientConfigurationEnablesNotifications(static_cast<uint16_t>(value[0] | (value[1] << 8))));
+    return (BluetoothManager::ClientConfigurationEnablesNotifications(static_cast<uint16_t>(value[0] | (static_cast<uint32_t>(value[1]) << 8U))));
 }
 
 /**
@@ -1450,7 +1450,7 @@ std::vector<BluetoothPairing::ClientConfiguration> BluetoothRequestHandler::Read
         const uint8_t *value = nullptr;
         if ((esp_ble_gatts_get_attr_value(handle, &length, &value) == ESP_GATT_OK) && (value != nullptr) && (length >= CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH))
         {
-            configurations.push_back({handle, static_cast<uint16_t>(value[0] | (value[1] << 8))});
+            configurations.push_back({handle, static_cast<uint16_t>(value[0] | (static_cast<uint32_t>(value[1]) << 8U))});
         }
     }
     return (configurations);
@@ -1465,7 +1465,7 @@ void BluetoothRequestHandler::RestoreClientConfigurations(const esp_bd_addr_t ad
 {
     for (const BluetoothPairing::ClientConfiguration &configuration: _pairing.GetClientConfigurations(address))
     {
-        const uint8_t value[CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH] = {static_cast<uint8_t>(configuration.Value & 0x00ff), static_cast<uint8_t>((configuration.Value & 0xff00) >> 8)};
+        const uint8_t value[CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH] = {static_cast<uint8_t>(configuration.Value & 0x00ffU), static_cast<uint8_t>((configuration.Value & 0xff00U) >> 8U)};
         if (esp_ble_gatts_set_attr_value(configuration.Handle, sizeof(value), value) != ESP_OK)
         {
             ERROR_MESSAGE("Could not restore the client configuration at handle 0x%04" PRIx16, configuration.Handle);

@@ -165,8 +165,8 @@ esp_ble_sec_act_t BluetoothSecurityConfiguration::EncryptionLevel() const
  */
 bool BluetoothSecurityConfiguration::PermissionRequiresMitm(const CharacteristicPermission permission)
 {
-    const uint16_t mitm = static_cast<uint16_t>(CharacteristicPermission::ReadEncMITM) | static_cast<uint16_t>(CharacteristicPermission::WriteEncMITM) | static_cast<uint16_t>(CharacteristicPermission::WriteSignedMITM);
-    return ((static_cast<uint16_t>(permission) & mitm) != 0);
+    const uint32_t mitm = static_cast<uint32_t>(CharacteristicPermission::ReadEncMITM) | static_cast<uint32_t>(CharacteristicPermission::WriteEncMITM) | static_cast<uint32_t>(CharacteristicPermission::WriteSignedMITM);
+    return ((static_cast<uint32_t>(permission) & mitm) != 0);
 }
 
 /**
