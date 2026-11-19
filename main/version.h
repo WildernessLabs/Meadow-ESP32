@@ -82,6 +82,6 @@ struct meadow_version_s
      */
     char *branch_name;
 };
-typedef struct meadow_version_s meadow_version_t;
+using meadow_version_t = struct meadow_version_s;
 
 extern meadow_version_t g_application_version;

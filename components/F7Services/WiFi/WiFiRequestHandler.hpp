@@ -118,7 +118,7 @@ private:
         struct pollfd *fd;   /* Pointer to the pollfd structure of the original request. */
         uint32_t request_id; /* ID of the message sent to the ESP32. */
     };
-    typedef struct poll_request_s poll_request_t;
+    using poll_request_t = struct poll_request_s;
 
     /*
      *  Event group bits.

@@ -124,7 +124,7 @@ public:
  *
  * @return true if the payload was decoded.
  */
-typedef bool (*Decoder)(const uint8_t *buffer, const uint32_t length, bool *malformed);
+using Decoder = bool (*)(const uint8_t *buffer, const uint32_t length, bool *malformed);
 
 /**
  * @brief Wrap a decoder whose result owns memory, released with its own Free function.
