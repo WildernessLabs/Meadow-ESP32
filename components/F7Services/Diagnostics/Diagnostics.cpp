@@ -282,8 +282,9 @@ void Diagnostics::WriteTasks(const uint32_t sequence)
             }
         }
         const int32_t core = (tasks[index].xCoreID == tskNO_AFFINITY) ? -1 : static_cast<int32_t>(tasks[index].xCoreID);
-        WriteRecord("task,%" PRIu32 ",%" PRIu32 ",%s,%" PRId32 ",%s,%" PRIu32 ",%" PRIu32 ",%" PRIu32 ",%" PRIu32 ",%" PRIu32, sequence, static_cast<uint32_t>(tasks[index].xTaskNumber), tasks[index].pcTaskName, core, TaskStateName(tasks[index].eCurrentState), static_cast<uint32_t>(tasks[index].uxCurrentPriority),
-                    static_cast<uint32_t>(tasks[index].uxBasePriority), static_cast<uint32_t>(tasks[index].usStackHighWaterMark), static_cast<uint32_t>(runTime), runTimePercentage);
+        WriteRecord(
+            "task,%" PRIu32 ",%" PRIu32 ",%s,%" PRId32 ",%s,%" PRIu32 ",%" PRIu32 ",%" PRIu32 ",%" PRIu32 ",%" PRIu32, sequence, static_cast<uint32_t>(tasks[index].xTaskNumber), tasks[index].pcTaskName, core, TaskStateName(tasks[index].eCurrentState),
+            static_cast<uint32_t>(tasks[index].uxCurrentPriority), static_cast<uint32_t>(tasks[index].uxBasePriority), static_cast<uint32_t>(tasks[index].usStackHighWaterMark), static_cast<uint32_t>(runTime), runTimePercentage);
     }
     RememberRunTimes(tasks, numberOfTasks, totalRunTime);
     Utils::DeleteAndNullifyPointer(tasks);
