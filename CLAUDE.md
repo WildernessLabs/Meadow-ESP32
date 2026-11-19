@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Meadow-ESP32** is ESP32 firmware (C++20/C11, ESP-IDF 6.1, FreeRTOS) that provides WiFi, Bluetooth, POSIX networking, and file storage services to an external STM32 microcontroller via SPI and UART.
+**Meadow-ESP32** is ESP32 firmware (C++26/C23 as `gnu++26`/`gnu23`, set by ESP-IDF in `tools/cmake/build.cmake`; ESP-IDF 6.1, FreeRTOS) that provides WiFi, Bluetooth, POSIX networking, and file storage services to an external STM32 microcontroller via SPI and UART.
 
 - **Target**: ESP32-PICO-D4
 - **STM32→ESP32**: UART for control/state, SPI for request/response
