@@ -521,26 +521,27 @@ Mapping::~Mapping()
  */
 int32_t Mapping::GetFlagValue(const MappingTable mapping, const MappingDirection type, const int32_t value, int32_t * const mappedValue)
 {
-    int32_t flag = 0x0001;
-    int32_t result = 0;
+    const auto bits = static_cast<uint32_t>(value);
+    uint32_t flag = 0x0001U;
+    uint32_t result = 0;
 
     while (flag != 0)
     {
-        if (value & flag)
+        if ((bits & flag) != 0)
         {
             int32_t mappedFlag = 0;
-            if (GetValue(mapping, type, flag, &mappedFlag) == 0)
+            if (GetValue(mapping, type, static_cast<int32_t>(flag), &mappedFlag) == 0)
             {
-                result |= mappedFlag;
+                result |= static_cast<uint32_t>(mappedFlag);
             }
             else
             {
                 return (-1);
             }
         }
-        flag <<= 1;
+        flag <<= 1U;
     }
-    *mappedValue = result;
+    *mappedValue = static_cast<int32_t>(result);
     return (0);
 }
 
@@ -574,7 +575,7 @@ int32_t Mapping::GetFlagValue(const MappingTable mapping, const MappingDirection
     int32_t mappingResult = GetFlagValue(mapping, type, value, &mappedFlags);
     if (mappingResult == 0)
     {
-        *mappedValue = mappedFlags & 0xffff;
+        *mappedValue = static_cast<int16_t>(static_cast<uint32_t>(mappedFlags) & 0xffffU);
     }
 
     return (mappingResult);
@@ -610,7 +611,7 @@ int32_t Mapping::GetValue(const MappingTable mapping, const MappingDirection typ
     int32_t mappingResult = GetValue(mapping, type, value, &mappedValue);
     if (mappingResult == 0)
     {
-        *result = mappedValue & 0xff;
+        *result = static_cast<int8_t>(static_cast<uint32_t>(mappedValue) & 0xffU);
     }
 
     return (mappingResult);
@@ -646,7 +647,7 @@ int32_t Mapping::GetValue(const MappingTable mapping, const MappingDirection typ
     int32_t mappingResult = GetValue(mapping, type, value, &mappedValue);
     if (mappingResult == 0)
     {
-        *result = mappedValue & 0xffff;
+        *result = static_cast<int16_t>(static_cast<uint32_t>(mappedValue) & 0xffffU);
     }
 
     return (mappingResult);

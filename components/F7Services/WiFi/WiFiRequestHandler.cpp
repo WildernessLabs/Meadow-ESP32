@@ -984,7 +984,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetMacAddress(const uint8_t * const
 {
     StatusCodes::StatusCodes result = StatusCodes::Failure;
 
-    if ((macAddress != nullptr) && ((macAddress[0] & 0x01) == 0))
+    if ((macAddress != nullptr) && ((macAddress[0] & 0x01U) == 0))
     {
         if (interface == WIFI_IF_STA)
         {

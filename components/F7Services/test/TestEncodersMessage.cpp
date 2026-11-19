@@ -377,7 +377,7 @@ TEST_CASE("ExtractMessage refuses a message that announces a payload and carries
  */
 static void SpoilCrc(uint8_t *buffer)
 {
-    Encoders::EncodeUInt32(Encoders::ExtractUInt32(buffer + Message::CRC_OFFSET) ^ 0x00000001, buffer + Message::CRC_OFFSET);
+    Encoders::EncodeUInt32(Encoders::ExtractUInt32(buffer + Message::CRC_OFFSET) ^ 0x00000001U, buffer + Message::CRC_OFFSET);
 }
 
 TEST_CASE("Whether a packet is well formed does not depend on its CRC", CLASS_OF_TESTS)
@@ -446,7 +446,7 @@ TEST_CASE("A well formed packet whose contents were damaged is refused by the CR
     //
     Reseal(frame, length);
 
-    frame[Message::HEADER_SIZE + 3] ^= 0x40;
+    frame[Message::HEADER_SIZE + 3] ^= 0x40U;
     TEST_ASSERT_TRUE(Encoders::PacketIsWellFormed(frame, length, false));
     TEST_ASSERT_NULL_MESSAGE(Encoders::ExtractMessage(frame, length, false), "A frame damaged in transmission was extracted.");
 

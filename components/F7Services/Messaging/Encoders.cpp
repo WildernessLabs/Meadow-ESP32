@@ -37,7 +37,7 @@ uint32_t Encoders::CalculateSpiBufferSize(const uint32_t requestedSize)
     //
     uint32_t result = requestedSize;
 
-    if ((result & 3) != 0)
+    if ((result & 3U) != 0)
     {
         result = (result & 0xfffffffc) + 4;
     }
@@ -98,7 +98,7 @@ uint16_t Encoders::ExtractUInt16(const uint8_t * const buffer)
     uint16_t result;
 
     result = buffer[0];
-    result |= (static_cast<uint32_t>(buffer[1]) << 8);
+    result |= (static_cast<uint32_t>(buffer[1]) << 8U);
     return (result);
 }
 
@@ -116,8 +116,8 @@ uint16_t Encoders::ExtractUInt16(const uint8_t * const buffer)
  */
 void Encoders::EncodeUInt16(const uint16_t value, uint8_t * const buffer)
 {
-    buffer[0] = (value & 0xff);
-    buffer[1] = ((value >> 8) & 0xff);
+    buffer[0] = (value & 0xffU);
+    buffer[1] = ((static_cast<uint32_t>(value) >> 8U) & 0xffU);
 }
 
 /**
@@ -137,9 +137,9 @@ uint32_t Encoders::ExtractUInt32(const uint8_t * const buffer)
     uint32_t result;
 
     result = buffer[0];
-    result |= (static_cast<uint32_t>(buffer[1]) << 8);
-    result |= (static_cast<uint32_t>(buffer[2]) << 16);
-    result |= (static_cast<uint32_t>(buffer[3]) << 24);
+    result |= (static_cast<uint32_t>(buffer[1]) << 8U);
+    result |= (static_cast<uint32_t>(buffer[2]) << 16U);
+    result |= (static_cast<uint32_t>(buffer[3]) << 24U);
     return (result);
 }
 
@@ -157,10 +157,10 @@ uint32_t Encoders::ExtractUInt32(const uint8_t * const buffer)
  */
 void Encoders::EncodeUInt32(const uint32_t value, uint8_t * const buffer)
 {
-    buffer[0] = (value & 0xff);
-    buffer[1] = ((value >> 8) & 0xff);
-    buffer[2] = ((value >> 16) & 0xff);
-    buffer[3] = ((value >> 24) & 0xff);
+    buffer[0] = (value & 0xffU);
+    buffer[1] = ((value >> 8U) & 0xffU);
+    buffer[2] = ((value >> 16U) & 0xffU);
+    buffer[3] = ((value >> 24U) & 0xffU);
 }
 
 /**
@@ -180,9 +180,9 @@ uint32_t Encoders::ExtractInt32(const uint8_t * const buffer)
     uint32_t result;
 
     result = buffer[0];
-    result |= (static_cast<uint32_t>(buffer[1]) << 8);
-    result |= (static_cast<uint32_t>(buffer[2]) << 16);
-    result |= (static_cast<uint32_t>(buffer[3]) << 24);
+    result |= (static_cast<uint32_t>(buffer[1]) << 8U);
+    result |= (static_cast<uint32_t>(buffer[2]) << 16U);
+    result |= (static_cast<uint32_t>(buffer[3]) << 24U);
     return (result);
 }
 
@@ -200,10 +200,7 @@ uint32_t Encoders::ExtractInt32(const uint8_t * const buffer)
  */
 void Encoders::EncodeInt32(const int32_t value, uint8_t * const buffer)
 {
-    buffer[0] = (value & 0xff);
-    buffer[1] = ((value >> 8) & 0xff);
-    buffer[2] = ((value >> 16) & 0xff);
-    buffer[3] = ((value >> 24) & 0xff);
+    EncodeUInt32(static_cast<uint32_t>(value), buffer);
 }
 
 /**
@@ -334,13 +331,13 @@ uint8_t Encoders::CRC8(const uint8_t *data, const uint16_t len)
         uint8_t byte = data[byteCounter];
         for (uint8_t bitCounter = 8; bitCounter; bitCounter--)
         {
-            uint8_t sum = (crc ^ byte) & 0x01;
-            crc >>= 1;
+            uint8_t sum = static_cast<uint8_t>(crc ^ byte) & 0x01U;
+            crc >>= 1U;
             if (sum)
             {
-                crc ^= 0x8C;
+                crc ^= 0x8CU;
             }
-            byte >>= 1;
+            byte >>= 1U;
         }
     }
     return (crc);
@@ -393,9 +390,9 @@ uint32_t Encoders::ProgressiveCRC32(const uint32_t currentChecksum, const uint8_
         //  not formatted correctly.
         //
         // clang-format off
-        uint32_t mask = - (crc & 0x01);
+        uint32_t mask = - (crc & 0x01U);
         // clang-format on
-        crc = (crc >> 1) ^ (0xedb88320 & mask);
+        crc = (crc >> 1U) ^ (0xedb88320 & mask);
     }
     return (crc);
 }

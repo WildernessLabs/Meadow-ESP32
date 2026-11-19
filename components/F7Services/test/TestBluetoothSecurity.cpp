@@ -25,19 +25,19 @@
 /**
  * @brief Permission bits, as the configuration gives them.
  */
-#define PERMISSION_READ 1
-#define PERMISSION_READ_ENCRYPTED 2
-#define PERMISSION_READ_MITM 4
-#define PERMISSION_WRITE 16
-#define PERMISSION_WRITE_ENCRYPTED 32
-#define PERMISSION_WRITE_MITM 64
+#define PERMISSION_READ 1U
+#define PERMISSION_READ_ENCRYPTED 2U
+#define PERMISSION_READ_MITM 4U
+#define PERMISSION_WRITE 16U
+#define PERMISSION_WRITE_ENCRYPTED 32U
+#define PERMISSION_WRITE_MITM 64U
 
 /**
  * @brief Property bits, as the configuration gives them.
  */
-#define PROPERTY_READ 2
-#define PROPERTY_WRITE 8
-#define PROPERTY_NOTIFY 16
+#define PROPERTY_READ 2U
+#define PROPERTY_WRITE 8U
+#define PROPERTY_NOTIFY 16U
 
 /**
  * @brief 16-bit UUID of the Characteristic User Description descriptor.

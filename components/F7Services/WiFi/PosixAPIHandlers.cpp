@@ -537,7 +537,7 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
                         errno = 0;
                         if ((Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family) == 0) && (family == AF_INET))
                         {
-                            sa.sin_family = static_cast<uint8_t>(family & 0xff);
+                            sa.sin_family = static_cast<uint8_t>(static_cast<uint32_t>(family) & 0xffU);
                             sa.sin_port = socketAddress->Port;
                             memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
                             sa.sin_len = sizeof(struct sockaddr_in);
@@ -1620,7 +1620,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(const Esp32Messaging::SendTo
             }
             else
             {
-                sa.sin_family = static_cast<unsigned char>(family & 0xff);
+                sa.sin_family = static_cast<unsigned char>(static_cast<uint32_t>(family) & 0xffU);
 
                 sa.sin_port = socketAddress->Port;
                 memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
@@ -2037,7 +2037,7 @@ static int MapMsgNameToSockAddr(const uint8_t * const raw, const uint32_t length
     {
         return (EAFNOSUPPORT);
     }
-    outSa->sin_family = static_cast<unsigned char>(family & 0xff);
+    outSa->sin_family = static_cast<unsigned char>(static_cast<uint32_t>(family) & 0xffU);
     memcpy(&outSa->sin_port, raw + 2, sizeof(outSa->sin_port));
     memcpy(&outSa->sin_addr, raw + 4, sizeof(outSa->sin_addr));
     outSa->sin_len = sizeof(*outSa);
@@ -3598,7 +3598,7 @@ WiFiRequestHandler::ActivePoll *WiFiRequestHandler::CreateActivePoll(const int d
     activePoll->RequestId = requestId;
     activePoll->TimeoutMs = (timeoutMs > 0) ? timeoutMs : -1;
     activePoll->Descriptors[POLL_FD_INDEX].fd = descriptor;
-    activePoll->Descriptors[POLL_FD_INDEX].events = static_cast<uint16_t>(events & 0xffff);
+    activePoll->Descriptors[POLL_FD_INDEX].events = static_cast<uint16_t>(static_cast<uint32_t>(events) & 0xffffU);
     activePoll->Descriptors[POLL_DUMMY_FD_INDEX].fd = wakeSocket;
     activePoll->Descriptors[POLL_DUMMY_FD_INDEX].events = POLLIN;
 

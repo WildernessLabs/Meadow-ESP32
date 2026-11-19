@@ -136,74 +136,74 @@ private:
      *  two events, network start and got IP.  The request only ends when the IP address
      *  has been granted.
      */
-    static constexpr int WIFI_READY_FOR_NEXT_COMMAND_BIT = BIT0;
+    static constexpr EventBits_t WIFI_READY_FOR_NEXT_COMMAND_BIT = BIT0;
 
     /**
      *  @brief Indicate if the system is in the process of connecting to an access point.
      */
-    static constexpr int WIFI_CONNECTING_BIT = BIT1;
+    static constexpr EventBits_t WIFI_CONNECTING_BIT = BIT1;
 
     /**
      *  @brief When set, this bit indicates that we have an active WiFi connection.
      */
-    static constexpr int WIFI_CONNECTED_BIT = BIT2;
+    static constexpr EventBits_t WIFI_CONNECTED_BIT = BIT2;
 
     /**
      *  @brief When set, this indicates that the system been granted an IP address from the access point.
      */
-    static constexpr int WIFI_HAVE_IP_BIT = BIT3;
+    static constexpr EventBits_t WIFI_HAVE_IP_BIT = BIT3;
 
     /**
      *  @brief Indicate if an explicit disconnect has been requested.
      */
-    static constexpr int WIFI_DISCONNECT_REQUESTED_BIT = BIT4;
+    static constexpr EventBits_t WIFI_DISCONNECT_REQUESTED_BIT = BIT4;
 
     /**
      *  @brief Indicate if the WiFi system has been initialised OK.
      */
-    static constexpr int WIFI_INTERFACE_STARTING_BIT = BIT5;
+    static constexpr EventBits_t WIFI_INTERFACE_STARTING_BIT = BIT5;
 
     /**
      *  @brief Indicate if the WiFi system has been initialised OK.
      */
-    static constexpr int WIFI_INTERFACE_STARTED_BIT = BIT6;
+    static constexpr EventBits_t WIFI_INTERFACE_STARTED_BIT = BIT6;
 
     /**
      *  @brief Indicate if the a request to stop the WiFi interface has been made.
      */
-    static constexpr int WIFI_INTERFACE_STOP_REQUESTED_BIT = BIT7;
+    static constexpr EventBits_t WIFI_INTERFACE_STOP_REQUESTED_BIT = BIT7;
 
     /**
      *  @brief Indicate if the scan for access points has completed.
      */
-    static constexpr int WIFI_SCAN_COMPLETE_BIT = BIT8;
+    static constexpr EventBits_t WIFI_SCAN_COMPLETE_BIT = BIT8;
 
     /**
      *  @brief Indicate a reset of the WiFi interface has been requested.
      */
-    static constexpr int WIFI_RESET_BIT = BIT9;
+    static constexpr EventBits_t WIFI_RESET_BIT = BIT9;
 
     /**
      * @brief Indicated if an access point is running on this device.
      */
-    static constexpr int WIFI_ACCESS_POINT_STARTED_BIT = BIT10;
+    static constexpr EventBits_t WIFI_ACCESS_POINT_STARTED_BIT = BIT10;
 
     /**
      * @brief USed to indicate that the access point is starting.
      */
-    static constexpr int WIFI_STARTING_ACCESS_POINT_BIT = BIT11;
+    static constexpr EventBits_t WIFI_STARTING_ACCESS_POINT_BIT = BIT11;
 
     /**
      *  @brief Indicate that some sort of error has occurred.
      *
      *  This will usually be problems with connections, getting the system started etc.
      */
-    static constexpr int WIFI_ERROR_BIT = BIT23;
+    static constexpr EventBits_t WIFI_ERROR_BIT = BIT23;
 
     /**
      * @brief All of the bits that could be set in an event group.
      */
-    static constexpr int WIFI_ALL_BITS = 0x00ffffff;
+    static constexpr EventBits_t WIFI_ALL_BITS = 0x00ffffffU;
 
     /**
      *  @brief Stack size for the WiFi task.

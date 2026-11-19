@@ -102,7 +102,7 @@ TEST_CASE("ExtractUInt32 decodes every high byte", CLASS_OF_TESTS)
 {
     for (uint32_t highByte = 0; highByte <= 0xff; highByte++)
     {
-        const uint32_t expected = (highByte << 24) | 0x00a5b6c7;
+        const uint32_t expected = (highByte << 24U) | 0x00a5b6c7U;
         uint8_t buffer[sizeof(uint32_t)];
         Encoders::EncodeUInt32(expected, buffer);
         TEST_ASSERT_EQUAL_HEX32(expected, Encoders::ExtractUInt32(buffer));

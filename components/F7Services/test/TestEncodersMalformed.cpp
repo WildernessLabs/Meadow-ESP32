@@ -49,8 +49,8 @@ public:
      */
     Payload &UInt16(const uint16_t value)
     {
-        Byte(value & 0xff);
-        return (Byte(value >> 8));
+        Byte(value & 0xffU);
+        return (Byte(value >> 8U));
     }
 
     /**
@@ -58,8 +58,8 @@ public:
      */
     Payload &UInt32(const uint32_t value)
     {
-        UInt16(value & 0xffff);
-        return (UInt16(value >> 16));
+        UInt16(value & 0xffffU);
+        return (UInt16(value >> 16U));
     }
 
     /**

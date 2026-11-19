@@ -822,7 +822,7 @@ static void WritePatternFile(const char *filename, const uint32_t length)
     TEST_ASSERT_NOT_NULL(buffer);
     for (uint32_t index = 0; index < length; index++)
     {
-        buffer[index] = static_cast<uint8_t>(index & 0xff);
+        buffer[index] = static_cast<uint8_t>(index & 0xffU);
     }
     const int written = WriteTestFile(filename, buffer, static_cast<int>(length));
     Utils::DeleteAndNullifyPointer(buffer);
@@ -904,7 +904,7 @@ TEST_CASE("ReadFile reads the longest file one response can hold", CLASS_OF_TEST
     TEST_ASSERT_EQUAL_UINT32(length, fileContents->ContentsLength);
     for (uint32_t index = 0; index < length; index++)
     {
-        TEST_ASSERT_EQUAL_UINT8_MESSAGE(static_cast<uint8_t>(index & 0xff), fileContents->Contents[index], "The contents read differ from the file.");
+        TEST_ASSERT_EQUAL_UINT8_MESSAGE(static_cast<uint8_t>(index & 0xffU), fileContents->Contents[index], "The contents read differ from the file.");
     }
     Encoders::FreeFileNameAndContents(&fileContents);
     Message::DeleteMessage(response);

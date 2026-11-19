@@ -87,7 +87,7 @@ static uint8_t ExpectedByte(const char *name, const uint32_t position)
     {
         hash = (hash ^ static_cast<uint8_t>(*character)) * 16777619u;
     }
-    return (static_cast<uint8_t>(hash + (position * 31) + (position >> 8)));
+    return (static_cast<uint8_t>(hash + (position * 31) + (position >> 8U)));
 }
 
 /**
