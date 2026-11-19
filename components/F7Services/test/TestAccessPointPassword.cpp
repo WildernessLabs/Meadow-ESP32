@@ -256,7 +256,8 @@ TEST_CASE("The soft-AP authentication mode follows the password and the mode ask
         uint8_t Requested;
         wifi_auth_mode_t Expected;
     } supported[] = {
-        {WiFiAuthenticationMode::WpaPsk, WIFI_AUTH_WPA_PSK}, {WiFiAuthenticationMode::Wpa2Psk, WIFI_AUTH_WPA2_PSK}, {WiFiAuthenticationMode::WpaWpa2Psk, WIFI_AUTH_WPA_WPA2_PSK}, {WiFiAuthenticationMode::Wpa3Psk, WIFI_AUTH_WPA3_PSK}, {WiFiAuthenticationMode::Wpa2Wpa3Psk, WIFI_AUTH_WPA2_WPA3_PSK},
+        {.Requested = WiFiAuthenticationMode::WpaPsk, .Expected = WIFI_AUTH_WPA_PSK},   {.Requested = WiFiAuthenticationMode::Wpa2Psk, .Expected = WIFI_AUTH_WPA2_PSK},          {.Requested = WiFiAuthenticationMode::WpaWpa2Psk, .Expected = WIFI_AUTH_WPA_WPA2_PSK},
+        {.Requested = WiFiAuthenticationMode::Wpa3Psk, .Expected = WIFI_AUTH_WPA3_PSK}, {.Requested = WiFiAuthenticationMode::Wpa2Wpa3Psk, .Expected = WIFI_AUTH_WPA2_WPA3_PSK},
     };
 
     for (const auto &entry: supported)

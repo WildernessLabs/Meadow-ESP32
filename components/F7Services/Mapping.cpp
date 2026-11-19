@@ -38,13 +38,13 @@ static const char *_unknown = "Unknown";
  *  STM value is first, ESP value second.
  */
 Mapping::int_mapping_t Mapping::_addressFamilies[] = {
-    {0, AF_UNSPEC},
-    {2, AF_INET},
-    {10, AF_INET6},
+    {.stm = 0, .esp = AF_UNSPEC},
+    {.stm = 2, .esp = AF_INET},
+    {.stm = 10, .esp = AF_INET6},
 #if LWIP_IPV6
-    {10, AF_INET6} /* AF_INET6 */
-#else              /* LWIP_IPV6 */
-    {0, AF_INET6} /* AF_UNSPEC */
+    {.stm = 10, .esp = AF_INET6} /* AF_INET6 */
+#else                            /* LWIP_IPV6 */
+    {.stm = 0, .esp = AF_INET6} /* AF_UNSPEC */
 #endif
 };
 
@@ -53,29 +53,30 @@ Mapping::int_mapping_t Mapping::_addressFamilies[] = {
  *
  *  STM value is first, ESP value second.
  */
-Mapping::int_mapping_t Mapping::_socketOptions[] = {{0, SO_ACCEPTCONN}, {1, SO_BROADCAST}, {2, SO_DEBUG},     {3, SO_DONTROUTE},  {4, SO_ERROR},   {5, SO_KEEPALIVE}, {6, SO_LINGER},    {7, SO_OOBINLINE},
-                                                    {8, SO_RCVBUF},     {9, SO_RCVLOWAT},  {10, SO_RCVTIMEO}, {11, SO_REUSEADDR}, {12, SO_SNDBUF}, {13, SO_SNDLOWAT}, {14, SO_SNDTIMEO}, {15, SO_TYPE}};
+Mapping::int_mapping_t Mapping::_socketOptions[] = {{.stm = 0, .esp = SO_ACCEPTCONN}, {.stm = 1, .esp = SO_BROADCAST}, {.stm = 2, .esp = SO_DEBUG},     {.stm = 3, .esp = SO_DONTROUTE}, {.stm = 4, .esp = SO_ERROR},     {.stm = 5, .esp = SO_KEEPALIVE},
+                                                    {.stm = 6, .esp = SO_LINGER},     {.stm = 7, .esp = SO_OOBINLINE}, {.stm = 8, .esp = SO_RCVBUF},    {.stm = 9, .esp = SO_RCVLOWAT},  {.stm = 10, .esp = SO_RCVTIMEO}, {.stm = 11, .esp = SO_REUSEADDR},
+                                                    {.stm = 12, .esp = SO_SNDBUF},    {.stm = 13, .esp = SO_SNDLOWAT}, {.stm = 14, .esp = SO_SNDTIMEO}, {.stm = 15, .esp = SO_TYPE}};
 
 /**
  *  @brief Map the STM32 TCP options to ESP32 TCP options.
  *
  *  STM value is first, ESP value second.
  */
-Mapping::int_mapping_t Mapping::_tcpOptions[] = {{0x10, TCP_NODELAY}, {0x11, TCP_KEEPIDLE}, {0x12, TCP_KEEPINTVL}, {0x13, TCP_KEEPCNT}};
+Mapping::int_mapping_t Mapping::_tcpOptions[] = {{.stm = 0x10, .esp = TCP_NODELAY}, {.stm = 0x11, .esp = TCP_KEEPIDLE}, {.stm = 0x12, .esp = TCP_KEEPINTVL}, {.stm = 0x13, .esp = TCP_KEEPCNT}};
 
 /**
  *  @brief Map the STM32 protocol family codes to ESP32 protocol family code.
  *
  *  STM value is first, ESP value second.
  */
-Mapping::int_mapping_t Mapping::_protocolFamilies[] = {{2, PF_INET}, {10, PF_INET6}, {0, PF_UNSPEC}};
+Mapping::int_mapping_t Mapping::_protocolFamilies[] = {{.stm = 2, .esp = PF_INET}, {.stm = 10, .esp = PF_INET6}, {.stm = 0, .esp = PF_UNSPEC}};
 
 /**
  *  @brief Map the STM32 socket types to ESP32 socket types.
  *
  *  STM value is first, ESP value second.
  */
-Mapping::int_mapping_t Mapping::_socketTypes[] = {{1, SOCK_STREAM}, {2, SOCK_DGRAM}, {3, SOCK_RAW}};
+Mapping::int_mapping_t Mapping::_socketTypes[] = {{.stm = 1, .esp = SOCK_STREAM}, {.stm = 2, .esp = SOCK_DGRAM}, {.stm = 3, .esp = SOCK_RAW}};
 
 /**
  *  @brief Map the STM32 socket option levels to ESP32 socket option levels.
@@ -88,7 +89,7 @@ Mapping::int_mapping_t Mapping::_socketTypes[] = {{1, SOCK_STREAM}, {2, SOCK_DGR
  *  so a NuttX 12 OS converts its levels to these values before sending them
  *  (espcp_mapping.c in Meadow.OS).
  */
-Mapping::int_mapping_t Mapping::_socketLevels[] = {{0, SOL_SOCKET}, {1, IPPROTO_IP}, {3, IPPROTO_TCP}, {4, IPPROTO_UDP}, {6, IPPROTO_TCP}, {17, IPPROTO_UDP}};
+Mapping::int_mapping_t Mapping::_socketLevels[] = {{.stm = 0, .esp = SOL_SOCKET}, {.stm = 1, .esp = IPPROTO_IP}, {.stm = 3, .esp = IPPROTO_TCP}, {.stm = 4, .esp = IPPROTO_UDP}, {.stm = 6, .esp = IPPROTO_TCP}, {.stm = 17, .esp = IPPROTO_UDP}};
 
 /**
  *  @brief Map the STM32 error codes to ESP32 error codes.
@@ -100,145 +101,145 @@ Mapping::int_mapping_t Mapping::_socketLevels[] = {{0, SOL_SOCKET}, {1, IPPROTO_
  *  values to its own when it receives them (espcp_mapping.c in Meadow.OS).
  */
 Mapping::int_mapping_t Mapping::_errno[] = {
-    {1, EPERM},
-    {2, ENOENT},
-    {3, ESRCH},
-    {4, EINTR},
-    {5, EIO},
-    {6, ENXIO},
-    {7, E2BIG},
-    {8, ENOEXEC},
-    {9, EBADF},
-    {10, ECHILD},
-    {11, EAGAIN},
-    {11, EWOULDBLOCK},
-    {12, ENOMEM},
-    {13, EACCES},
-    {14, EFAULT},
-    //    { 15, ENOTBLK },
-    {16, EBUSY},
-    {17, EEXIST},
-    {18, EXDEV},
-    {19, ENODEV},
-    {20, ENOTDIR},
-    {21, EISDIR},
-    {22, EINVAL},
-    {23, ENFILE},
-    {24, EMFILE},
-    {25, ENOTTY},
-    {26, ETXTBSY},
-    {27, EFBIG},
-    {28, ENOSPC},
-    {29, ESPIPE},
-    {30, EROFS},
-    {31, EMLINK},
-    {32, EPIPE},
-    {33, EDOM},
-    {34, ERANGE},
-    {35, ENOMSG},
-    {36, EIDRM},
+    {.stm = 1, .esp = EPERM},
+    {.stm = 2, .esp = ENOENT},
+    {.stm = 3, .esp = ESRCH},
+    {.stm = 4, .esp = EINTR},
+    {.stm = 5, .esp = EIO},
+    {.stm = 6, .esp = ENXIO},
+    {.stm = 7, .esp = E2BIG},
+    {.stm = 8, .esp = ENOEXEC},
+    {.stm = 9, .esp = EBADF},
+    {.stm = 10, .esp = ECHILD},
+    {.stm = 11, .esp = EAGAIN},
+    {.stm = 11, .esp = EWOULDBLOCK},
+    {.stm = 12, .esp = ENOMEM},
+    {.stm = 13, .esp = EACCES},
+    {.stm = 14, .esp = EFAULT},
+    //    {.stm = 15, .esp = ENOTBLK},
+    {.stm = 16, .esp = EBUSY},
+    {.stm = 17, .esp = EEXIST},
+    {.stm = 18, .esp = EXDEV},
+    {.stm = 19, .esp = ENODEV},
+    {.stm = 20, .esp = ENOTDIR},
+    {.stm = 21, .esp = EISDIR},
+    {.stm = 22, .esp = EINVAL},
+    {.stm = 23, .esp = ENFILE},
+    {.stm = 24, .esp = EMFILE},
+    {.stm = 25, .esp = ENOTTY},
+    {.stm = 26, .esp = ETXTBSY},
+    {.stm = 27, .esp = EFBIG},
+    {.stm = 28, .esp = ENOSPC},
+    {.stm = 29, .esp = ESPIPE},
+    {.stm = 30, .esp = EROFS},
+    {.stm = 31, .esp = EMLINK},
+    {.stm = 32, .esp = EPIPE},
+    {.stm = 33, .esp = EDOM},
+    {.stm = 34, .esp = ERANGE},
+    {.stm = 35, .esp = ENOMSG},
+    {.stm = 36, .esp = EIDRM},
     /*
-    { 37, ECHRNG },
-    { 38, EL2NSYNC },
-    { 39, EL3HLT },
-    { 40, EL3RST },
-    { 41, ELNRNG },
-    { 42, EUNATCH },
-    { 43, ENOCSI },
-    { 44, EL2HLT },
+    {.stm = 37, .esp = ECHRNG},
+    {.stm = 38, .esp = EL2NSYNC},
+    {.stm = 39, .esp = EL3HLT},
+    {.stm = 40, .esp = EL3RST},
+    {.stm = 41, .esp = ELNRNG},
+    {.stm = 42, .esp = EUNATCH},
+    {.stm = 43, .esp = ENOCSI},
+    {.stm = 44, .esp = EL2HLT},
     */
-    {45, EDEADLK},
-    {46, ENOLCK},
+    {.stm = 45, .esp = EDEADLK},
+    {.stm = 46, .esp = ENOLCK},
     /*
-    { 50, EBADE },
-    { 51, EBADR },
-    { 52, EXFULL },
-    { 53, ENOANO },
-    { 54, EBADRQC },
-    { 55, EBADSLT },
-    { 56, EDEADLOCK },
-    { 57, EBFONT },
+    {.stm = 50, .esp = EBADE},
+    {.stm = 51, .esp = EBADR},
+    {.stm = 52, .esp = EXFULL},
+    {.stm = 53, .esp = ENOANO},
+    {.stm = 54, .esp = EBADRQC},
+    {.stm = 55, .esp = EBADSLT},
+    {.stm = 56, .esp = EDEADLOCK},
+    {.stm = 57, .esp = EBFONT},
     */
-    {60, ENOSTR},
-    {61, ENODATA},
-    {62, ETIME},
-    {63, ENOSR},
-    {64, ENOENT},
+    {.stm = 60, .esp = ENOSTR},
+    {.stm = 61, .esp = ENODATA},
+    {.stm = 62, .esp = ETIME},
+    {.stm = 63, .esp = ENOSR},
+    {.stm = 64, .esp = ENOENT},
     /*
-    { 65, ENOPKG },
-    { 66, EREMOTE },
+    {.stm = 65, .esp = ENOPKG},
+    {.stm = 66, .esp = EREMOTE},
     */
-    {67, ENOLINK},
+    {.stm = 67, .esp = ENOLINK},
     /*
-    { 68, EADV },
-    { 69, ESRMNT },
-    { 70, ECOMM },
+    {.stm = 68, .esp = EADV},
+    {.stm = 69, .esp = ESRMNT},
+    {.stm = 70, .esp = ECOMM},
     */
-    {71, EPROTO},
-    {74, EMULTIHOP},
+    {.stm = 71, .esp = EPROTO},
+    {.stm = 74, .esp = EMULTIHOP},
     /*
-    { 75, ELBIN },
-    { 76, EDOTDOT },
+    {.stm = 75, .esp = ELBIN},
+    {.stm = 76, .esp = EDOTDOT},
     */
-    {77, EBADMSG},
-    {79, EFTYPE},
+    {.stm = 77, .esp = EBADMSG},
+    {.stm = 79, .esp = EFTYPE},
     /*
-    { 80, ENOTUNIQ },
-    { 81, EBADFD },
-    { 82, EREMCHG },
-    { 83, ELIBACC },
-    { 84, ELIBBAD },
-    { 85, ELIBSCN },
-    { 86, ELIBMAX },
-    { 87, ELIBEXEC },
-    { 88, ENOSYS },
-    { 89, ENMFILE },
+    {.stm = 80, .esp = ENOTUNIQ},
+    {.stm = 81, .esp = EBADFD},
+    {.stm = 82, .esp = EREMCHG},
+    {.stm = 83, .esp = ELIBACC},
+    {.stm = 84, .esp = ELIBBAD},
+    {.stm = 85, .esp = ELIBSCN},
+    {.stm = 86, .esp = ELIBMAX},
+    {.stm = 87, .esp = ELIBEXEC},
+    {.stm = 88, .esp = ENOSYS},
+    {.stm = 89, .esp = ENMFILE},
     */
-    {90, ENOTEMPTY},
-    {91, ENAMETOOLONG},
-    {92, ELOOP},
-    {95, EOPNOTSUPP},
-    {96, EPFNOSUPPORT},
-    {104, ECONNRESET},
-    {105, ENOBUFS},
-    {106, EAFNOSUPPORT},
-    {107, EPROTOTYPE},
-    {108, ENOTSOCK},
-    {109, ENOPROTOOPT},
-    {110, ESHUTDOWN},
-    {111, ECONNREFUSED},
-    {112, EADDRINUSE},
-    {113, ECONNABORTED},
-    {114, ENETUNREACH},
-    {115, ENETDOWN},
-    {116, ETIMEDOUT},
-    {117, EHOSTDOWN},
-    {118, EHOSTUNREACH},
-    {119, EINPROGRESS},
-    {120, EALREADY},
-    {121, EDESTADDRREQ},
-    {122, EMSGSIZE},
-    {123, EPROTONOSUPPORT},
-    // { 124, ESOCKTNOSUPPORT },
-    {125, EADDRNOTAVAIL},
-    {126, ENETRESET},
-    {127, EISCONN},
-    {128, ENOTCONN},
-    {129, ETOOMANYREFS},
-    // { 130, EPROCLIM },
-    // { 131, EUSERS },
-    {132, EDQUOT},
-    {133, ESTALE},
-    {134, ENOTSUP},
-    // { 135, ENOMEDIUM },
-    // { 136, ENOSHARE },
-    // { 137, ECASECLASH },
-    {138, EILSEQ},
-    {139, EOVERFLOW},
-    {140, ECANCELED},
-    {141, ENOTRECOVERABLE},
-    {142, EOWNERDEAD}
-    // { 143, ESTRPIPE }
+    {.stm = 90, .esp = ENOTEMPTY},
+    {.stm = 91, .esp = ENAMETOOLONG},
+    {.stm = 92, .esp = ELOOP},
+    {.stm = 95, .esp = EOPNOTSUPP},
+    {.stm = 96, .esp = EPFNOSUPPORT},
+    {.stm = 104, .esp = ECONNRESET},
+    {.stm = 105, .esp = ENOBUFS},
+    {.stm = 106, .esp = EAFNOSUPPORT},
+    {.stm = 107, .esp = EPROTOTYPE},
+    {.stm = 108, .esp = ENOTSOCK},
+    {.stm = 109, .esp = ENOPROTOOPT},
+    {.stm = 110, .esp = ESHUTDOWN},
+    {.stm = 111, .esp = ECONNREFUSED},
+    {.stm = 112, .esp = EADDRINUSE},
+    {.stm = 113, .esp = ECONNABORTED},
+    {.stm = 114, .esp = ENETUNREACH},
+    {.stm = 115, .esp = ENETDOWN},
+    {.stm = 116, .esp = ETIMEDOUT},
+    {.stm = 117, .esp = EHOSTDOWN},
+    {.stm = 118, .esp = EHOSTUNREACH},
+    {.stm = 119, .esp = EINPROGRESS},
+    {.stm = 120, .esp = EALREADY},
+    {.stm = 121, .esp = EDESTADDRREQ},
+    {.stm = 122, .esp = EMSGSIZE},
+    {.stm = 123, .esp = EPROTONOSUPPORT},
+    // {.stm = 124, .esp = ESOCKTNOSUPPORT},
+    {.stm = 125, .esp = EADDRNOTAVAIL},
+    {.stm = 126, .esp = ENETRESET},
+    {.stm = 127, .esp = EISCONN},
+    {.stm = 128, .esp = ENOTCONN},
+    {.stm = 129, .esp = ETOOMANYREFS},
+    // {.stm = 130, .esp = EPROCLIM},
+    // {.stm = 131, .esp = EUSERS},
+    {.stm = 132, .esp = EDQUOT},
+    {.stm = 133, .esp = ESTALE},
+    {.stm = 134, .esp = ENOTSUP},
+    // {.stm = 135, .esp = ENOMEDIUM},
+    // {.stm = 136, .esp = ENOSHARE},
+    // {.stm = 137, .esp = ECASECLASH},
+    {.stm = 138, .esp = EILSEQ},
+    {.stm = 139, .esp = EOVERFLOW},
+    {.stm = 140, .esp = ECANCELED},
+    {.stm = 141, .esp = ENOTRECOVERABLE},
+    {.stm = 142, .esp = EOWNERDEAD}
+    // {.stm = 143, .esp = ESTRPIPE}
 };
 
 /**
@@ -247,7 +248,7 @@ Mapping::int_mapping_t Mapping::_errno[] = {
  *  STM value is first, ESP value second.
  */
 Mapping::int_mapping_t Mapping::_messageFlags[] = {
-    {0x0008, MSG_CTRUNC}, {0x0040, MSG_DONTWAIT}, {0x8000, MSG_MORE}, {0x4000, MSG_NOSIGNAL}, {0x0001, MSG_OOB}, {0x0002, MSG_PEEK}, {0x0020, MSG_TRUNC}, {0x0100, MSG_WAITALL},
+    {.stm = 0x0008, .esp = MSG_CTRUNC}, {.stm = 0x0040, .esp = MSG_DONTWAIT}, {.stm = 0x8000, .esp = MSG_MORE}, {.stm = 0x4000, .esp = MSG_NOSIGNAL}, {.stm = 0x0001, .esp = MSG_OOB}, {.stm = 0x0002, .esp = MSG_PEEK}, {.stm = 0x0020, .esp = MSG_TRUNC}, {.stm = 0x0100, .esp = MSG_WAITALL},
 };
 
 /**
@@ -255,211 +256,217 @@ Mapping::int_mapping_t Mapping::_messageFlags[] = {
  *
  *  STM (Mono) value is first, ESP value second.
  */
-Mapping::int_mapping_t Mapping::_pollEvents[] = {{0x01, POLLIN}, {0x02, POLLPRI}, {0x04, POLLOUT}, {0x08, POLLERR}, {0x10, POLLHUP}, {0x20, POLLNVAL}};
+Mapping::int_mapping_t Mapping::_pollEvents[] = {{.stm = 0x01, .esp = POLLIN}, {.stm = 0x02, .esp = POLLPRI}, {.stm = 0x04, .esp = POLLOUT}, {.stm = 0x08, .esp = POLLERR}, {.stm = 0x10, .esp = POLLHUP}, {.stm = 0x20, .esp = POLLNVAL}};
 
 /**
  *  @brief Map the STM32 socket shutdown types.
  *
  *  STM value is first, ESP value second.
  */
-Mapping::int_mapping_t Mapping::_socketShutdownType[] = {{1, SHUT_RD}, {2, SHUT_WR}, {3, SHUT_RDWR}};
+Mapping::int_mapping_t Mapping::_socketShutdownType[] = {{.stm = 1, .esp = SHUT_RD}, {.stm = 2, .esp = SHUT_WR}, {.stm = 3, .esp = SHUT_RDWR}};
 
 /**
  *  @brief Map of the ESP IDF error codes (esp_err_t) to StatusCodes.
  */
 Mapping::int_mapping_t Mapping::_espErrorCodes[] = {
-    {StatusCodes::CompletedOk, ESP_OK},
-    {StatusCodes::EspOutOfMemory, ESP_ERR_NO_MEM},
-    {StatusCodes::CannotConnectToAccessPoint, ESP_ERR_WIFI_CONN},
-    {StatusCodes::EspWiFiInvalidSsid, ESP_ERR_WIFI_SSID},
-    {StatusCodes::EspWiFiNotStarted, ESP_ERR_WIFI_NOT_STARTED},
-    {StatusCodes::EspWiFiNotStarted, ESP_ERR_WIFI_NOT_INIT},
+    {.stm = StatusCodes::CompletedOk, .esp = ESP_OK},
+    {.stm = StatusCodes::EspOutOfMemory, .esp = ESP_ERR_NO_MEM},
+    {.stm = StatusCodes::CannotConnectToAccessPoint, .esp = ESP_ERR_WIFI_CONN},
+    {.stm = StatusCodes::EspWiFiInvalidSsid, .esp = ESP_ERR_WIFI_SSID},
+    {.stm = StatusCodes::EspWiFiNotStarted, .esp = ESP_ERR_WIFI_NOT_STARTED},
+    {.stm = StatusCodes::EspWiFiNotStarted, .esp = ESP_ERR_WIFI_NOT_INIT},
 };
 
 /**
  *  @brief Map of the ESP32 authentication types to the NetworkAuthenticationType enum in Meadow.Core
  */
 Mapping::int_mapping_t Mapping::_networkAuthenticationType[] = {
-    {0, WIFI_AUTH_OPEN}, {1, WIFI_AUTH_WEP}, {2, WIFI_AUTH_WPA_PSK}, {3, WIFI_AUTH_WPA2_PSK}, {4, WIFI_AUTH_WPA_WPA2_PSK}, {5, WIFI_AUTH_WPA2_ENTERPRISE}, {13, WIFI_AUTH_WPA3_PSK}, {14, WIFI_AUTH_WPA2_WPA3_PSK},
+    {.stm = 0, .esp = WIFI_AUTH_OPEN},           {.stm = 1, .esp = WIFI_AUTH_WEP}, {.stm = 2, .esp = WIFI_AUTH_WPA_PSK}, {.stm = 3, .esp = WIFI_AUTH_WPA2_PSK}, {.stm = 4, .esp = WIFI_AUTH_WPA_WPA2_PSK}, {.stm = 5, .esp = WIFI_AUTH_WPA2_ENTERPRISE}, {.stm = 13, .esp = WIFI_AUTH_WPA3_PSK},
+    {.stm = 14, .esp = WIFI_AUTH_WPA2_WPA3_PSK},
 };
 
 /**
  *  @brief Map of the status codes to their string representations.
  */
 Mapping::str_mapping_t Mapping::_statusCodes[] = {
-    {StatusCodes::CompletedOk, "CompletedOk"},
-    {StatusCodes::CrcError, "CrcError"},
-    {StatusCodes::Restart, "Restarting"},
-    {StatusCodes::Failure, "Failure"},
-    {StatusCodes::InvalidInterface, "InvalidInterface"},
-    {StatusCodes::QueueError, "QueueError"},
-    {StatusCodes::Timeout, "Timeout"},
-    {StatusCodes::InvalidPacket, "InvalidPacket"},
-    {StatusCodes::InvalidHeader, "InvalidHeader"},
-    {StatusCodes::UnexpectedData, "UnexpectedData"},
-    {StatusCodes::MissingEndOfFrameMarker, "MissingEndOfFrameMarker"},
-    {StatusCodes::HeaderBodyFieldMismatch, "HeaderBodyFieldMismatch"},
-    {StatusCodes::WiFiAlreadyStarted, "WiFiAlreadyStarted"},
-    {StatusCodes::InvalidWiFiCredentials, "InvalidWiFiCredentials"},
-    {StatusCodes::WiFiDisconnected, "WiFiDisconnected"},
-    {StatusCodes::CannotStartNetworkInterface, "CannotStartNetworkInterface"},
-    {StatusCodes::CannotConnectToAccessPoint, "CannotConnectToAccessPoint"},
-    {StatusCodes::InvalidAntennaData, "InvalidAntennaData"},
-    {StatusCodes::InvalidAntennaValue, "InvalidAntennaValue"},
-    {StatusCodes::NoMessagesWaiting, "NoMessagesWaiting"},
-    {StatusCodes::CoprocessorNotResponding, "CoprocessorNotResponding"},
-    {StatusCodes::EspWiFiNotStarted, "EspWiFiNotStarted"},
-    {StatusCodes::EspOutOfMemory, "EspOutOfMemory"},
-    {StatusCodes::EspWiFiInvalidSsid, "EspWiFiInvalidSsid"},
-    {StatusCodes::AccessPointNotFound, "AccessPointNotFound"},
-    {StatusCodes::BeaconTimeout, "BeaconTimeout"},
-    {StatusCodes::AuthenticationFailed, "AuthenticationFailed"},
-    {StatusCodes::AssociationFailed, "AssociationFailed"},
-    {StatusCodes::HandshakeTimeout, "HandshakeTimeout"},
-    {StatusCodes::ConnectionFailed, "ConnectionFailed"},
-    {StatusCodes::ApTsfReset, "ApTsfReset"},
-    {StatusCodes::UnmappedErrorCode, "UnmappedErrorCode"},
-    {StatusCodes::UnknownConfigurationItem, "UnknownConfigurationItem"},
-    {StatusCodes::CannotStartAccessPoint, "CannotStartAccessPoint"},
-    {StatusCodes::DhcpConfigurationError, "DhcpConfigurationError"},
-    {StatusCodes::AccessPointNotStarted, "AccessPointNotStarted"},
-    {StatusCodes::AccessPointAlreadyStarted, "AccessPointAlreadyStarted"},
-    {StatusCodes::FileNotFound, "FileNotFound"},
-    {StatusCodes::InvalidRequest, "InvalidRequest"},
-    {StatusCodes::BluetoothNotStarted, "BluetoothNotStarted"},
-    {StatusCodes::BluetoothDeviceNotBonded, "BluetoothDeviceNotBonded"},
-    {StatusCodes::NetworkCloseDeadlock, "NetworkCloseDeadlock"},
-    {StatusCodes::NetworkPollDeadlock, "NetworkPollDeadlock"},
-    {StatusCodes::NetworkSocketDeadlock, "NetworkSocketDeadlock"},
+    {.key = StatusCodes::CompletedOk, .value = "CompletedOk"},
+    {.key = StatusCodes::CrcError, .value = "CrcError"},
+    {.key = StatusCodes::Restart, .value = "Restarting"},
+    {.key = StatusCodes::Failure, .value = "Failure"},
+    {.key = StatusCodes::InvalidInterface, .value = "InvalidInterface"},
+    {.key = StatusCodes::QueueError, .value = "QueueError"},
+    {.key = StatusCodes::Timeout, .value = "Timeout"},
+    {.key = StatusCodes::InvalidPacket, .value = "InvalidPacket"},
+    {.key = StatusCodes::InvalidHeader, .value = "InvalidHeader"},
+    {.key = StatusCodes::UnexpectedData, .value = "UnexpectedData"},
+    {.key = StatusCodes::MissingEndOfFrameMarker, .value = "MissingEndOfFrameMarker"},
+    {.key = StatusCodes::HeaderBodyFieldMismatch, .value = "HeaderBodyFieldMismatch"},
+    {.key = StatusCodes::WiFiAlreadyStarted, .value = "WiFiAlreadyStarted"},
+    {.key = StatusCodes::InvalidWiFiCredentials, .value = "InvalidWiFiCredentials"},
+    {.key = StatusCodes::WiFiDisconnected, .value = "WiFiDisconnected"},
+    {.key = StatusCodes::CannotStartNetworkInterface, .value = "CannotStartNetworkInterface"},
+    {.key = StatusCodes::CannotConnectToAccessPoint, .value = "CannotConnectToAccessPoint"},
+    {.key = StatusCodes::InvalidAntennaData, .value = "InvalidAntennaData"},
+    {.key = StatusCodes::InvalidAntennaValue, .value = "InvalidAntennaValue"},
+    {.key = StatusCodes::NoMessagesWaiting, .value = "NoMessagesWaiting"},
+    {.key = StatusCodes::CoprocessorNotResponding, .value = "CoprocessorNotResponding"},
+    {.key = StatusCodes::EspWiFiNotStarted, .value = "EspWiFiNotStarted"},
+    {.key = StatusCodes::EspOutOfMemory, .value = "EspOutOfMemory"},
+    {.key = StatusCodes::EspWiFiInvalidSsid, .value = "EspWiFiInvalidSsid"},
+    {.key = StatusCodes::AccessPointNotFound, .value = "AccessPointNotFound"},
+    {.key = StatusCodes::BeaconTimeout, .value = "BeaconTimeout"},
+    {.key = StatusCodes::AuthenticationFailed, .value = "AuthenticationFailed"},
+    {.key = StatusCodes::AssociationFailed, .value = "AssociationFailed"},
+    {.key = StatusCodes::HandshakeTimeout, .value = "HandshakeTimeout"},
+    {.key = StatusCodes::ConnectionFailed, .value = "ConnectionFailed"},
+    {.key = StatusCodes::ApTsfReset, .value = "ApTsfReset"},
+    {.key = StatusCodes::UnmappedErrorCode, .value = "UnmappedErrorCode"},
+    {.key = StatusCodes::UnknownConfigurationItem, .value = "UnknownConfigurationItem"},
+    {.key = StatusCodes::CannotStartAccessPoint, .value = "CannotStartAccessPoint"},
+    {.key = StatusCodes::DhcpConfigurationError, .value = "DhcpConfigurationError"},
+    {.key = StatusCodes::AccessPointNotStarted, .value = "AccessPointNotStarted"},
+    {.key = StatusCodes::AccessPointAlreadyStarted, .value = "AccessPointAlreadyStarted"},
+    {.key = StatusCodes::FileNotFound, .value = "FileNotFound"},
+    {.key = StatusCodes::InvalidRequest, .value = "InvalidRequest"},
+    {.key = StatusCodes::BluetoothNotStarted, .value = "BluetoothNotStarted"},
+    {.key = StatusCodes::BluetoothDeviceNotBonded, .value = "BluetoothDeviceNotBonded"},
+    {.key = StatusCodes::NetworkCloseDeadlock, .value = "NetworkCloseDeadlock"},
+    {.key = StatusCodes::NetworkPollDeadlock, .value = "NetworkPollDeadlock"},
+    {.key = StatusCodes::NetworkSocketDeadlock, .value = "NetworkSocketDeadlock"},
 };
 
 /**
  *  @brief Table of reset codes.
  */
 Mapping::int_mapping_t Mapping::_resetReasons[] = {
-    {Esp32ResetCodes::Unknown, ESP_RST_UNKNOWN},       {Esp32ResetCodes::PowerOn, ESP_RST_POWERON},   {Esp32ResetCodes::ExternalGpio, ESP_RST_EXT},    {Esp32ResetCodes::Software, ESP_RST_SW},       {Esp32ResetCodes::Panic, ESP_RST_PANIC}, {Esp32ResetCodes::InterruptWatchdog, ESP_RST_INT_WDT},
-    {Esp32ResetCodes::TaskWatchdog, ESP_RST_TASK_WDT}, {Esp32ResetCodes::OtherWatchdog, ESP_RST_WDT}, {Esp32ResetCodes::DeepSleep, ESP_RST_DEEPSLEEP}, {Esp32ResetCodes::Brownout, ESP_RST_BROWNOUT}, {Esp32ResetCodes::SDIO, ESP_RST_SDIO},
+    {.stm = Esp32ResetCodes::Unknown, .esp = ESP_RST_UNKNOWN},       {.stm = Esp32ResetCodes::PowerOn, .esp = ESP_RST_POWERON},   {.stm = Esp32ResetCodes::ExternalGpio, .esp = ESP_RST_EXT},
+    {.stm = Esp32ResetCodes::Software, .esp = ESP_RST_SW},           {.stm = Esp32ResetCodes::Panic, .esp = ESP_RST_PANIC},       {.stm = Esp32ResetCodes::InterruptWatchdog, .esp = ESP_RST_INT_WDT},
+    {.stm = Esp32ResetCodes::TaskWatchdog, .esp = ESP_RST_TASK_WDT}, {.stm = Esp32ResetCodes::OtherWatchdog, .esp = ESP_RST_WDT}, {.stm = Esp32ResetCodes::DeepSleep, .esp = ESP_RST_DEEPSLEEP},
+    {.stm = Esp32ResetCodes::Brownout, .esp = ESP_RST_BROWNOUT},     {.stm = Esp32ResetCodes::SDIO, .esp = ESP_RST_SDIO},
 };
 
 /**
  *  @brief Map of the message types to their string representations.
  */
 Mapping::str_mapping_t Mapping::_messageTypeNames[] = {
-    {MessageTypes::Ack, "Ack"}, {MessageTypes::Nak, "Nak"}, {MessageTypes::Reset, "Reset"}, {MessageTypes::Event, "Event"}, {MessageTypes::Response, "Response"}, {MessageTypes::Transport, "Transport"}, {MessageTypes::Header, "Request"}, {MessageTypes::Data, "Data"},
+    {.key = MessageTypes::Ack, .value = "Ack"},        {.key = MessageTypes::Nak, .value = "Nak"},           {.key = MessageTypes::Reset, .value = "Reset"},
+    {.key = MessageTypes::Event, .value = "Event"},    {.key = MessageTypes::Response, .value = "Response"}, {.key = MessageTypes::Transport, .value = "Transport"},
+    {.key = MessageTypes::Header, .value = "Request"}, {.key = MessageTypes::Data, .value = "Data"},
 };
 
 /**
  *  @brief Map if the interface IDs to their names.
  */
 Mapping::str_mapping_t Mapping::_interfaceNames[] = {
-    {Esp32Interfaces::WiFi, "WiFi"}, {Esp32Interfaces::BlueTooth, "Bluetooth"}, {Esp32Interfaces::MeshNetwork, "MeshNetwork"}, {Esp32Interfaces::System, "System"}, {Esp32Interfaces::Transport, "Transport"},
+    {.key = Esp32Interfaces::WiFi, .value = "WiFi"}, {.key = Esp32Interfaces::BlueTooth, .value = "Bluetooth"}, {.key = Esp32Interfaces::MeshNetwork, .value = "MeshNetwork"}, {.key = Esp32Interfaces::System, .value = "System"}, {.key = Esp32Interfaces::Transport, .value = "Transport"},
 };
 
 /**
  *  @brief Map of the system function IDs to their names.
  */
 Mapping::str_mapping_t Mapping::_systemFunctionNames[] = {
-    {SystemFunction::GetConfiguration, "GetConfiguration"},
-    {SystemFunction::SetConfigurationItem, "SetConfigurationItem"},
-    {SystemFunction::DeepSleep, "DeepSleep"},
-    {SystemFunction::GetBatteryChargeLevel, "GetBatteryChargeLevel"},
-    {SystemFunction::StartHeapTrace, "StartHeapTrace"},
-    {SystemFunction::StopHeapTrace, "StopHeapTrace"},
-    {SystemFunction::FileSystemFormat, "FileSystemFormat"},
-    {SystemFunction::FileSystemListFiles, "FileSystemListFiles"},
-    {SystemFunction::FileSystemWriteFile, "FileSystemWriteFile"},
-    {SystemFunction::FileSystemReadFile, "FileSystemReadFile"},
-    {SystemFunction::FileSystemDeleteFile, "FileSystemDeleteFile"},
-    {SystemFunction::LoggingConfiguration, "LoggingConfiguration"},
-    {SystemFunction::LogMessage, "LogMessage"},
-    {SystemFunction::GetCoreDumpInformation, "GetCoreDumpInformation"},
-    {SystemFunction::GetCoreDumpFragment, "GetCoreDumpFragment"},
-    {SystemFunction::EraseCoreDump, "EraseCoreDump"},
+    {.key = SystemFunction::GetConfiguration, .value = "GetConfiguration"},
+    {.key = SystemFunction::SetConfigurationItem, .value = "SetConfigurationItem"},
+    {.key = SystemFunction::DeepSleep, .value = "DeepSleep"},
+    {.key = SystemFunction::GetBatteryChargeLevel, .value = "GetBatteryChargeLevel"},
+    {.key = SystemFunction::StartHeapTrace, .value = "StartHeapTrace"},
+    {.key = SystemFunction::StopHeapTrace, .value = "StopHeapTrace"},
+    {.key = SystemFunction::FileSystemFormat, .value = "FileSystemFormat"},
+    {.key = SystemFunction::FileSystemListFiles, .value = "FileSystemListFiles"},
+    {.key = SystemFunction::FileSystemWriteFile, .value = "FileSystemWriteFile"},
+    {.key = SystemFunction::FileSystemReadFile, .value = "FileSystemReadFile"},
+    {.key = SystemFunction::FileSystemDeleteFile, .value = "FileSystemDeleteFile"},
+    {.key = SystemFunction::LoggingConfiguration, .value = "LoggingConfiguration"},
+    {.key = SystemFunction::LogMessage, .value = "LogMessage"},
+    {.key = SystemFunction::GetCoreDumpInformation, .value = "GetCoreDumpInformation"},
+    {.key = SystemFunction::GetCoreDumpFragment, .value = "GetCoreDumpFragment"},
+    {.key = SystemFunction::EraseCoreDump, .value = "EraseCoreDump"},
 };
 
 /**
  *  @brief Map of the bluetooth function IDs to their names.
  */
 Mapping::str_mapping_t Mapping::_bluetoothFunctionNames[] = {
-    {BluetoothFunction::Start, "Start"},
-    {BluetoothFunction::Stop, "Stop"},
-    {BluetoothFunction::GetHandles, "GetHandles"},
-    {BluetoothFunction::ServerDataSet, "ServerDataSet"},
-    {BluetoothFunction::ClientWriteRequestEvent, "ClientWriteRequestEvent"},
-    {BluetoothFunction::BluetoothStartingEvent, "BluetoothStartingEvent"},
-    {BluetoothFunction::BluetoothStartedEvent, "BluetoothStartedEvent"},
-    {BluetoothFunction::BluetoothStoppingEvent, "BluetoothStoppingEvent"},
-    {BluetoothFunction::BluetoothStoppedEvent, "BluetoothStoppedEvent"},
-    {BluetoothFunction::ClientConnectedEvent, "ClientConnectedEvent"},
-    {BluetoothFunction::ClientDisconnectedEvent, "ClientDisconnectedEvent"},
-    {BluetoothFunction::PasskeyReply, "PasskeyReply"},
-    {BluetoothFunction::NumericComparisonReply, "NumericComparisonReply"},
-    {BluetoothFunction::GetBondedDevices, "GetBondedDevices"},
-    {BluetoothFunction::RemoveBond, "RemoveBond"},
-    {BluetoothFunction::RemoveAllBonds, "RemoveAllBonds"},
-    {BluetoothFunction::PasskeyDisplayEvent, "PasskeyDisplayEvent"},
-    {BluetoothFunction::PasskeyRequestEvent, "PasskeyRequestEvent"},
-    {BluetoothFunction::NumericComparisonRequestEvent, "NumericComparisonRequestEvent"},
-    {BluetoothFunction::AuthenticationCompleteEvent, "AuthenticationCompleteEvent"},
+    {.key = BluetoothFunction::Start, .value = "Start"},
+    {.key = BluetoothFunction::Stop, .value = "Stop"},
+    {.key = BluetoothFunction::GetHandles, .value = "GetHandles"},
+    {.key = BluetoothFunction::ServerDataSet, .value = "ServerDataSet"},
+    {.key = BluetoothFunction::ClientWriteRequestEvent, .value = "ClientWriteRequestEvent"},
+    {.key = BluetoothFunction::BluetoothStartingEvent, .value = "BluetoothStartingEvent"},
+    {.key = BluetoothFunction::BluetoothStartedEvent, .value = "BluetoothStartedEvent"},
+    {.key = BluetoothFunction::BluetoothStoppingEvent, .value = "BluetoothStoppingEvent"},
+    {.key = BluetoothFunction::BluetoothStoppedEvent, .value = "BluetoothStoppedEvent"},
+    {.key = BluetoothFunction::ClientConnectedEvent, .value = "ClientConnectedEvent"},
+    {.key = BluetoothFunction::ClientDisconnectedEvent, .value = "ClientDisconnectedEvent"},
+    {.key = BluetoothFunction::PasskeyReply, .value = "PasskeyReply"},
+    {.key = BluetoothFunction::NumericComparisonReply, .value = "NumericComparisonReply"},
+    {.key = BluetoothFunction::GetBondedDevices, .value = "GetBondedDevices"},
+    {.key = BluetoothFunction::RemoveBond, .value = "RemoveBond"},
+    {.key = BluetoothFunction::RemoveAllBonds, .value = "RemoveAllBonds"},
+    {.key = BluetoothFunction::PasskeyDisplayEvent, .value = "PasskeyDisplayEvent"},
+    {.key = BluetoothFunction::PasskeyRequestEvent, .value = "PasskeyRequestEvent"},
+    {.key = BluetoothFunction::NumericComparisonRequestEvent, .value = "NumericComparisonRequestEvent"},
+    {.key = BluetoothFunction::AuthenticationCompleteEvent, .value = "AuthenticationCompleteEvent"},
 };
 
 /**
  *  @brief Map of the transport function IDs to their names.
  */
-Mapping::str_mapping_t Mapping::_transportFunctionNames[] = {{TransportFunction::ResponseReady, "ResponseReady"}, {TransportFunction::SendResponse, "SendResponse"}, {TransportFunction::KillNuttxThread, "KillNuttxThread"}, {TransportFunction::ResetEsp32, "ResetEsp32"}};
+Mapping::str_mapping_t Mapping::_transportFunctionNames[] = {
+    {.key = TransportFunction::ResponseReady, .value = "ResponseReady"}, {.key = TransportFunction::SendResponse, .value = "SendResponse"}, {.key = TransportFunction::KillNuttxThread, .value = "KillNuttxThread"}, {.key = TransportFunction::ResetEsp32, .value = "ResetEsp32"}};
 
 /**
  *  @brief Map of the WiFi function ID to their names.
  */
 Mapping::str_mapping_t Mapping::_wifiFunctionNames[] = {
-    {WiFiFunction::ConnectToAccessPoint, "ConnectToAccessPoint"},
-    {WiFiFunction::ConnectToDefaultAccessPoint, "ConnectToDefaultAccessPoint"},
-    {WiFiFunction::StartAccessPoint, "StartAccessPoint"},
-    {WiFiFunction::StopAccessPoint, "StopAccesPoint"},
-    {WiFiFunction::NodeConnectedEvent, "NodeConnected"},
-    {WiFiFunction::NodeDisconnectedEvent, "NodeDisconnectedEvent"},
-    {WiFiFunction::DisconnectFromAccessPoint, "DisconnectFromAccessPoint"},
-    {WiFiFunction::GetAccessPoints, "GetAccessPoints"},
-    {WiFiFunction::GetAddrInfo, "GetAddrInfo"},
-    {WiFiFunction::Socket, "Socket"},
-    {WiFiFunction::Connect, "Connect"},
-    {WiFiFunction::Write, "Write"},
-    {WiFiFunction::SetSockOpt, "SetSockOpt"},
-    {WiFiFunction::Read, "Read"},
-    {WiFiFunction::Close, "Close"},
-    {WiFiFunction::SendTo, "SendTo"},
-    {WiFiFunction::RecvFrom, "RecvFrom"},
-    {WiFiFunction::Poll, "Poll"},
-    {WiFiFunction::InterruptPollResponse, "InterruptPollResponse"},
-    {WiFiFunction::Send, "Send"},
-    {WiFiFunction::Bind, "Bind"},
-    {WiFiFunction::Listen, "Listen"},
-    {WiFiFunction::Accept, "Accept"},
-    {WiFiFunction::Ioctl, "Ioctl"},
-    {WiFiFunction::GetSockName, "GetSockName"},
-    {WiFiFunction::GetPeerName, "GetPeerName"},
-    {WiFiFunction::FreeAddrInfo, "FreeAddrInfo"},
-    {WiFiFunction::GetAddrInfo, "GetAddrInfo"},
-    {WiFiFunction::RecvMsg, "RecvMsg"},
-    {WiFiFunction::Shutdown, "Shutdown"},
-    {WiFiFunction::SendMsg, "SendMsg"},
-    {WiFiFunction::Dup2, "Dup2"},
-    {WiFiFunction::AddRef, "AddRef"},
-    {WiFiFunction::SockCaps, "SockCaps"},
-    {WiFiFunction::StartWiFiInterfaceEvent, "StartWiFiInterfaceEvent"},
-    {WiFiFunction::StopWiFiInterfaceEvent, "StopWiFiInterfaceEvent"},
-    {WiFiFunction::NetworkConnectedEvent, "NetworkConnectedEvent"},
-    {WiFiFunction::NetworkDisconnectedEvent, "NetworkDisconnectedEvent"},
-    {WiFiFunction::NtpUpdateEvent, "NtpUpdateEvent"},
-    {WiFiFunction::ErrorEvent, "ErrorEvent"},
-    {WiFiFunction::StartAccessPoint, "StartAccessPoint"},
-    {WiFiFunction::StopAccessPoint, "StopAccessPoint"},
-    {WiFiFunction::AccessPointStartedEvent, "AccessPointStartedEvent"},
-    {WiFiFunction::AccessPointStoppedEvent, "AccessPointStoppedEvent"},
-    {WiFiFunction::NodeConnectedEvent, "NodeConnectedEvent"},
-    {WiFiFunction::NodeDisconnectedEvent, "NodeDisconnectedEvent"},
-    {WiFiFunction::NetworkConnectionRetryCountExceededEvent, "NetworkConnectionRetryCountExceededEvent"},
-    {WiFiFunction::NetworkConnectingEvent, "NetworkConnectingEvent"}};
+    {.key = WiFiFunction::ConnectToAccessPoint, .value = "ConnectToAccessPoint"},
+    {.key = WiFiFunction::ConnectToDefaultAccessPoint, .value = "ConnectToDefaultAccessPoint"},
+    {.key = WiFiFunction::StartAccessPoint, .value = "StartAccessPoint"},
+    {.key = WiFiFunction::StopAccessPoint, .value = "StopAccesPoint"},
+    {.key = WiFiFunction::NodeConnectedEvent, .value = "NodeConnected"},
+    {.key = WiFiFunction::NodeDisconnectedEvent, .value = "NodeDisconnectedEvent"},
+    {.key = WiFiFunction::DisconnectFromAccessPoint, .value = "DisconnectFromAccessPoint"},
+    {.key = WiFiFunction::GetAccessPoints, .value = "GetAccessPoints"},
+    {.key = WiFiFunction::GetAddrInfo, .value = "GetAddrInfo"},
+    {.key = WiFiFunction::Socket, .value = "Socket"},
+    {.key = WiFiFunction::Connect, .value = "Connect"},
+    {.key = WiFiFunction::Write, .value = "Write"},
+    {.key = WiFiFunction::SetSockOpt, .value = "SetSockOpt"},
+    {.key = WiFiFunction::Read, .value = "Read"},
+    {.key = WiFiFunction::Close, .value = "Close"},
+    {.key = WiFiFunction::SendTo, .value = "SendTo"},
+    {.key = WiFiFunction::RecvFrom, .value = "RecvFrom"},
+    {.key = WiFiFunction::Poll, .value = "Poll"},
+    {.key = WiFiFunction::InterruptPollResponse, .value = "InterruptPollResponse"},
+    {.key = WiFiFunction::Send, .value = "Send"},
+    {.key = WiFiFunction::Bind, .value = "Bind"},
+    {.key = WiFiFunction::Listen, .value = "Listen"},
+    {.key = WiFiFunction::Accept, .value = "Accept"},
+    {.key = WiFiFunction::Ioctl, .value = "Ioctl"},
+    {.key = WiFiFunction::GetSockName, .value = "GetSockName"},
+    {.key = WiFiFunction::GetPeerName, .value = "GetPeerName"},
+    {.key = WiFiFunction::FreeAddrInfo, .value = "FreeAddrInfo"},
+    {.key = WiFiFunction::GetAddrInfo, .value = "GetAddrInfo"},
+    {.key = WiFiFunction::RecvMsg, .value = "RecvMsg"},
+    {.key = WiFiFunction::Shutdown, .value = "Shutdown"},
+    {.key = WiFiFunction::SendMsg, .value = "SendMsg"},
+    {.key = WiFiFunction::Dup2, .value = "Dup2"},
+    {.key = WiFiFunction::AddRef, .value = "AddRef"},
+    {.key = WiFiFunction::SockCaps, .value = "SockCaps"},
+    {.key = WiFiFunction::StartWiFiInterfaceEvent, .value = "StartWiFiInterfaceEvent"},
+    {.key = WiFiFunction::StopWiFiInterfaceEvent, .value = "StopWiFiInterfaceEvent"},
+    {.key = WiFiFunction::NetworkConnectedEvent, .value = "NetworkConnectedEvent"},
+    {.key = WiFiFunction::NetworkDisconnectedEvent, .value = "NetworkDisconnectedEvent"},
+    {.key = WiFiFunction::NtpUpdateEvent, .value = "NtpUpdateEvent"},
+    {.key = WiFiFunction::ErrorEvent, .value = "ErrorEvent"},
+    {.key = WiFiFunction::StartAccessPoint, .value = "StartAccessPoint"},
+    {.key = WiFiFunction::StopAccessPoint, .value = "StopAccessPoint"},
+    {.key = WiFiFunction::AccessPointStartedEvent, .value = "AccessPointStartedEvent"},
+    {.key = WiFiFunction::AccessPointStoppedEvent, .value = "AccessPointStoppedEvent"},
+    {.key = WiFiFunction::NodeConnectedEvent, .value = "NodeConnectedEvent"},
+    {.key = WiFiFunction::NodeDisconnectedEvent, .value = "NodeDisconnectedEvent"},
+    {.key = WiFiFunction::NetworkConnectionRetryCountExceededEvent, .value = "NetworkConnectionRetryCountExceededEvent"},
+    {.key = WiFiFunction::NetworkConnectingEvent, .value = "NetworkConnectingEvent"}};
 
 /*
  * ---------------------------------------------------------------------------
