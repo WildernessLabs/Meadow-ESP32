@@ -22,7 +22,7 @@
 #include "Utils.hpp"
 #include "Logging.hpp"
 
-#if defined(FILE_SYSTEM_DEBUG)
+#ifdef FILE_SYSTEM_DEBUG
     #pragma message "FileSystem.cpp: Debugging enabled"
 #endif
 
@@ -240,7 +240,7 @@ StatusCodes::StatusCodes FileSystem::Setup()
     StatusCodes::StatusCodes result;
     if (Mount())
     {
-#if defined(FILE_SYSTEM_DEBUG)
+#ifdef FILE_SYSTEM_DEBUG
         ShowFiles();
 #endif
 

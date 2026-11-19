@@ -3646,7 +3646,7 @@ int WiFiRequestHandler::PollSetup(void * const vpMessage)
         return (-1);
     }
 
-#if defined(WIFI_DEBUG)
+#ifdef WIFI_DEBUG
     DumpActivePollRequests();
 #endif
 
@@ -3696,7 +3696,7 @@ int WiFiRequestHandler::PollTeardown(void * const vpMessage)
 
     const auto request = static_cast<Esp32Messaging::PollRequest *>(vpMessage);
 
-#if defined(WIFI_DEBUG)
+#ifdef WIFI_DEBUG
     DumpActivePollRequests();
 #endif
 
@@ -3754,7 +3754,7 @@ int WiFiRequestHandler::PollTeardown(void * const vpMessage)
         }
     }
 
-#if defined(WIFI_DEBUG)
+#ifdef WIFI_DEBUG
     DumpActivePollRequests();
 #endif
 

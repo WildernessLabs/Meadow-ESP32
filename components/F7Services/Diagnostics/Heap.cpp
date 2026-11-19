@@ -45,7 +45,7 @@
  */
 const char *Heap::COMPONENT_NAME = "HeapDiagnostics";
 
-#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+#ifdef CONFIG_HEAP_TRACING_STANDALONE
 
 /**
  * @brief Number of records standalone heap tracing keeps.
@@ -102,7 +102,7 @@ void Heap::Setup()
 #if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
     esp_err_t result = ESP_FAIL;
 
-    #if defined(CONFIG_HEAP_TRACING_STANDALONE)
+    #ifdef CONFIG_HEAP_TRACING_STANDALONE
     _traceRecords = static_cast<heap_trace_record_t *>(pvPortMalloc(sizeof(heap_trace_record_t) * TRACE_RECORD_COUNT));
     if (_traceRecords == nullptr)
     {
@@ -113,7 +113,7 @@ void Heap::Setup()
         result = heap_trace_init_standalone(_traceRecords, TRACE_RECORD_COUNT);
     }
     #endif
-    #if defined(CONFIG_HEAP_TRACING_TOHOST)
+    #ifdef CONFIG_HEAP_TRACING_TOHOST
     result = heap_trace_init_tohost();
     #endif
     if (result != ESP_OK)
@@ -123,7 +123,7 @@ void Heap::Setup()
     else
     {
         TRACE_MESSAGE("Heap tracing initialized successfully");
-    #if defined(CONFIG_HEAP_TRACING_TOHOST)
+    #ifdef CONFIG_HEAP_TRACING_TOHOST
         if (xTaskCreate(HostTracingTask, "HeapTrace", HOST_TRACING_TASK_STACK_SIZE, nullptr, tskIDLE_PRIORITY + 1, nullptr) != pdPASS)
         {
             ERROR_MESSAGE("Failed to create the task that starts heap tracing to the host");
@@ -137,7 +137,7 @@ void Heap::Setup()
     TRACE_MESSAGE("Setup: Exit");
 }
 
-#if defined(CONFIG_HEAP_TRACING_TOHOST)
+#ifdef CONFIG_HEAP_TRACING_TOHOST
 
 /**
  * @brief Start heap tracing to the host once a SystemView capture starts.
@@ -159,7 +159,7 @@ void Heap::HostTracingTask(void *parameters)
  */
 bool Heap::CheckIntegrity()
 {
-#if defined(CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS)
+#ifdef CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS
     TRACE_MESSAGE("CheckIntegrity: Enter");
 
     bool integrity = heap_caps_check_integrity_all(true);
@@ -193,7 +193,7 @@ void Heap::StartTracing(const heap_trace_mode_t mode)
         return;
     }
 
-#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+#ifdef CONFIG_HEAP_TRACING_STANDALONE
     if (_traceRecords == nullptr)
     {
         ERROR_MESSAGE("Heap trace records not initialized");
@@ -223,7 +223,7 @@ void Heap::StopTracing()
 {
     TRACE_MESSAGE("StopTracing: Enter");
 
-#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+#ifdef CONFIG_HEAP_TRACING_STANDALONE
     if (!_traceRecords)
     {
         ERROR_MESSAGE("Heap trace records not initialized");
@@ -246,7 +246,7 @@ void Heap::StopTracing()
  */
 void Heap::DumpTraceRecords()
 {
-#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+#ifdef CONFIG_HEAP_TRACING_STANDALONE
     if (!_traceRecords)
     {
         ERROR_MESSAGE("Heap trace records not initialized");
@@ -264,7 +264,7 @@ void Heap::ReportStatistics()
 {
     TRACE_MESSAGE("ReportStatistics: Enter");
 
-#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+#ifdef CONFIG_HEAP_TRACING_STANDALONE
     if (!_traceRecords)
     {
         ERROR_MESSAGE("Heap trace records not initialized");

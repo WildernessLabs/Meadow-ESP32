@@ -357,12 +357,12 @@ TEST_CASE("A snapshot writes each kind of record with its sequence number", CLAS
         "cpu,%lu,",
         "heap,%lu,internal,",
         "heap,%lu,dma,",
-#if defined(CONFIG_MEADOW_METRICS)
+#ifdef CONFIG_MEADOW_METRICS
         "counter,%lu,RequestsReceived,",
         "gauge,%lu,OutboundQueueDepth,",
         "histogram,%lu,WiFiRequestLatency,",
 #endif
-#if defined(CONFIG_LWIP_STATS)
+#ifdef CONFIG_LWIP_STATS
         "network,%lu,tcp,",
 #endif
         "end,%lu,"};
@@ -421,7 +421,7 @@ TEST_CASE("A snapshot lists the task that took it", CLASS_OF_TESTS)
     TEST_ASSERT_TRUE_MESSAGE(found, "The task taking the snapshot is not in it.");
 }
 
-#if defined(CONFIG_MEADOW_METRICS)
+#ifdef CONFIG_MEADOW_METRICS
 
 TEST_CASE("A histogram record holds a count for every bucket", CLASS_OF_TESTS)
 {

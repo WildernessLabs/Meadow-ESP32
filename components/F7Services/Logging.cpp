@@ -11,7 +11,7 @@
 
 #include "esp32/rom/gpio.h"
 #include "lwip/sockets.h"
-#if defined(CONFIG_MEADOW_SYSVIEW)
+#ifdef CONFIG_MEADOW_SYSVIEW
     //
     //  esp_sysview_vprintf comes from the espressif/esp_sysview managed component, which is
     //  where SystemView lives from ESP-IDF 6.
@@ -92,7 +92,7 @@ SemaphoreHandle_t Logging::_udpMutex = nullptr;
  */
 char Logging::_udpBuffer[Logging::UDP_LOG_MESSAGE_SIZE];
 
-#if defined(CONFIG_MEADOW_SYSVIEW)
+#ifdef CONFIG_MEADOW_SYSVIEW
 /**
  *  @brief The function that wrote log messages before they were sent to SystemView, nullptr when they are not.
  */
@@ -150,7 +150,7 @@ void Logging::Setup()
     //
     uart_driver_install(LOGGING_UART_PORT_NUMBER, RX_BUFFER_SIZE * 2, 0, 0, nullptr, 0);
 
-#if defined(CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS)
+#ifdef CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS
     #pragma message "Heap integrity checks enabled, setting heap logging level to INFO."
     esp_log_level_set(Heap::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
@@ -190,7 +190,7 @@ StatusCodes::StatusCodes Logging::Configure(const char * const components, uint3
             }
             break;
         case Esp32LogDestination::Jtag:
-#if defined(CONFIG_MEADOW_SYSVIEW)
+#ifdef CONFIG_MEADOW_SYSVIEW
             break;
 #else
             return (StatusCodes::NotImplemented);
@@ -201,7 +201,7 @@ StatusCodes::StatusCodes Logging::Configure(const char * const components, uint3
 
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     StopUdpLogging();
-#if defined(CONFIG_MEADOW_SYSVIEW)
+#ifdef CONFIG_MEADOW_SYSVIEW
     StopSystemViewLogging();
 #endif
     TurnAllLoggingOff();
@@ -209,7 +209,7 @@ StatusCodes::StatusCodes Logging::Configure(const char * const components, uint3
     {
         result = StartUdpLogging(static_cast<uint16_t>(udpPort));
     }
-#if defined(CONFIG_MEADOW_SYSVIEW)
+#ifdef CONFIG_MEADOW_SYSVIEW
     if (interface == Esp32LogDestination::Jtag)
     {
         StartSystemViewLogging();
@@ -281,7 +281,7 @@ StatusCodes::StatusCodes Logging::StartUdpLogging(const uint16_t port)
     return (StatusCodes::CompletedOk);
 }
 
-#if defined(CONFIG_MEADOW_SYSVIEW)
+#ifdef CONFIG_MEADOW_SYSVIEW
 
 /**
  * @brief Send the log messages to the SystemView trace instead of the UART.

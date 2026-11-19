@@ -81,7 +81,7 @@ private:
      */
     static bool _isSetup;
 
-#if defined(CONFIG_HEAP_TRACING_TOHOST)
+#ifdef CONFIG_HEAP_TRACING_TOHOST
 
     /**
      * @brief Stack size of the task that starts heap tracing to the host.
@@ -100,7 +100,7 @@ private:
 
 #endif
 
-#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+#ifdef CONFIG_HEAP_TRACING_STANDALONE
 
     /**
      * @brief Pointer to the heap trace records.

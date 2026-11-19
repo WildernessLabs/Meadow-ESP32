@@ -79,7 +79,7 @@ enum class ProfileEvent : uint32_t {
 class Profile
 {
 public:
-#if defined(CONFIG_MEADOW_SYSVIEW_EVENTS)
+#ifdef CONFIG_MEADOW_SYSVIEW_EVENTS
 
     /**
      * @brief Record an event with one value.

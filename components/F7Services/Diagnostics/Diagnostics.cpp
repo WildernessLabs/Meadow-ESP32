@@ -24,11 +24,11 @@
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 
-#if defined(CONFIG_HEAP_TASK_TRACKING)
+#ifdef CONFIG_HEAP_TASK_TRACKING
     #include "esp_heap_task_info.h"
 #endif
 
-#if defined(CONFIG_LWIP_STATS)
+#ifdef CONFIG_LWIP_STATS
     #include "lwip/stats.h"
 #endif
 
@@ -312,7 +312,7 @@ void Diagnostics::WriteHeap(const uint32_t sequence)
 {
     WriteHeapRegion(sequence, "internal", MALLOC_CAP_INTERNAL);
     WriteHeapRegion(sequence, "dma", MALLOC_CAP_DMA);
-#if defined(CONFIG_SPIRAM)
+#ifdef CONFIG_SPIRAM
     WriteHeapRegion(sequence, "spiram", MALLOC_CAP_SPIRAM);
 #endif
 }
@@ -347,7 +347,7 @@ void Diagnostics::WriteHeapRegion(const uint32_t sequence, const char *name, con
  */
 void Diagnostics::WriteTaskHeap(const uint32_t sequence)
 {
-#if defined(CONFIG_HEAP_TASK_TRACKING)
+#ifdef CONFIG_HEAP_TASK_TRACKING
     //
     //  The allocation can fail after allocating some of its three arrays, and it clears the
     //  pointers first, so freeing is safe on either path.
@@ -384,7 +384,7 @@ void Diagnostics::WriteTaskHeap(const uint32_t sequence)
  */
 void Diagnostics::WriteMetrics(const uint32_t sequence)
 {
-#if defined(CONFIG_MEADOW_METRICS)
+#ifdef CONFIG_MEADOW_METRICS
     for (size_t index = 0; index < static_cast<size_t>(MetricCounter::NumberOfCounters); index++)
     {
         const auto counter = static_cast<MetricCounter>(index);
@@ -422,7 +422,7 @@ void Diagnostics::WriteMetrics(const uint32_t sequence)
  */
 void Diagnostics::WriteNetwork(const uint32_t sequence)
 {
-#if defined(CONFIG_LWIP_STATS)
+#ifdef CONFIG_LWIP_STATS
     const struct
     {
         const char *name;

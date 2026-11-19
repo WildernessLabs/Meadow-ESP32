@@ -74,7 +74,7 @@ TEST_CASE("Every interface with a request handler has its histograms", CLASS_OF_
     TEST_ASSERT_FALSE(Metrics::HandlerTimeFor(Esp32Interfaces::None, histogram));
 }
 
-#if defined(CONFIG_MEADOW_METRICS)
+#ifdef CONFIG_MEADOW_METRICS
 
 TEST_CASE("Counters, gauges and histograms record what they are given and reset to zero", CLASS_OF_TESTS)
 {

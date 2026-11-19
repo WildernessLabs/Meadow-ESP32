@@ -138,7 +138,7 @@ SystemRequestHandler::SystemRequestHandler(IMessageDispatcher *messageDispatcher
 #if CONFIG_MEADOW_DIAGNOSTICS_PERIOD_MS > 0
     Diagnostics::Setup(CONFIG_MEADOW_DIAGNOSTICS_PERIOD_MS);
 #endif
-#if defined(CONFIG_HEAP_TRACING_TOHOST)
+#ifdef CONFIG_HEAP_TRACING_TOHOST
     Heap::Setup();
 #endif
 }

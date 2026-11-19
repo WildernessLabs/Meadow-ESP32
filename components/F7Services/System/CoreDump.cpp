@@ -34,7 +34,7 @@
 extern "C" esp_err_t esp_core_dump_image_check();
 #endif
 
-#if defined(CORE_DUMP_DEBUG)
+#ifdef CORE_DUMP_DEBUG
     #pragma message "CoreDump.cpp: Debug logging enabled"
 #endif
 

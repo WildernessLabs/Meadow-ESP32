@@ -13,7 +13,7 @@
 #include "esp_netif.h"
 #include "lwip/sockets.h"
 #include "unity.h"
-#if defined(CONFIG_MEADOW_SYSVIEW)
+#ifdef CONFIG_MEADOW_SYSVIEW
     //
     //  esp_sysview_vprintf comes from the espressif/esp_sysview managed component, which is
     //  where SystemView lives from ESP-IDF 6.
@@ -133,7 +133,7 @@ TEST_CASE("A logging configuration that cannot be honoured is refused and change
     TestLogging::Reset();
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, Logging::Configure("WiFi", Esp32LogDestination::Uart, 0));
 
-#if !defined(CONFIG_MEADOW_SYSVIEW)
+#ifndef CONFIG_MEADOW_SYSVIEW
     TEST_ASSERT_EQUAL_MESSAGE(StatusCodes::NotImplemented, Logging::Configure("Thread", Esp32LogDestination::Jtag, 0), "JTAG logging was accepted in a build without SystemView.");
 #endif
     TEST_ASSERT_EQUAL_MESSAGE(StatusCodes::InvalidRequest, Logging::Configure("Thread", 9, 0), "A destination that does not exist was accepted.");
@@ -202,7 +202,7 @@ TEST_CASE("Log messages are sent over UDP to the port asked for, and stop when t
     TestLogging::Reset();
 }
 
-#if defined(CONFIG_MEADOW_SYSVIEW)
+#ifdef CONFIG_MEADOW_SYSVIEW
 
 /**
  * @brief The log output function in use now.

@@ -44,7 +44,7 @@ meadow_version_t g_application_version = {
 //
 //  These checks are included in here so that they are processed only once.
 //
-#if defined(TRACE_MESSAGES)
+#ifdef TRACE_MESSAGES
 
     #pragma message "Trace message output is enabled - turn this feature off for release builds."
 
@@ -60,11 +60,11 @@ meadow_version_t g_application_version = {
 //
 #define COMPONENT_NAME APP_MAIN_COMPONENT_NAME
 
-#if !defined(CONFIG_WIFI_SSID)
+#ifndef CONFIG_WIFI_SSID
     #define CONFIG_WIFI_SSID "SSID"
 #endif
 
-#if !defined(CONFIG_WIFI_PASSWORD)
+#ifndef CONFIG_WIFI_PASSWORD
     #define CONFIG_WIFI_PASSWORD "PASSWORD"
 #endif
 
@@ -103,7 +103,7 @@ extern "C" void app_main()
     //  Failed allocations are counted in every build.  The heap takes one callback, so the
     //  develop build's report of each failure is called from the metrics' callback.
     //
-#if defined(DEBUG)
+#ifdef DEBUG
     Metrics::Setup(heap_caps_alloc_failed_hook);
 #else
     Metrics::Setup();

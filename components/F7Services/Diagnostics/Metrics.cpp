@@ -42,7 +42,7 @@ static_assert(sizeof(GAUGE_NAMES) / sizeof(GAUGE_NAMES[0]) == static_cast<size_t
 static const char *HISTOGRAM_NAMES[] = {"WiFiRequestLatency", "BluetoothRequestLatency", "SystemRequestLatency", "WiFiHandlerTime", "BluetoothHandlerTime", "SystemHandlerTime"};
 static_assert(sizeof(HISTOGRAM_NAMES) / sizeof(HISTOGRAM_NAMES[0]) == static_cast<size_t>(MetricHistogram::NumberOfHistograms), "A histogram has no name.");
 
-#if defined(CONFIG_MEADOW_METRICS)
+#ifdef CONFIG_MEADOW_METRICS
 
 /**
  * @brief A gauge: the value now and the highest it has been.

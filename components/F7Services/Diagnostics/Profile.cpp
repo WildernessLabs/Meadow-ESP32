@@ -11,7 +11,7 @@
 
 #include "Profile.hpp"
 
-#if defined(CONFIG_MEADOW_SYSVIEW_EVENTS)
+#ifdef CONFIG_MEADOW_SYSVIEW_EVENTS
 
     #include <atomic>
 

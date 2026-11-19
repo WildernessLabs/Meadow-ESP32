@@ -170,7 +170,7 @@ public:
      */
     static constexpr size_t NUMBER_OF_BUCKETS = HistogramReading::NUMBER_OF_BUCKETS;
 
-#if defined(CONFIG_MEADOW_METRICS)
+#ifdef CONFIG_MEADOW_METRICS
 
     /**
      * @brief Start counting failed heap allocations.  Call once, early.

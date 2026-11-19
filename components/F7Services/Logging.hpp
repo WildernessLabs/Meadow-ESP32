@@ -31,7 +31,7 @@
 //
 //  Trace and debug output macros.
 //
-#if defined(TRACE_MESSAGES)
+#ifdef TRACE_MESSAGES
 
     #define TRACE_MESSAGE(format, ...) ESP_LOGI(COMPONENT_NAME, format, ##__VA_ARGS__)
     #define DEBUG_MESSAGE(format, ...) ESP_LOGD(COMPONENT_NAME, format, ##__VA_ARGS__)
@@ -165,7 +165,7 @@ private:
      */
     static int UdpLogOutput(const char *format, va_list arguments);
 
-#if defined(CONFIG_MEADOW_SYSVIEW)
+#ifdef CONFIG_MEADOW_SYSVIEW
     /**
      * @brief The function that wrote log messages before they were sent to SystemView, nullptr when they are not.
      */
