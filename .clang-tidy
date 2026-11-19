@@ -1,0 +1,58 @@
+#
+#   clang-tidy configuration for the Meadow ESP32 firmware.
+#
+#   Read by clang-tidy.sh and by CLion (Settings > Editor > Inspections > C/C++ > Static Analysis
+#   Tools > Clang-Tidy, "Prefer .clang-tidy files over IDE settings", on by default).  See
+#   Documentation/Tools.md.
+#
+#   The four families below are on, less the checks that do not suit this code:
+#
+#   modernize-use-trailing-return-type     Not the project style.
+#   readability-magic-numbers              Encoders and protocol code are built from byte
+#                                          offsets and field sizes; the findings are noise.
+#   modernize-avoid-c-arrays               Buffers are passed to C and ESP-IDF APIs.
+#   modernize-macro-to-enum                Its remedy (an enum) is the wrong one here; a
+#                                          constexpr is.
+#   modernize-use-std-print                Output goes through printf-style logging macros.
+#   modernize-use-nullptr                  CLAUDE.md keeps NULL for results of standard C and
+#                                          POSIX functions (fopen, readdir, memchr, ...).
+#   readability-avoid-const-params-in-decls
+#                                          Declarations repeat the const of the definition.
+#   performance-enum-size                  Shared enums are part of the wire format with the
+#                                          STM32; their size is not ours to change.
+#   bugprone-easily-swappable-parameters   Fires on most functions with two integer
+#                                          parameters, which the protocol code is full of.
+#
+#   readability-implicit-bool-conversion stays on, but allows if (pointer), which the code
+#   uses throughout.
+#
+Checks: >
+  -*,
+  bugprone-*,
+  modernize-*,
+  performance-*,
+  readability-*,
+  -modernize-use-trailing-return-type,
+  -readability-magic-numbers,
+  -modernize-avoid-c-arrays,
+  -modernize-macro-to-enum,
+  -modernize-use-std-print,
+  -modernize-use-nullptr,
+  -readability-avoid-const-params-in-decls,
+  -performance-enum-size,
+  -bugprone-easily-swappable-parameters
+
+WarningsAsErrors: ''
+
+#
+#   Report issues in our headers, not in those of ESP-IDF or the managed components.
+#
+HeaderFilterRegex: '.*/(components/F7Services|main|test/main)/.*'
+
+#
+#   Fixes applied by clang-tidy itself are formatted to .clang-format.
+#
+FormatStyle: file
+
+CheckOptions:
+  readability-implicit-bool-conversion.AllowPointerConditions: true
