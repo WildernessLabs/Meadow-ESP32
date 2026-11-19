@@ -10,20 +10,20 @@
 
 #include "build_info.h"
 
-#define VERSION_FORMAT_STRING       "%d.%d.%d.%d built %02d %s 20%02d %02d:%02d:%02d UTC (0x%08x/%s)"
+#define VERSION_FORMAT_STRING "%d.%d.%d.%d built %02d %s 20%02d %02d:%02d:%02d UTC (0x%08x/%s)"
 
 /**
  * @brief Structure to hold the version information for the system.
- * 
+ *
  * Build number is of the format:
- * 
+ *
  *      major.minor.revision.build built dd MMM yyy hh:MM:ss UTC (git hash/branch)
  */
 struct meadow_version_s
 {
     /**
      * @brief Major part of the build number.
-     * 
+     *
      */
     uint32_t major;
 

@@ -24,8 +24,7 @@
 /**
  * @brief Things that are counted.
  */
-enum class MetricCounter : uint8_t
-{
+enum class MetricCounter : uint8_t {
     /**
      * @brief SPI transactions with the STM32 that finished.
      */
@@ -65,8 +64,7 @@ enum class MetricCounter : uint8_t
 /**
  * @brief Values that go up and down; the highest value is kept as well.
  */
-enum class MetricGauge : uint8_t
-{
+enum class MetricGauge : uint8_t {
     /**
      * @brief Messages waiting on the queue for the STM32.
      */
@@ -86,8 +84,7 @@ enum class MetricGauge : uint8_t
 /**
  * @brief Times that are recorded as a distribution, in microseconds.
  */
-enum class MetricHistogram : uint8_t
-{
+enum class MetricHistogram : uint8_t {
     /**
      * @brief WiFi request: arrival to the STM32 acknowledging the response.
      */

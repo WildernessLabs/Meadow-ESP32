@@ -247,18 +247,18 @@ void Metrics::Read(const MetricHistogram histogram, HistogramReading &reading)
  */
 void Metrics::Reset()
 {
-    for (std::atomic<uint32_t> &counter : _counters)
+    for (std::atomic<uint32_t> &counter: _counters)
     {
         counter.store(0, std::memory_order_relaxed);
     }
-    for (GaugeData &gauge : _gauges)
+    for (GaugeData &gauge: _gauges)
     {
         gauge.value.store(0, std::memory_order_relaxed);
         gauge.maximum.store(0, std::memory_order_relaxed);
     }
-    for (HistogramData &histogram : _histograms)
+    for (HistogramData &histogram: _histograms)
     {
-        for (std::atomic<uint32_t> &bucket : histogram.buckets)
+        for (std::atomic<uint32_t> &bucket: histogram.buckets)
         {
             bucket.store(0, std::memory_order_relaxed);
         }

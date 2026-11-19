@@ -27,5 +27,5 @@ extern "C" int main(int argc, char *argv[])
     printf("\n\n\nProgram execution complete.\n");
     printf("Executed in %ld nanoseconds.\n", end.tv_nsec - start.tv_nsec);
 
-    return(0);
+    return (0);
 }
