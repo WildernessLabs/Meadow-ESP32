@@ -36,9 +36,7 @@ ProgressiveDelay::ProgressiveDelay()
 /**
  * @brief Destroy the Progressive Delay object
  */
-ProgressiveDelay::~ProgressiveDelay()
-{
-}
+ProgressiveDelay::~ProgressiveDelay() = default;
 
 /**
  * @brief Restart the Progressive Delay from the start of the list of delay periods.

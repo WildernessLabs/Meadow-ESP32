@@ -32,9 +32,7 @@ const char *BluetoothService::COMPONENT_NAME = BLUETOOTH_COMPONENT_NAME;
 /**
  * @brief Construct a new BluetoothService object.
  */
-BluetoothService::BluetoothService()
-{
-}
+BluetoothService::BluetoothService() = default;
 
 /**
  * @brief Destroy the BluetoothService object and release any allocated resources.

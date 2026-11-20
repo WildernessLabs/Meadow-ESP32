@@ -38,9 +38,7 @@ Uuid16 Uuid16::CharacteristicDeclaration = Uuid16(static_cast<uint16_t>(0x2803))
 /**
  * @brief Construct a new Uuid16 object (16-bit UUID).
  */
-Uuid16::Uuid16()
-{
-}
+Uuid16::Uuid16() = default;
 
 /**
  * @brief Construct a new Uuid16 object with the specified value.
@@ -125,9 +123,7 @@ unsigned char HexPairToChar(const char a, const char b)
 /**
  * @brief Construct a new Uuid128 object with the default values.
  */
-Uuid128::Uuid128()
-{
-}
+Uuid128::Uuid128() = default;
 
 /**
  * @brief Construct a new Uuid128 from an array of bytes.

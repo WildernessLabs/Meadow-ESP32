@@ -53,16 +53,12 @@ bool NvsManager::_nvsAvailable = false;
 /**
  *  @brief Default constructor for the NVS manager class.
  */
-NvsManager::NvsManager()
-{
-}
+NvsManager::NvsManager() = default;
 
 /**
  * @brief Destructor for the NVS manager class.
  */
-NvsManager::~NvsManager()
-{
-}
+NvsManager::~NvsManager() = default;
 
 /*
  * ----------------------------------------------------------------------------

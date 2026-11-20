@@ -43,17 +43,7 @@ BluetoothCharacteristicDeclaration::BluetoothCharacteristicDeclaration(const Uui
 /**
  * @brief Destroy the BluetoothCharacteristicDeclaration object and release any allocated resources.
  */
-BluetoothCharacteristicDeclaration::~BluetoothCharacteristicDeclaration()
-{
-    // if (_is128)
-    // {
-    //     delete ValueUuid128;
-    // }
-    // else
-    // {
-    //     delete ValueUuid16;
-    // }
-}
+BluetoothCharacteristicDeclaration::~BluetoothCharacteristicDeclaration() = default;
 
 /**
  * @brief Is the UUID 16 or 128 bit?

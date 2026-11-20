@@ -118,9 +118,7 @@ Logging::Logging()
 /**
  *  @brief Default destructor for the logging system.
  */
-Logging::~Logging()
-{
-}
+Logging::~Logging() = default;
 
 /*
  * ---------------------------------------------------------------------------

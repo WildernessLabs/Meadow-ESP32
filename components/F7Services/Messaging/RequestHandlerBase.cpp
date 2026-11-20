@@ -73,9 +73,7 @@ RequestHandlerBase::RequestHandlerBase(IMessageDispatcher *messageDispatcher) : 
 /**
  *  @brief Destructor for the RequestHandlerBase class.
  */
-RequestHandlerBase::~RequestHandlerBase()
-{
-}
+RequestHandlerBase::~RequestHandlerBase() = default;
 
 /*
  * ----------------------------------------------------------------------------
