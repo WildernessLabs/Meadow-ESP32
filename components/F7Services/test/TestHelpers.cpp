@@ -8,7 +8,6 @@
 
 #include "sdkconfig.h"
 
-#include <cstdio>
 #include "unity.h"
 
 #include "esp_system.h"

@@ -9,7 +9,6 @@
 
 #include "sdkconfig.h"
 
-#include <cstring>
 #include "unity.h"
 
 #include "freertos/FreeRTOS.h"

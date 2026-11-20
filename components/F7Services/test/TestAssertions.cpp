@@ -12,8 +12,6 @@
 
 #include <cstdint>
 
-#include "SharedEnums.hpp"
-
 #include "TestAssertions.hpp"
 
 /**

@@ -8,13 +8,9 @@
 
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
-#include "nvs_flash.h"
-#include "esp_ota_ops.h"
-#include "esp_heap_caps.h"
 #include "version.h"
 
 #include "AppMain.hpp"
-#include "Encoders.hpp"
 #include "NvsManager.hpp"
 #include "Logging.hpp"
 #include "Metrics.hpp"

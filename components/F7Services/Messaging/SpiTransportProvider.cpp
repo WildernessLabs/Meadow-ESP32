@@ -21,8 +21,6 @@
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
 #include "Globals.hpp"
-#include "Diagnostics.hpp"
-#include "Heap.hpp"
 #include "Utils.hpp"
 #include "Logging.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"

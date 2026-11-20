@@ -11,7 +11,6 @@
 
 #include "sdkconfig.h"
 
-#include <cinttypes>
 #include "esp_err.h"
 #include "esp_partition.h"
 

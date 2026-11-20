@@ -10,7 +10,6 @@
 
 #include <cstdio>
 #include <string>
-#include <cstring>
 #include <utility>
 #include "esp_gap_ble_api.h"
 #include "unity.h"

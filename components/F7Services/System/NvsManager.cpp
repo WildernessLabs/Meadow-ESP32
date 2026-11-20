@@ -14,14 +14,12 @@
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
 
-#include "esp_system.h"
 #include "nvs_flash.h"
 #include "nvs.h"
 
 #include <cstring>
 
 #include "NvsManager.hpp"
-#include "Exceptions/MultipleInstancesException.hpp"
 #include "Utils.hpp"
 
 /*

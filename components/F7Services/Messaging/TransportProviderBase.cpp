@@ -9,14 +9,10 @@
 
 #include "sdkconfig.h"
 
-#include <string>
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
-
-#include "driver/gpio.h"
 
 #include "Utils.hpp"
 #include "esp_attr.h"
@@ -24,7 +20,6 @@
 #include "TransportProviderBase.hpp"
 #include "Metrics.hpp"
 #include "Profile.hpp"
-#include "Encoders.hpp"
 #include "Logging.hpp"
 #include "Heap.hpp"
 

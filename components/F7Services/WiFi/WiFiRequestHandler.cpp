@@ -10,13 +10,10 @@
 #include "sdkconfig.h"
 
 #include "driver/gpio.h"
-#include "esp_system.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_mac.h"
-#include <cstdlib>
 #include <cstring>
-#include <unistd.h>
 #include <cinttypes>
 
 #include "Globals.hpp"

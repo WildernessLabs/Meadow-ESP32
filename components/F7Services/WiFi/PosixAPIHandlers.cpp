@@ -9,8 +9,6 @@
 
 #include <cstdlib>
 #include <cstring>
-#include <unistd.h>
-#include <cinttypes>
 
 #include "WiFiRequestHandler.hpp"
 #include "Mapping.hpp"

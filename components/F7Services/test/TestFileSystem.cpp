@@ -6,12 +6,8 @@
 
 #include "sdkconfig.h"
 
-#include <climits>
 #include <cstdio>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <dirent.h>
-#include <string>
 #include <cstring>
 #include "esp_system.h"
 #include "unity.h"

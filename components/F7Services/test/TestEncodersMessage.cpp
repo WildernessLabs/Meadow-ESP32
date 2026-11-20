@@ -17,7 +17,6 @@
 #include "Encoders.hpp"
 #include "Esp32Messaging.hpp"
 #include "SharedEnums.hpp"
-#include "Utils.hpp"
 
 /**
  * @brief Class of tests in this file.

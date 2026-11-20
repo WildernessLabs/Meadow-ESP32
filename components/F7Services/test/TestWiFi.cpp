@@ -16,10 +16,7 @@
 
 #include "sdkconfig.h"
 
-#include <climits>
 #include <cstdio>
-#include <sys/types.h>
-#include <dirent.h>
 #include <string>
 #include <cstring>
 #include "unity.h"

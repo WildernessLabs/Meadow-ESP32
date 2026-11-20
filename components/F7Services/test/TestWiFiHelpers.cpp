@@ -19,7 +19,6 @@
 
 #include "Encoders.hpp"
 #include "NvsManager.hpp"
-#include "Utils.hpp"
 
 #include "TestHarness.hpp"
 #include "UnitTestConfiguration.hpp"

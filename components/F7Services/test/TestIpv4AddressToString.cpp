@@ -14,7 +14,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
-#include "lwip/sockets.h"
 #include "unity.h"
 
 #include "Utils.hpp"

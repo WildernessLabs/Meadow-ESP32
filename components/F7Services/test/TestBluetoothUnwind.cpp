@@ -10,14 +10,12 @@
 
 #include "sdkconfig.h"
 
-#include <cstdint>
 #include "esp_bt.h"
 #include "esp_bt_main.h"
 #include "unity.h"
 
 #include "BluetoothRequestHandler.hpp"
 #include "MockMessageDispatcher.hpp"
-#include "TestAssertions.hpp"
 #include "TestHarness.hpp"
 
 /**

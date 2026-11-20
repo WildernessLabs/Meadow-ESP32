@@ -13,19 +13,14 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
-#include "esp_system.h"
 #include "esp_log.h"
 #include "esp_mac.h"
-#include "driver/uart.h"
-#include "soc/uart_struct.h"
 #include <cstring>
-#include <cstdlib>
 #include <utility>
 
 #include "Globals.hpp"
 #include "Logging.hpp"
 #include "Encoders.hpp"
-#include "Mapping.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
 #include "BluetoothComponentName.hpp"
 #include "Utils.hpp"

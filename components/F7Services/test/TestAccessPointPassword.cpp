@@ -18,7 +18,6 @@
 #include "NvsManager.hpp"
 #include "WiFiRequestHandler.hpp"
 
-#include "TestAssertions.hpp"
 #include "TestWiFiHelpers.hpp"
 
 /**

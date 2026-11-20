@@ -16,20 +16,14 @@
 #include "sdkconfig.h"
 
 #include <cinttypes>
-#include <string>
 
 #include "Heap.hpp"
-#include "esp_system.h"
 #include "esp_log.h"
-#include "esp_heap_caps.h"
 
-#include "esp_heap_task_info.h"
 #include "esp_heap_trace.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "Utils.hpp"
-#include "Debug.hpp"
 #include "Logging.hpp"
 
 /*

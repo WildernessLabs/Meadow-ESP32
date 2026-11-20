@@ -12,7 +12,6 @@
 
 #include <cstdio>
 #include <cstring>
-#include <sys/types.h>
 #include "unity.h"
 
 #include "freertos/FreeRTOS.h"
