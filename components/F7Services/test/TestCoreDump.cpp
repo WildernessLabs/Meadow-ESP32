@@ -245,7 +245,7 @@ TEST_CASE("Get core dump information", CLASS_OF_TESTS)
     TEST_ASSERT_EQUAL(CORE_DUMP_PARTITION_SIZE, information->PartitionSize);
 
     printf("Validate the following core dump information:\n");
-    printf("IsValid: %s\n", information->IsValid ? "true" : "false");
+    printf("IsValid: %s\n", (information->IsValid != 0U) ? "true" : "false");
     printf("Partition Size: 0x%05" PRIx32 "\n", information->PartitionSize);
     printf("Core Dump Size: 0x%05" PRIx32 "\n", information->CoreDumpSize);
     Utils::DeleteAndNullifyPointer(information);

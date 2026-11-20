@@ -138,7 +138,7 @@ Message *TransportProviderBase::GetOutboundMessage()
 void TransportProviderBase::DumpMessageAtHeadOfQueue()
 {
     Message *message;
-    if (xQueuePeek(_outboundMessageQueueHandle, &(message), static_cast<TickType_t>(10)))
+    if (xQueuePeek(_outboundMessageQueueHandle, &(message), static_cast<TickType_t>(10)) == pdTRUE)
     {
         Logging::DumpMessage(COMPONENT_NAME, message);
     }
