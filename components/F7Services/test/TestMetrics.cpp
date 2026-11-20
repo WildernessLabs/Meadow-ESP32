@@ -8,6 +8,7 @@
 #include "sdkconfig.h"
 
 #include <cstdint>
+#include <utility>
 #include "esp_heap_caps.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
@@ -65,11 +66,11 @@ TEST_CASE("Every interface with a request handler has its histograms", CLASS_OF_
 {
     MetricHistogram histogram;
     TEST_ASSERT_TRUE(Metrics::RequestLatencyFor(Esp32Interfaces::WiFi, histogram));
-    TEST_ASSERT_EQUAL(MetricHistogram::WiFiRequestLatency, histogram);
+    TEST_ASSERT_EQUAL(std::to_underlying(MetricHistogram::WiFiRequestLatency), std::to_underlying(histogram));
     TEST_ASSERT_TRUE(Metrics::RequestLatencyFor(Esp32Interfaces::BlueTooth, histogram));
-    TEST_ASSERT_EQUAL(MetricHistogram::BluetoothRequestLatency, histogram);
+    TEST_ASSERT_EQUAL(std::to_underlying(MetricHistogram::BluetoothRequestLatency), std::to_underlying(histogram));
     TEST_ASSERT_TRUE(Metrics::HandlerTimeFor(Esp32Interfaces::System, histogram));
-    TEST_ASSERT_EQUAL(MetricHistogram::SystemHandlerTime, histogram);
+    TEST_ASSERT_EQUAL(std::to_underlying(MetricHistogram::SystemHandlerTime), std::to_underlying(histogram));
     TEST_ASSERT_FALSE(Metrics::RequestLatencyFor(Esp32Interfaces::Transport, histogram));
     TEST_ASSERT_FALSE(Metrics::HandlerTimeFor(Esp32Interfaces::None, histogram));
 }

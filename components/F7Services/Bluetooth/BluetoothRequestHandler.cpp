@@ -20,6 +20,7 @@
 #include "soc/uart_struct.h"
 #include <cstring>
 #include <cstdlib>
+#include <utility>
 
 #include "Globals.hpp"
 #include "Logging.hpp"
@@ -429,7 +430,7 @@ void BluetoothRequestHandler::GenerateAttributeTable()
                     .att_desc = {
                         .uuid_length = ESP_UUID_LEN_128,
                         .uuid_p = reinterpret_cast<uint8_t *>(&characteristic->GetValue().uuid128),
-                        .perm = static_cast<uint16_t>(characteristic->GetValue().Permission),
+                        .perm = std::to_underlying(characteristic->GetValue().Permission),
                         .max_length = characteristic->GetValue().MaxLength,
                         .length = 0,
                         .value = nullptr}}; // <- 0, nullptr means "current value length is 0, current value data is null"
@@ -441,7 +442,7 @@ void BluetoothRequestHandler::GenerateAttributeTable()
                     .att_desc = {
                         .uuid_length = ESP_UUID_LEN_16,
                         .uuid_p = reinterpret_cast<uint8_t *>(&characteristic->GetValue().uuid16),
-                        .perm = static_cast<uint16_t>(characteristic->GetValue().Permission),
+                        .perm = std::to_underlying(characteristic->GetValue().Permission),
                         .max_length = characteristic->GetValue().MaxLength,
                         .length = 0,
                         .value = nullptr}}; // <- 0, nullptr means "current value length is 0, current value data is null"
@@ -457,7 +458,7 @@ void BluetoothRequestHandler::GenerateAttributeTable()
                         .att_desc = {
                             .uuid_length = ESP_UUID_LEN_128,
                             .uuid_p = reinterpret_cast<uint8_t *>(&descriptor->uuid128),
-                            .perm = static_cast<uint16_t>(descriptor->Permission),
+                            .perm = std::to_underlying(descriptor->Permission),
                             .max_length = descriptor->MaxLength,
                             .length = descriptor->CurrentLength,
                             .value = const_cast<uint8_t *>(descriptor->GetValue())}};
@@ -469,7 +470,7 @@ void BluetoothRequestHandler::GenerateAttributeTable()
                         .att_desc = {
                             .uuid_length = ESP_UUID_LEN_16,
                             .uuid_p = reinterpret_cast<uint8_t *>(&descriptor->uuid16),
-                            .perm = static_cast<uint16_t>(descriptor->Permission),
+                            .perm = std::to_underlying(descriptor->Permission),
                             .max_length = descriptor->MaxLength,
                             .length = descriptor->CurrentLength,
                             .value = const_cast<uint8_t *>(descriptor->GetValue())}};
@@ -887,7 +888,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
 bool BluetoothRequestHandler::ApplySecurityParameters(const BluetoothSecurityConfiguration &security)
 {
     esp_ble_auth_req_t authenticationRequirement = security.AuthenticationRequirement();
-    auto ioCapability = static_cast<esp_ble_io_cap_t>(security.Capability);
+    esp_ble_io_cap_t ioCapability = std::to_underlying(security.Capability);
     uint8_t keySize = BluetoothSecurityConfiguration::KEY_SIZE;
     uint8_t onlyAcceptSpecified = security.OnlyAcceptSpecifiedAuthentication();
     uint8_t outOfBand = ESP_BLE_OOB_DISABLE;

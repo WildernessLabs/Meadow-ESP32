@@ -7,6 +7,8 @@
  * @copyright Copyright (c) 2021 Wilderness Labs
  */
 
+#include <utility>
+
 #include "cJSON.h"
 #include "esp_gatt_defs.h"
 
@@ -908,7 +910,7 @@ uint32_t BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCha
  */
 void BluetoothManager::AddClientCharacteristicConfiguration(BluetoothCharacteristic * const characteristic, const uint16_t properties)
 {
-    const uint16_t subscribable = static_cast<uint16_t>(CharacteristicProperty::Notify) | static_cast<uint16_t>(CharacteristicProperty::Indicate);
+    const uint16_t subscribable = std::to_underlying(CharacteristicProperty::Notify) | std::to_underlying(CharacteristicProperty::Indicate);
     if ((properties & subscribable) == 0)
     {
         return;

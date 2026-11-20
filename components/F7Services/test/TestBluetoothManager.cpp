@@ -10,6 +10,7 @@
 #include <string>
 #include <cstring>
 #include <type_traits>
+#include <utility>
 #include "esp_gatt_defs.h"
 #include "unity.h"
 #include "esp_system.h"
@@ -285,7 +286,7 @@ TEST_CASE("BuildGraphFromJson adds a client configuration descriptor to a notify
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(1, cccd.size(), "A subscribable characteristic has no client configuration descriptor.");
         TEST_ASSERT_EQUAL_UINT16_MESSAGE(CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH, cccd[0]->MaxLength, "The descriptor is not two bytes long.");
         TEST_ASSERT_EQUAL_UINT16_MESSAGE(CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH, cccd[0]->CurrentLength, "The descriptor's value is not two bytes long.");
-        TEST_ASSERT_EQUAL_UINT16_MESSAGE(static_cast<uint16_t>(CharacteristicPermission::Read | CharacteristicPermission::Write), static_cast<uint16_t>(cccd[0]->Permission), "The descriptor is not readable and writable.");
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE(std::to_underlying(CharacteristicPermission::Read | CharacteristicPermission::Write), std::to_underlying(cccd[0]->Permission), "The descriptor is not readable and writable.");
         TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, cccd[0]->GetValue()[0], "The descriptor does not start at 0.");
         TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, cccd[0]->GetValue()[1], "The descriptor does not start at 0.");
     }

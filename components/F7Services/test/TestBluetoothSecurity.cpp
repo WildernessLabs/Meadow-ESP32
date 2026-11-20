@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <string>
 #include <cstring>
+#include <utility>
 #include "esp_gap_ble_api.h"
 #include "unity.h"
 
@@ -127,7 +128,7 @@ static BluetoothDescriptor *FindDescriptor(BluetoothCharacteristic *characterist
  */
 static void CheckDefaults(const BluetoothSecurityConfiguration &security)
 {
-    TEST_ASSERT_EQUAL_MESSAGE(static_cast<int>(BluetoothSecurityConfiguration::IoCapability::NoInputNoOutput), static_cast<int>(security.Capability), "The default capability is not NoInputNoOutput.");
+    TEST_ASSERT_EQUAL_MESSAGE(std::to_underlying(BluetoothSecurityConfiguration::IoCapability::NoInputNoOutput), std::to_underlying(security.Capability), "The default capability is not NoInputNoOutput.");
     TEST_ASSERT_TRUE_MESSAGE(security.Bonding, "Bonding is not on by default.");
     TEST_ASSERT_FALSE_MESSAGE(security.Mitm, "MITM protection is on by default.");
     TEST_ASSERT_FALSE_MESSAGE(security.SecureConnectionsOnly, "Secure Connections only is on by default.");
@@ -161,7 +162,7 @@ TEST_CASE("Every security setting is read from the configuration", CLASS_OF_TEST
     BuildOne(manager, Configuration("{\"ioCapability\":1,\"bonding\":false,\"mitm\":true,\"secureConnectionsOnly\":true,\"encryptOnConnect\":true,\"acceptPairing\":false}"));
 
     const BluetoothSecurityConfiguration security = manager.GetSecurityConfiguration();
-    TEST_ASSERT_EQUAL(static_cast<int>(BluetoothSecurityConfiguration::IoCapability::DisplayYesNo), static_cast<int>(security.Capability));
+    TEST_ASSERT_EQUAL(std::to_underlying(BluetoothSecurityConfiguration::IoCapability::DisplayYesNo), std::to_underlying(security.Capability));
     TEST_ASSERT_FALSE(security.Bonding);
     TEST_ASSERT_TRUE(security.Mitm);
     TEST_ASSERT_TRUE(security.SecureConnectionsOnly);
@@ -182,8 +183,8 @@ TEST_CASE("Each input and output capability is accepted", CLASS_OF_TESTS)
     for (const BluetoothSecurityConfiguration::IoCapability capability: capabilities)
     {
         BluetoothManager manager;
-        BuildOne(manager, Configuration("{\"ioCapability\":" + std::to_string(static_cast<int>(capability)) + "}"));
-        TEST_ASSERT_EQUAL(static_cast<int>(capability), static_cast<int>(manager.GetSecurityConfiguration().Capability));
+        BuildOne(manager, Configuration("{\"ioCapability\":" + std::to_string(std::to_underlying(capability)) + "}"));
+        TEST_ASSERT_EQUAL(std::to_underlying(capability), std::to_underlying(manager.GetSecurityConfiguration().Capability));
         manager.DeleteAllServices();
     }
 }
@@ -284,25 +285,25 @@ TEST_CASE("An attribute that needs MITM protection needs settings that demand it
  */
 TEST_CASE("Subscribing to a protected characteristic needs the security its value does", CLASS_OF_TESTS)
 {
-    const auto plain = static_cast<uint16_t>(CharacteristicPermission::Read | CharacteristicPermission::Write);
+    const auto plain = std::to_underlying(CharacteristicPermission::Read | CharacteristicPermission::Write);
     BluetoothManager manager;
 
     BluetoothCharacteristic *characteristic = BuildOne(manager, Configuration("", PERMISSION_READ | PERMISSION_WRITE, PROPERTY_READ | PROPERTY_NOTIFY));
     BluetoothDescriptor *configuration = FindDescriptor(characteristic, CLIENT_CHARACTERISTIC_CONFIGURATION_UUID);
     TEST_ASSERT_NOT_NULL(configuration);
-    TEST_ASSERT_EQUAL_HEX16_MESSAGE(plain, static_cast<uint16_t>(configuration->Permission), "An unprotected characteristic's subscription was changed.");
+    TEST_ASSERT_EQUAL_HEX16_MESSAGE(plain, std::to_underlying(configuration->Permission), "An unprotected characteristic's subscription was changed.");
     manager.DeleteAllServices();
 
     characteristic = BuildOne(manager, Configuration("", PERMISSION_READ_ENCRYPTED | PERMISSION_WRITE, PROPERTY_READ | PROPERTY_NOTIFY));
     configuration = FindDescriptor(characteristic, CLIENT_CHARACTERISTIC_CONFIGURATION_UUID);
     TEST_ASSERT_NOT_NULL(configuration);
-    TEST_ASSERT_EQUAL_HEX16_MESSAGE(plain | PERMISSION_WRITE_ENCRYPTED, static_cast<uint16_t>(configuration->Permission), "Subscribing to an encrypted characteristic does not need encryption.");
+    TEST_ASSERT_EQUAL_HEX16_MESSAGE(plain | PERMISSION_WRITE_ENCRYPTED, std::to_underlying(configuration->Permission), "Subscribing to an encrypted characteristic does not need encryption.");
     manager.DeleteAllServices();
 
     characteristic = BuildOne(manager, Configuration("{\"ioCapability\":4,\"mitm\":true}", PERMISSION_READ_MITM | PERMISSION_WRITE, PROPERTY_READ | PROPERTY_NOTIFY));
     configuration = FindDescriptor(characteristic, CLIENT_CHARACTERISTIC_CONFIGURATION_UUID);
     TEST_ASSERT_NOT_NULL(configuration);
-    TEST_ASSERT_EQUAL_HEX16_MESSAGE(plain | PERMISSION_WRITE_MITM, static_cast<uint16_t>(configuration->Permission), "Subscribing to a MITM protected characteristic does not need MITM protection.");
+    TEST_ASSERT_EQUAL_HEX16_MESSAGE(plain | PERMISSION_WRITE_MITM, std::to_underlying(configuration->Permission), "Subscribing to a MITM protected characteristic does not need MITM protection.");
     manager.DeleteAllServices();
 
     //
@@ -312,10 +313,10 @@ TEST_CASE("Subscribing to a protected characteristic needs the security its valu
     characteristic = BuildOne(manager, Configuration("", PERMISSION_READ_ENCRYPTED | PERMISSION_WRITE_ENCRYPTED, PROPERTY_READ | PROPERTY_NOTIFY, descriptors));
     configuration = FindDescriptor(characteristic, CLIENT_CHARACTERISTIC_CONFIGURATION_UUID);
     TEST_ASSERT_NOT_NULL(configuration);
-    TEST_ASSERT_EQUAL_HEX16_MESSAGE(plain | PERMISSION_WRITE_ENCRYPTED, static_cast<uint16_t>(configuration->Permission), "A declared client configuration was not protected.");
+    TEST_ASSERT_EQUAL_HEX16_MESSAGE(plain | PERMISSION_WRITE_ENCRYPTED, std::to_underlying(configuration->Permission), "A declared client configuration was not protected.");
     BluetoothDescriptor *description = FindDescriptor(characteristic, USER_DESCRIPTION_UUID);
     TEST_ASSERT_NOT_NULL(description);
-    TEST_ASSERT_EQUAL_HEX16_MESSAGE(PERMISSION_READ, static_cast<uint16_t>(description->Permission), "A descriptor other than the client configuration was changed.");
+    TEST_ASSERT_EQUAL_HEX16_MESSAGE(PERMISSION_READ, std::to_underlying(description->Permission), "A descriptor other than the client configuration was changed.");
     manager.DeleteAllServices();
 }
 
@@ -332,7 +333,7 @@ TEST_CASE("Permissions are classified by the security they need", CLASS_OF_TESTS
         {.Permission = PERMISSION_WRITE_ENCRYPTED, .Encryption = true, .Mitm = false},
         {.Permission = PERMISSION_READ_MITM, .Encryption = true, .Mitm = true},
         {.Permission = PERMISSION_WRITE_MITM, .Encryption = true, .Mitm = true},
-        {.Permission = static_cast<uint16_t>(CharacteristicPermission::WriteSignedMITM), .Encryption = true, .Mitm = true},
+        {.Permission = std::to_underlying(CharacteristicPermission::WriteSignedMITM), .Encryption = true, .Mitm = true},
     };
 
     for (const auto &item: cases)
