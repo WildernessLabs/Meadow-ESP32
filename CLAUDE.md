@@ -48,7 +48,7 @@ Tests live in `components/F7Services/test/` and use the Unity framework. Run fro
 # From the root of the repository, once: settings the tests read from the device.
 cp test/main/unittest.config.json.template test/fsimage/unittest.config.json
 ./mkfsimage.sh --flash          # Write the test settings to the board
-                                # After a --fullclean: idf.py reconfigure in test/ first
+                                # After a --fullclean without --build: idf.py reconfigure in test/ first
 
 cd test
 ./build.sh --build

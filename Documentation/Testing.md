@@ -71,8 +71,9 @@ cp test/main/unittest.config.json.template test/fsimage/unittest.config.json
 `mkfsimage.sh` builds the image with littlefs-python, installed into
 `test/build/mkfsimage_venv` at the version the managed littlefs component names in its
 `image-building-requirements.txt`, so the test project has to have been configured at
-least once. A `--fullclean` removes `test/managed_components` and the script stops until
-`idf.py reconfigure` has been run in `test/`. The image is written at the LittleFS
+least once. A `--fullclean` removes `test/managed_components`, and a `--build` in the same
+run fetches them again. After a `--fullclean` on its own, the script stops until the test
+project is built or `idf.py reconfigure` has been run in `test/`. The image is written at the LittleFS
 on-disk version the firmware is configured to write (2.0, see `sdkconfig.defaults`).
 
 A failed mount is not reported. `FileSystem` is set up with `format_if_mount_failed`, so
@@ -781,7 +782,8 @@ cd test
 idf.py reconfigure
 ```
 `--fullclean` removes `test/managed_components`, and `mkfsimage.sh` installs littlefs-python
-at the version the component names there. Reconfiguring brings it back without a full rebuild.
+at the version the component names there. A `--fullclean` without `--build` leaves them
+missing; reconfiguring brings them back without a full rebuild.
 
 ### Issue: The run says no configuration file was found
 

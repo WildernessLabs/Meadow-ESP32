@@ -58,7 +58,7 @@ case $i in
     IDF_FLAGS+=" clean"
     ;;
     --fullclean)
-    IDF_FLAGS+=" fullclean"
+    FULLCLEAN=true
     ;;
     --flash)
     FLASH=true
@@ -227,8 +227,16 @@ fi
 #   There are sometimes problems with old configuration in the build directory
 #   so this removes the build directory before executing the full clean.
 #
+#   The managed components are removed too.  idf.py fullclean tries to remove
+#   them but refuses when any of their files differ from the installed copy,
+#   which is the state an interrupted install (CLion reconfiguring the shared
+#   build directory at the same time, for example) leaves behind.  Nothing in
+#   managed_components is edited by hand, and the component manager restores it
+#   from its cache on the next build.
+#
 if $FULLCLEAN; then
     run_command "rm -Rf $scriptdir/build"
+    run_command "rm -Rf $scriptdir/managed_components"
     run_command "$IDF fullclean"
     run_command "rm -f $scriptdir/sdkconfig"
 fi
