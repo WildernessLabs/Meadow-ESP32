@@ -70,15 +70,21 @@ unsigned char HexDigitToChar(const char ch)
 {
     // 0-9
     if (ch > 47 && ch < 58)
+    {
         return ch - 48;
+    }
 
     // a-f
     if (ch > 96 && ch < 103)
+    {
         return ch - 87;
+    }
 
     // A-F
     if (ch > 64 && ch < 71)
+    {
         return ch - 55;
+    }
 
     return 0;
 }
@@ -94,15 +100,21 @@ bool IsValidHexChar(const char ch)
 {
     // 0-9
     if (ch > 47 && ch < 58)
+    {
         return true;
+    }
 
     // a-f
     if (ch > 96 && ch < 103)
+    {
         return true;
+    }
 
     // A-F
     if (ch > 64 && ch < 71)
+    {
         return true;
+    }
 
     return false;
 }
