@@ -768,7 +768,7 @@ const char *WiFiRequestHandler::FindCountryCode(const char *code)
     {
         for (auto _validCountryCode: WiFiRequestHandler::_validCountryCodes)
         {
-            if (!strcmp(code, _validCountryCode))
+            if (strcmp(code, _validCountryCode) == 0)
             {
                 result = _validCountryCode;
                 break;
@@ -1991,7 +1991,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
     esp_err_t result = ESP_OK;
 
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
-    if (bits & WIFI_CONNECTED_BIT)
+    if ((bits & WIFI_CONNECTED_BIT) != 0U)
     {
         result = esp_wifi_disconnect();
     }
@@ -2155,7 +2155,7 @@ void WiFiRequestHandler::SetAntennaRequest(Message *message)
     {
         TRACE_MESSAGE("Switching antenna to %" PRIu8 " with persist set to %" PRIu8, request->Antenna, request->Persist);
 
-        if (request->Persist)
+        if (request->Persist != 0U)
         {
             SetAntenna(request->Antenna); // This method also switches the antenna.
         }
@@ -2204,7 +2204,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
-    if (bits & WIFI_HAVE_IP_BIT)
+    if ((bits & WIFI_HAVE_IP_BIT) != 0U)
     {
         return (StatusCodes::WiFiAlreadyStarted);
     }
@@ -2216,7 +2216,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
 
     _currentRetryCount = 0;
     ClearIpAndDisconnectData();
-    if (!(bits & WIFI_INTERFACE_STARTED_BIT))
+    if ((bits & WIFI_INTERFACE_STARTED_BIT) == 0U)
     {
         if (StartWiFiInterface(WIFI_MODE_STA, accessPointInformation) != ESP_OK)
         {
@@ -2269,13 +2269,13 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
             if (idfResult == ESP_OK)
             {
                 bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_HAVE_IP_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
-                if (bits & WIFI_ERROR_BIT)
+                if ((bits & WIFI_ERROR_BIT) != 0U)
                 {
                     result = StatusCodes::CannotConnectToAccessPoint;
                 }
                 else
                 {
-                    if (bits & WIFI_HAVE_IP_BIT)
+                    if ((bits & WIFI_HAVE_IP_BIT) != 0U)
                     {
                         result = StatusCodes::CompletedOk;
                     }
@@ -2514,7 +2514,7 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
     esp_err_t result = ESP_OK;
 
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
-    if (!(bits & WIFI_INTERFACE_STARTED_BIT))
+    if ((bits & WIFI_INTERFACE_STARTED_BIT) == 0U)
     {
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTING_BIT);
         result = esp_netif_init();
@@ -2699,7 +2699,7 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
 
     _currentRetryCount = 0;
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
-    if (!(bits & WIFI_CONNECTED_BIT))
+    if ((bits & WIFI_CONNECTED_BIT) == 0U)
     {
         TRACE_MESSAGE("Starting network");
         if (StartWiFiInterface(WIFI_MODE_STA, nullptr) != ESP_OK)
@@ -2711,7 +2711,7 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
     if (result == StatusCodes::CompletedOk)
     {
         bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
-        if (bits & WIFI_INTERFACE_STARTED_BIT)
+        if ((bits & WIFI_INTERFACE_STARTED_BIT) != 0U)
         {
             //
             //  WIFI_SCAN_COMPLETE_BIT is waited on with xClearOnExit = pdFALSE, so a bit left
@@ -2737,7 +2737,7 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
             {
                 bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
             }
-            if (bits & WIFI_SCAN_COMPLETE_BIT)
+            if ((bits & WIFI_SCAN_COMPLETE_BIT) != 0U)
             {
                 uint16_t apCount = 0;
                 esp_wifi_scan_get_ap_num(&apCount);
@@ -3010,7 +3010,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(const wifi_event_sta_disconnec
 
     bool raiseDisconnectedEvent = true;
     EventBits_t bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_DISCONNECT_REQUESTED_BIT, pdFALSE, pdFALSE, 0);
-    if (bits & WIFI_DISCONNECT_REQUESTED_BIT)
+    if ((bits & WIFI_DISCONNECT_REQUESTED_BIT) != 0U)
     {
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_DISCONNECT_REQUESTED_BIT);
     }
@@ -3021,7 +3021,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(const wifi_event_sta_disconnec
         //  not been requested.
         //
         uint32_t maximumRetryCount = GetMaximumRetryCount();
-        if (bits & WIFI_CONNECTED_BIT)
+        if ((bits & WIFI_CONNECTED_BIT) != 0U)
         {
             //
             //  So here we were connected and now we are not so clear the connection flags.

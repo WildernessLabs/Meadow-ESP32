@@ -374,40 +374,40 @@ bool Logging::SetComponentLogging(const char * const component, const esp_log_le
         //  A multitude of if statements are used here because we have some cases where we want to turn logging on for
         //  a group of components and one case where we want to do this for a "non-component" name.
         //
-        if (!strcasecmp(component, WiFiRequestHandler::COMPONENT_NAME))
+        if (strcasecmp(component, WiFiRequestHandler::COMPONENT_NAME) == 0)
         {
             esp_log_level_set(WiFiRequestHandler::COMPONENT_NAME, level);
             return (true);
         }
-        if (!strcasecmp(component, SystemRequestHandler::COMPONENT_NAME))
+        if (strcasecmp(component, SystemRequestHandler::COMPONENT_NAME) == 0)
         {
             esp_log_level_set(SystemRequestHandler::COMPONENT_NAME, level);
             esp_log_level_set(FileSystem::COMPONENT_NAME, level);
             esp_log_level_set(CoreDump::COMPONENT_NAME, level);
             return (true);
         }
-        if (!strcasecmp(component, CoreDump::COMPONENT_NAME))
+        if (strcasecmp(component, CoreDump::COMPONENT_NAME) == 0)
         {
             esp_log_level_set(CoreDump::COMPONENT_NAME, level);
             return (true);
         }
-        if (!strcasecmp(component, BluetoothRequestHandler::COMPONENT_NAME))
+        if (strcasecmp(component, BluetoothRequestHandler::COMPONENT_NAME) == 0)
         {
             esp_log_level_set(BluetoothRequestHandler::COMPONENT_NAME, level);
             return (true);
         }
-        if (!strcasecmp(component, SpiTransportProvider::COMPONENT_NAME))
+        if (strcasecmp(component, SpiTransportProvider::COMPONENT_NAME) == 0)
         {
             esp_log_level_set(SpiTransportProvider::COMPONENT_NAME, level);
             return (true);
         }
-        if (!strcasecmp(component, Thread::COMPONENT_NAME))
+        if (strcasecmp(component, Thread::COMPONENT_NAME) == 0)
         {
             esp_log_level_set(Thread::COMPONENT_NAME, level);
             esp_log_level_set(ThreadPool::COMPONENT_NAME, level);
             return (true);
         }
-        if (!strcasecmp(component, "Messages"))
+        if (strcasecmp(component, "Messages") == 0)
         {
             esp_log_level_set(RequestHandlerBase::COMPONENT_NAME, level);
             esp_log_level_set(TransportProviderBase::COMPONENT_NAME, level);

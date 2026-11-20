@@ -67,7 +67,7 @@ Esp32Messaging::AccessPointInformation *WiFiRequestHandler::ExtractAndValidateAc
         result = Encoders::ExtractAccessPointInformation(data, dataLength);
         if (result)
         {
-            const bool nameError = (!result->NetworkName) || (strlen(result->NetworkName) == 0) || (strlen(result->NetworkName) > MAXIMUM_SSID_LENGTH);
+            const bool nameError = (result->NetworkName == nullptr) || (strlen(result->NetworkName) == 0) || (strlen(result->NetworkName) > MAXIMUM_SSID_LENGTH);
             // error |= (result->IpAddress == 0) || (result->SubnetMask == 0) || (result->Gateway == 0);
             //
             //  Refused before the interface is touched, so a request that cannot work is reported
@@ -262,7 +262,7 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
         uint32_t subnetMask = accessPointInformation->SubnetMask;
         uint32_t gateway = accessPointInformation->Gateway;
 
-        if (!(bits & WIFI_INTERFACE_STARTED_BIT))
+        if ((bits & WIFI_INTERFACE_STARTED_BIT) == 0U)
         {
             //
             //  Clear the IP settings so the station interface uses DHCP; the AP's
@@ -398,7 +398,7 @@ void WiFiRequestHandler::StopAccessPoint(Message *message)
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
-    if (!(bits & WIFI_ACCESS_POINT_STARTED_BIT))
+    if ((bits & WIFI_ACCESS_POINT_STARTED_BIT) == 0U)
     {
         result = StatusCodes::AccessPointNotStarted;
     }

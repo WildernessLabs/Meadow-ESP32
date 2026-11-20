@@ -328,11 +328,11 @@ uint8_t Encoders::CRC8(const uint8_t *data, const uint16_t len)
     for (uint16_t byteCounter = 0; byteCounter < len; byteCounter++)
     {
         uint8_t byte = data[byteCounter];
-        for (uint8_t bitCounter = 8; bitCounter; bitCounter--)
+        for (uint8_t bitCounter = 8; bitCounter > 0; bitCounter--)
         {
             uint8_t sum = static_cast<uint8_t>(crc ^ byte) & 0x01U;
             crc >>= 1U;
-            if (sum)
+            if (sum != 0U)
             {
                 crc ^= 0x8CU;
             }
