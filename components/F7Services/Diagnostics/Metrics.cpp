@@ -10,6 +10,7 @@
 #include "sdkconfig.h"
 
 #include <atomic>
+#include <utility>
 
 #include "esp_heap_caps.h"
 
@@ -28,19 +29,19 @@
  * @brief Names of the counters, in the order of MetricCounter.
  */
 static const char *COUNTER_NAMES[] = {"SpiTransactions", "RequestsReceived", "ResponsesQueued", "EventsQueued", "MessagesDropped", "AllocationFailures"};
-static_assert(sizeof(COUNTER_NAMES) / sizeof(COUNTER_NAMES[0]) == static_cast<size_t>(MetricCounter::NumberOfCounters), "A counter has no name.");
+static_assert(sizeof(COUNTER_NAMES) / sizeof(COUNTER_NAMES[0]) == std::to_underlying(MetricCounter::NumberOfCounters), "A counter has no name.");
 
 /**
  * @brief Names of the gauges, in the order of MetricGauge.
  */
 static const char *GAUGE_NAMES[] = {"OutboundQueueDepth", "FailedAllocationSize"};
-static_assert(sizeof(GAUGE_NAMES) / sizeof(GAUGE_NAMES[0]) == static_cast<size_t>(MetricGauge::NumberOfGauges), "A gauge has no name.");
+static_assert(sizeof(GAUGE_NAMES) / sizeof(GAUGE_NAMES[0]) == std::to_underlying(MetricGauge::NumberOfGauges), "A gauge has no name.");
 
 /**
  * @brief Names of the histograms, in the order of MetricHistogram.
  */
 static const char *HISTOGRAM_NAMES[] = {"WiFiRequestLatency", "BluetoothRequestLatency", "SystemRequestLatency", "WiFiHandlerTime", "BluetoothHandlerTime", "SystemHandlerTime"};
-static_assert(sizeof(HISTOGRAM_NAMES) / sizeof(HISTOGRAM_NAMES[0]) == static_cast<size_t>(MetricHistogram::NumberOfHistograms), "A histogram has no name.");
+static_assert(sizeof(HISTOGRAM_NAMES) / sizeof(HISTOGRAM_NAMES[0]) == std::to_underlying(MetricHistogram::NumberOfHistograms), "A histogram has no name.");
 
 #ifdef CONFIG_MEADOW_METRICS
 
@@ -89,17 +90,17 @@ struct HistogramData
 /**
  * @brief The counters.
  */
-static std::atomic<uint32_t> _counters[static_cast<size_t>(MetricCounter::NumberOfCounters)];
+static std::atomic<uint32_t> _counters[std::to_underlying(MetricCounter::NumberOfCounters)];
 
 /**
  * @brief The gauges.
  */
-static GaugeData _gauges[static_cast<size_t>(MetricGauge::NumberOfGauges)];
+static GaugeData _gauges[std::to_underlying(MetricGauge::NumberOfGauges)];
 
 /**
  * @brief The histograms.
  */
-static HistogramData _histograms[static_cast<size_t>(MetricHistogram::NumberOfHistograms)];
+static HistogramData _histograms[std::to_underlying(MetricHistogram::NumberOfHistograms)];
 
 /**
  * @brief Failed allocation callback to call after counting the failure, or nullptr.
@@ -166,7 +167,7 @@ void Metrics::Setup(const esp_alloc_failed_hook_t alsoCall)
  */
 void Metrics::Increment(const MetricCounter counter)
 {
-    _counters[static_cast<size_t>(counter)].fetch_add(1, std::memory_order_relaxed);
+    _counters[std::to_underlying(counter)].fetch_add(1, std::memory_order_relaxed);
 }
 
 /**
@@ -177,7 +178,7 @@ void Metrics::Increment(const MetricCounter counter)
  */
 void Metrics::Set(const MetricGauge gauge, const uint32_t value)
 {
-    GaugeData &data = _gauges[static_cast<size_t>(gauge)];
+    GaugeData &data = _gauges[std::to_underlying(gauge)];
     data.value.store(value, std::memory_order_relaxed);
     RaiseMaximum(data.maximum, value);
 }
@@ -190,7 +191,7 @@ void Metrics::Set(const MetricGauge gauge, const uint32_t value)
  */
 void Metrics::Record(const MetricHistogram histogram, const uint32_t microseconds)
 {
-    HistogramData &data = _histograms[static_cast<size_t>(histogram)];
+    HistogramData &data = _histograms[std::to_underlying(histogram)];
     data.buckets[BucketFor(microseconds)].fetch_add(1, std::memory_order_relaxed);
     data.count.fetch_add(1, std::memory_order_relaxed);
     data.total.fetch_add(microseconds, std::memory_order_relaxed);
@@ -205,7 +206,7 @@ void Metrics::Record(const MetricHistogram histogram, const uint32_t microsecond
  */
 uint32_t Metrics::Read(const MetricCounter counter)
 {
-    return (_counters[static_cast<size_t>(counter)].load(std::memory_order_relaxed));
+    return (_counters[std::to_underlying(counter)].load(std::memory_order_relaxed));
 }
 
 /**
@@ -217,7 +218,7 @@ uint32_t Metrics::Read(const MetricCounter counter)
  */
 uint32_t Metrics::Read(const MetricGauge gauge, uint32_t &maximum)
 {
-    const GaugeData &data = _gauges[static_cast<size_t>(gauge)];
+    const GaugeData &data = _gauges[std::to_underlying(gauge)];
     maximum = data.maximum.load(std::memory_order_relaxed);
     return (data.value.load(std::memory_order_relaxed));
 }
@@ -230,7 +231,7 @@ uint32_t Metrics::Read(const MetricGauge gauge, uint32_t &maximum)
  */
 void Metrics::Read(const MetricHistogram histogram, HistogramReading &reading)
 {
-    const HistogramData &data = _histograms[static_cast<size_t>(histogram)];
+    const HistogramData &data = _histograms[std::to_underlying(histogram)];
     for (size_t bucket = 0; bucket < NUMBER_OF_BUCKETS; bucket++)
     {
         reading.buckets[bucket] = data.buckets[bucket].load(std::memory_order_relaxed);
@@ -305,7 +306,7 @@ uint32_t Metrics::BucketLowerBound(const size_t bucket)
  */
 const char *Metrics::Name(const MetricCounter counter)
 {
-    return (COUNTER_NAMES[static_cast<size_t>(counter)]);
+    return (COUNTER_NAMES[std::to_underlying(counter)]);
 }
 
 /**
@@ -316,7 +317,7 @@ const char *Metrics::Name(const MetricCounter counter)
  */
 const char *Metrics::Name(const MetricGauge gauge)
 {
-    return (GAUGE_NAMES[static_cast<size_t>(gauge)]);
+    return (GAUGE_NAMES[std::to_underlying(gauge)]);
 }
 
 /**
@@ -327,7 +328,7 @@ const char *Metrics::Name(const MetricGauge gauge)
  */
 const char *Metrics::Name(const MetricHistogram histogram)
 {
-    return (HISTOGRAM_NAMES[static_cast<size_t>(histogram)]);
+    return (HISTOGRAM_NAMES[std::to_underlying(histogram)]);
 }
 
 /**

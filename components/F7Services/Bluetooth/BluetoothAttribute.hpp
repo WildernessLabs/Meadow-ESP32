@@ -10,6 +10,7 @@
 #pragma once
 
 #include <cstdint>
+#include <utility>
 
 /**
  * @brief Property type of this characteristic
@@ -27,7 +28,7 @@ enum class CharacteristicProperty : unsigned char { Broadcast = 1U << 0U, Read =
  */
 inline CharacteristicProperty operator|(CharacteristicProperty a, CharacteristicProperty b)
 {
-    return static_cast<CharacteristicProperty>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
+    return static_cast<CharacteristicProperty>(static_cast<uint32_t>(std::to_underlying(a)) | static_cast<uint32_t>(std::to_underlying(b)));
 }
 
 /**
@@ -41,7 +42,7 @@ inline CharacteristicProperty operator|(CharacteristicProperty a, Characteristic
  */
 inline CharacteristicProperty operator&(CharacteristicProperty a, CharacteristicProperty b)
 {
-    return static_cast<CharacteristicProperty>(static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
+    return static_cast<CharacteristicProperty>(static_cast<uint32_t>(std::to_underlying(a)) & static_cast<uint32_t>(std::to_underlying(b)));
 }
 
 /**
@@ -70,7 +71,7 @@ enum class CharacteristicPermission : unsigned short {
  */
 inline CharacteristicPermission operator|(CharacteristicPermission a, CharacteristicPermission b)
 {
-    return static_cast<CharacteristicPermission>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
+    return static_cast<CharacteristicPermission>(static_cast<uint32_t>(std::to_underlying(a)) | static_cast<uint32_t>(std::to_underlying(b)));
 }
 
 /**

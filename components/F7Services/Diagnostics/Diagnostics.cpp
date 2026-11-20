@@ -16,6 +16,7 @@
 #include <cinttypes>
 #include <cstdarg>
 #include <cstdio>
+#include <utility>
 
 #include "esp_log.h"
 #include "esp_system.h"
@@ -386,19 +387,19 @@ void Diagnostics::WriteTaskHeap(const uint32_t sequence)
 void Diagnostics::WriteMetrics(const uint32_t sequence)
 {
 #ifdef CONFIG_MEADOW_METRICS
-    for (size_t index = 0; index < static_cast<size_t>(MetricCounter::NumberOfCounters); index++)
+    for (size_t index = 0; index < std::to_underlying(MetricCounter::NumberOfCounters); index++)
     {
         const auto counter = static_cast<MetricCounter>(index);
         WriteRecord("counter,%" PRIu32 ",%s,%" PRIu32, sequence, Metrics::Name(counter), Metrics::Read(counter));
     }
-    for (size_t index = 0; index < static_cast<size_t>(MetricGauge::NumberOfGauges); index++)
+    for (size_t index = 0; index < std::to_underlying(MetricGauge::NumberOfGauges); index++)
     {
         const auto gauge = static_cast<MetricGauge>(index);
         uint32_t maximum = 0;
         const uint32_t value = Metrics::Read(gauge, maximum);
         WriteRecord("gauge,%" PRIu32 ",%s,%" PRIu32 ",%" PRIu32, sequence, Metrics::Name(gauge), value, maximum);
     }
-    for (size_t index = 0; index < static_cast<size_t>(MetricHistogram::NumberOfHistograms); index++)
+    for (size_t index = 0; index < std::to_underlying(MetricHistogram::NumberOfHistograms); index++)
     {
         const auto histogram = static_cast<MetricHistogram>(index);
         HistogramReading reading;

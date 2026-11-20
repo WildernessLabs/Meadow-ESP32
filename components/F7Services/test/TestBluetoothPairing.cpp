@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <cstring>
 #include <vector>
+#include <utility>
 #include "esp_bt_main.h"
 #include "unity.h"
 
@@ -381,7 +382,7 @@ TEST_CASE("A numeric comparison is passed to the STM32 rather than confirmed", C
 
     NumericComparisonEvent(CLIENT, PASSKEY);
     CheckPairingEvent(dispatcher, BluetoothFunction::NumericComparisonRequestEvent, PASSKEY);
-    TEST_ASSERT_EQUAL_MESSAGE(static_cast<int>(BluetoothPairing::PendingReply::NumericComparison), static_cast<int>(TestBluetoothPairing::Pairing().GetPendingReply()), "No reply is expected from the STM32.");
+    TEST_ASSERT_EQUAL_MESSAGE(std::to_underlying(BluetoothPairing::PendingReply::NumericComparison), std::to_underlying(TestBluetoothPairing::Pairing().GetPendingReply()), "No reply is expected from the STM32.");
 
     End(dispatcher);
 }
@@ -392,7 +393,7 @@ TEST_CASE("A request for the client's passkey is passed to the STM32", CLASS_OF_
 
     PasskeyRequestEvent(CLIENT);
     CheckPairingEvent(dispatcher, BluetoothFunction::PasskeyRequestEvent, 0);
-    TEST_ASSERT_EQUAL(static_cast<int>(BluetoothPairing::PendingReply::Passkey), static_cast<int>(TestBluetoothPairing::Pairing().GetPendingReply()));
+    TEST_ASSERT_EQUAL(std::to_underlying(BluetoothPairing::PendingReply::Passkey), std::to_underlying(TestBluetoothPairing::Pairing().GetPendingReply()));
 
     End(dispatcher);
 }
@@ -406,7 +407,7 @@ TEST_CASE("A passkey to show the user is passed to the STM32", CLASS_OF_TESTS)
     param.ble_security.key_notif.passkey = PASSKEY;
     TestBluetoothPairing::GapEvent(ESP_GAP_BLE_PASSKEY_NOTIF_EVT, param);
     CheckPairingEvent(dispatcher, BluetoothFunction::PasskeyDisplayEvent, PASSKEY);
-    TEST_ASSERT_EQUAL_MESSAGE(static_cast<int>(BluetoothPairing::PendingReply::None), static_cast<int>(TestBluetoothPairing::Pairing().GetPendingReply()), "Showing a passkey needs no reply.");
+    TEST_ASSERT_EQUAL_MESSAGE(std::to_underlying(BluetoothPairing::PendingReply::None), std::to_underlying(TestBluetoothPairing::Pairing().GetPendingReply()), "Showing a passkey needs no reply.");
 
     End(dispatcher);
 }
@@ -437,10 +438,10 @@ TEST_CASE("A pairing reply about another client, or to another question, is refu
 
     Reply(dispatcher, BluetoothFunction::NumericComparisonReply, OTHER_CLIENT, true, 0, StatusCodes::InvalidRequest, "A confirmation for another client was accepted.");
     Reply(dispatcher, BluetoothFunction::PasskeyReply, CLIENT, true, PASSKEY, StatusCodes::InvalidRequest, "A passkey was accepted for a numeric comparison.");
-    TEST_ASSERT_EQUAL_MESSAGE(static_cast<int>(BluetoothPairing::PendingReply::NumericComparison), static_cast<int>(TestBluetoothPairing::Pairing().GetPendingReply()), "A wrong reply closed the question.");
+    TEST_ASSERT_EQUAL_MESSAGE(std::to_underlying(BluetoothPairing::PendingReply::NumericComparison), std::to_underlying(TestBluetoothPairing::Pairing().GetPendingReply()), "A wrong reply closed the question.");
 
     Reply(dispatcher, BluetoothFunction::NumericComparisonReply, CLIENT, true, 0, StatusCodes::BluetoothNotStarted, "The right reply did not reach the stack.");
-    TEST_ASSERT_EQUAL_MESSAGE(static_cast<int>(BluetoothPairing::PendingReply::None), static_cast<int>(TestBluetoothPairing::Pairing().GetPendingReply()), "The question stayed open after it was answered.");
+    TEST_ASSERT_EQUAL_MESSAGE(std::to_underlying(BluetoothPairing::PendingReply::None), std::to_underlying(TestBluetoothPairing::Pairing().GetPendingReply()), "The question stayed open after it was answered.");
     Reply(dispatcher, BluetoothFunction::NumericComparisonReply, CLIENT, true, 0, StatusCodes::InvalidRequest, "A question was answered twice.");
 
     End(dispatcher);
@@ -455,13 +456,13 @@ TEST_CASE("A passkey of more than six digits is refused and the question stays o
     CheckPairingEvent(dispatcher, BluetoothFunction::PasskeyRequestEvent, 0);
 
     Reply(dispatcher, BluetoothFunction::PasskeyReply, CLIENT, true, 1000000, StatusCodes::InvalidRequest, "A seven digit passkey was accepted.");
-    TEST_ASSERT_EQUAL(static_cast<int>(BluetoothPairing::PendingReply::Passkey), static_cast<int>(TestBluetoothPairing::Pairing().GetPendingReply()));
+    TEST_ASSERT_EQUAL(std::to_underlying(BluetoothPairing::PendingReply::Passkey), std::to_underlying(TestBluetoothPairing::Pairing().GetPendingReply()));
 
     //
     //  Refusing the pairing needs no passkey, so whatever passkey comes with it is not checked.
     //
     Reply(dispatcher, BluetoothFunction::PasskeyReply, CLIENT, false, 1000000, StatusCodes::BluetoothNotStarted, "Refusing the pairing did not reach the stack.");
-    TEST_ASSERT_EQUAL(static_cast<int>(BluetoothPairing::PendingReply::None), static_cast<int>(TestBluetoothPairing::Pairing().GetPendingReply()));
+    TEST_ASSERT_EQUAL(std::to_underlying(BluetoothPairing::PendingReply::None), std::to_underlying(TestBluetoothPairing::Pairing().GetPendingReply()));
 
     End(dispatcher);
 }
@@ -486,7 +487,7 @@ TEST_CASE("A malformed pairing reply is refused", CLASS_OF_TESTS)
         ASSERT_RESPONSE(response, Esp32Interfaces::BlueTooth, function, StatusCodes::InvalidRequest);
         Message::DeleteMessage(response);
     }
-    TEST_ASSERT_EQUAL_MESSAGE(static_cast<int>(BluetoothPairing::PendingReply::NumericComparison), static_cast<int>(TestBluetoothPairing::Pairing().GetPendingReply()), "A malformed reply closed the question.");
+    TEST_ASSERT_EQUAL_MESSAGE(std::to_underlying(BluetoothPairing::PendingReply::NumericComparison), std::to_underlying(TestBluetoothPairing::Pairing().GetPendingReply()), "A malformed reply closed the question.");
 
     End(dispatcher);
 }
@@ -550,7 +551,7 @@ TEST_CASE("A failed pairing is reported to the STM32 and closes the question", C
     TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, event->Payload[9], "A failed pairing is reported as bonded.");
     Message::DeleteMessage(event);
 
-    TEST_ASSERT_EQUAL_MESSAGE(static_cast<int>(BluetoothPairing::PendingReply::None), static_cast<int>(TestBluetoothPairing::Pairing().GetPendingReply()), "The question stayed open after pairing ended.");
+    TEST_ASSERT_EQUAL_MESSAGE(std::to_underlying(BluetoothPairing::PendingReply::None), std::to_underlying(TestBluetoothPairing::Pairing().GetPendingReply()), "The question stayed open after pairing ended.");
 
     End(dispatcher);
 }
@@ -603,7 +604,7 @@ TEST_CASE("A client connecting or disconnecting closes the question and forgets 
     ASSERT_EVENT(event, Esp32Interfaces::BlueTooth, BluetoothFunction::ClientConnectedEvent, StatusCodes::CompletedOk);
     Message::DeleteMessage(event);
     esp_bd_addr_t bonded;
-    TEST_ASSERT_EQUAL_MESSAGE(static_cast<int>(BluetoothPairing::PendingReply::None), static_cast<int>(TestBluetoothPairing::Pairing().GetPendingReply()), "A question from before the connection stayed open.");
+    TEST_ASSERT_EQUAL_MESSAGE(std::to_underlying(BluetoothPairing::PendingReply::None), std::to_underlying(TestBluetoothPairing::Pairing().GetPendingReply()), "A question from before the connection stayed open.");
     TEST_ASSERT_FALSE_MESSAGE(TestBluetoothPairing::Pairing().GetBondedClient(bonded), "A new client was taken to be bonded before it encrypted.");
 
     NumericComparisonEvent(CLIENT, PASSKEY);
@@ -617,7 +618,7 @@ TEST_CASE("A client connecting or disconnecting closes the question and forgets 
     TEST_ASSERT_NOT_NULL(event);
     ASSERT_EVENT(event, Esp32Interfaces::BlueTooth, BluetoothFunction::ClientDisconnectedEvent, StatusCodes::CompletedOk);
     Message::DeleteMessage(event);
-    TEST_ASSERT_EQUAL_MESSAGE(static_cast<int>(BluetoothPairing::PendingReply::None), static_cast<int>(TestBluetoothPairing::Pairing().GetPendingReply()), "A question stayed open after the client left.");
+    TEST_ASSERT_EQUAL_MESSAGE(std::to_underlying(BluetoothPairing::PendingReply::None), std::to_underlying(TestBluetoothPairing::Pairing().GetPendingReply()), "A question stayed open after the client left.");
     TEST_ASSERT_FALSE_MESSAGE(TestBluetoothPairing::Pairing().GetBondedClient(bonded), "The bonded client was remembered after it left.");
 
     End(dispatcher);
@@ -638,7 +639,7 @@ TEST_CASE("Pairing events that arrive with no handler are ignored", CLASS_OF_TES
     TestBluetoothPairing::GapEvent(ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT, param);
 
     TestBluetoothPairing::Restore(handler);
-    TEST_ASSERT_EQUAL_MESSAGE(static_cast<int>(BluetoothPairing::PendingReply::None), static_cast<int>(TestBluetoothPairing::Pairing().GetPendingReply()), "An event with no handler opened a question.");
+    TEST_ASSERT_EQUAL_MESSAGE(std::to_underlying(BluetoothPairing::PendingReply::None), std::to_underlying(TestBluetoothPairing::Pairing().GetPendingReply()), "An event with no handler opened a question.");
     End(dispatcher);
 }
 
@@ -652,7 +653,7 @@ TEST_CASE("BluetoothPairing accepts only the reply that is due", CLASS_OF_TESTS)
     TEST_ASSERT_FALSE(pairing.Take(BluetoothPairing::PendingReply::NumericComparison, CLIENT));
     TEST_ASSERT_FALSE(pairing.Take(BluetoothPairing::PendingReply::Passkey, OTHER_CLIENT));
     TEST_ASSERT_TRUE(pairing.Take(BluetoothPairing::PendingReply::Passkey, CLIENT));
-    TEST_ASSERT_EQUAL(static_cast<int>(BluetoothPairing::PendingReply::None), static_cast<int>(pairing.GetPendingReply()));
+    TEST_ASSERT_EQUAL(std::to_underlying(BluetoothPairing::PendingReply::None), std::to_underlying(pairing.GetPendingReply()));
     TEST_ASSERT_FALSE_MESSAGE(pairing.Take(BluetoothPairing::PendingReply::Passkey, CLIENT), "A reply was taken twice.");
 
     //

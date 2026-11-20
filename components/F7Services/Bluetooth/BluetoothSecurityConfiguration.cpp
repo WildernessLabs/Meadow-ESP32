@@ -8,6 +8,9 @@
  */
 
 #include "BluetoothSecurityConfiguration.hpp"
+
+#include <utility>
+
 #include "BluetoothComponentName.hpp"
 #include "Logging.hpp"
 
@@ -79,7 +82,7 @@ bool BluetoothSecurityConfiguration::Parse(const cJSON * const security)
         //  A number such as 1.5 is refused rather than truncated, as is anything outside the five
         //  capabilities the Bluetooth Core Specification defines.
         //
-        if (!cJSON_IsNumber(capability) || (capability->valuedouble != static_cast<double>(capability->valueint)) || (capability->valueint < static_cast<int>(IoCapability::DisplayOnly)) || (capability->valueint > static_cast<int>(IoCapability::KeyboardDisplay)))
+        if (!cJSON_IsNumber(capability) || (capability->valuedouble != static_cast<double>(capability->valueint)) || (capability->valueint < std::to_underlying(IoCapability::DisplayOnly)) || (capability->valueint > std::to_underlying(IoCapability::KeyboardDisplay)))
         {
             ERROR_MESSAGE("Security setting " IO_CAPABILITY_KEY " is not a number from 0 to 4.");
             valid = false;
@@ -165,8 +168,8 @@ esp_ble_sec_act_t BluetoothSecurityConfiguration::EncryptionLevel() const
  */
 bool BluetoothSecurityConfiguration::PermissionRequiresMitm(const CharacteristicPermission permission)
 {
-    const uint32_t mitm = static_cast<uint32_t>(CharacteristicPermission::ReadEncMITM) | static_cast<uint32_t>(CharacteristicPermission::WriteEncMITM) | static_cast<uint32_t>(CharacteristicPermission::WriteSignedMITM);
-    return ((static_cast<uint32_t>(permission) & mitm) != 0);
+    const uint32_t mitm = static_cast<uint32_t>(std::to_underlying(CharacteristicPermission::ReadEncMITM)) | static_cast<uint32_t>(std::to_underlying(CharacteristicPermission::WriteEncMITM)) | static_cast<uint32_t>(std::to_underlying(CharacteristicPermission::WriteSignedMITM));
+    return ((static_cast<uint32_t>(std::to_underlying(permission)) & mitm) != 0);
 }
 
 /**
@@ -178,8 +181,8 @@ bool BluetoothSecurityConfiguration::PermissionRequiresMitm(const Characteristic
  */
 bool BluetoothSecurityConfiguration::PermissionRequiresEncryption(const CharacteristicPermission permission)
 {
-    const uint16_t encrypted = static_cast<uint16_t>(CharacteristicPermission::ReadEncrypted) | static_cast<uint16_t>(CharacteristicPermission::WriteEncrypted);
-    return (((static_cast<uint16_t>(permission) & encrypted) != 0) || PermissionRequiresMitm(permission));
+    const uint16_t encrypted = std::to_underlying(CharacteristicPermission::ReadEncrypted) | std::to_underlying(CharacteristicPermission::WriteEncrypted);
+    return (((std::to_underlying(permission) & encrypted) != 0) || PermissionRequiresMitm(permission));
 }
 
 /**
