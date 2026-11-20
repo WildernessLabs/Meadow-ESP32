@@ -11,7 +11,6 @@
 #include "sdkconfig.h"
 
 #include <cstdio>
-#include <cstring>
 #include "unity.h"
 
 #include "nvs.h"

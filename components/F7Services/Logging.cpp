@@ -9,7 +9,6 @@
 
 #include "sdkconfig.h"
 
-#include "esp32/rom/gpio.h"
 #include "lwip/sockets.h"
 #ifdef CONFIG_MEADOW_SYSVIEW
     //
@@ -19,26 +18,18 @@
     #include "esp_sysview_heap_trace_module.h"
 #endif
 #include <cstring>
-#include <climits>
 
 #include "SharedEnums.hpp"
 #include "Logging.hpp"
 
-#include "NvsManager.hpp"
 #include "MessageDispatcher.hpp"
 #include "SpiTransportProvider.hpp"
 #include "WiFiRequestHandler.hpp"
-#include "SpiTransportProvider.hpp"
 #include "Mapping.hpp"
-#include "Diagnostics.hpp"
-#include "Heap.hpp"
-#include "Utils.hpp"
-#include "MutexLock.hpp"
 #include "AppMain.hpp"
 
 #include "SystemRequestHandler.hpp"
 #include "BluetoothRequestHandler.hpp"
-#include "WiFiRequestHandler.hpp"
 #include "FileSystem.hpp"
 #include "Thread.hpp"
 #include "ThreadPool.hpp"

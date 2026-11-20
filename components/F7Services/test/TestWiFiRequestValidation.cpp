@@ -17,8 +17,6 @@
 #include "NvsManager.hpp"
 #include "WiFiRequestHandler.hpp"
 
-#include "TestAssertions.hpp"
-
 /**
  * @brief Class of tests in this file.
  */

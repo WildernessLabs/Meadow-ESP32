@@ -12,7 +12,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
-#include "esp_log.h"
 
 #include "Encoders.hpp"
 #include "RequestHandlerBase.hpp"
@@ -21,7 +20,6 @@
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
 #include "Utils.hpp"
-#include "TransportProviderBase.hpp"
 
 /*
  * ---------------------------------------------------------------------------

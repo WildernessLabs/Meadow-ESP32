@@ -21,9 +21,6 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include "esp_heap_caps.h"
 #include "esp_system.h"
 #include "esp_timer.h"
 #include "unity.h"

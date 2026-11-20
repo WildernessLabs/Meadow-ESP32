@@ -12,7 +12,6 @@
 
 #include <cstdio>
 #include <string>
-#include <sys/types.h>
 #include <dirent.h>
 
 #include "unity.h"

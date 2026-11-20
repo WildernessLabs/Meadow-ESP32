@@ -4,25 +4,18 @@
  *  Implementation of the test methods for the BluetoothRequestHandler class.
  */
 
-#include <climits>
 #include <cstdio>
-#include <sys/types.h>
-#include <dirent.h>
 #include <string>
 #include <cstring>
 #include <vector>
-#include "esp_heap_caps.h"
 #include "esp_system.h"
 #include "esp_timer.h"
 #include "unity.h"
 
 #include "MockMessageDispatcher.hpp"
-#include "MockTransportProvider.hpp"
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
 #include "SharedEnums.hpp"
-#include "Logging.hpp"
-#include "Utils.hpp"
 
 #include "TestAssertions.hpp"
 #include "TestBluetoothHelpers.hpp"

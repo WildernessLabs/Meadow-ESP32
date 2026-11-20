@@ -34,8 +34,6 @@
 #include "Utils.hpp"
 #include "MutexLock.hpp"
 #include "Logging.hpp"
-#include "Diagnostics.hpp"
-#include "Heap.hpp"
 
 /*
  * ----------------------------------------------------------------------------

@@ -22,8 +22,6 @@
 #include <cstring>
 #include <string>
 #include <sys/stat.h>
-#include <sys/types.h>
-#include <dirent.h>
 #include <cerrno>
 #include <cinttypes>
 

@@ -10,7 +10,6 @@
 #include "sdkconfig.h"
 
 #include "Utils.hpp"
-#include "Encoders.hpp"
 #include "Esp32Messaging.hpp"
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"

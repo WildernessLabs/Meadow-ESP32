@@ -8,7 +8,6 @@
 
 #include <cstdint>
 #include <cstring>
-#include "esp_wifi_types.h"
 #include "unity.h"
 
 #include "SharedEnums.hpp"

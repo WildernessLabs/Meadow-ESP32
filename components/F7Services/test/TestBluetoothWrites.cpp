@@ -7,7 +7,6 @@
 #include "sdkconfig.h"
 
 #include <cstdint>
-#include <cstring>
 #include "unity.h"
 
 #include "BluetoothRequestHandler.hpp"

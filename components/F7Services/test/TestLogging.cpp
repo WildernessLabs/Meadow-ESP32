@@ -8,7 +8,6 @@
 #include "sdkconfig.h"
 
 #include <cstring>
-#include <sys/socket.h>
 #include "esp_log.h"
 #include "esp_netif.h"
 #include "lwip/sockets.h"
