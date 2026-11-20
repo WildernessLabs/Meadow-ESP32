@@ -64,9 +64,7 @@ TransportProviderBase::TransportProviderBase()
 /**
  *  @brief Default destructor.
  */
-TransportProviderBase::~TransportProviderBase()
-{
-}
+TransportProviderBase::~TransportProviderBase() = default;
 
 /*
  * ----------------------------------------------------------------------------

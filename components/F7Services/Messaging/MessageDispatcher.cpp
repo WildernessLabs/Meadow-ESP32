@@ -72,9 +72,7 @@ MessageDispatcher::MessageDispatcher(TransportProviderBase * const transportProv
 /**
  *  @brief Default destructor.
  */
-MessageDispatcher::~MessageDispatcher()
-{
-}
+MessageDispatcher::~MessageDispatcher() = default;
 
 /* ---------------------------------------------------------------------------
  *

@@ -479,16 +479,12 @@ Mapping::str_mapping_t Mapping::_wifiFunctionNames[] = {
 /**
  *  @brief Default constructor for the mapping system.
  */
-Mapping::Mapping()
-{
-}
+Mapping::Mapping() = default;
 
 /**
  *  @brief Default destructor for the mapping system.
  */
-Mapping::~Mapping()
-{
-}
+Mapping::~Mapping() = default;
 
 /*
  * ---------------------------------------------------------------------------

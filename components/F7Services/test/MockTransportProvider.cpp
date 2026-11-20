@@ -21,9 +21,7 @@ MockTransportProvider::MockTransportProvider() : TransportProviderBase()
 /**
  *  @brief Default destructor for the Mock transport provider.
  */
-MockTransportProvider::~MockTransportProvider()
-{
-}
+MockTransportProvider::~MockTransportProvider() = default;
 
 /**
  *  @brief Setup the Mock transport provider.

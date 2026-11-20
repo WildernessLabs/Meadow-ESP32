@@ -72,9 +72,7 @@ public:
     /**
      * @brief Construct a new BluetoothHandleManager object
      */
-    BluetoothHandleManager()
-    {
-    }
+    BluetoothHandleManager() = default;
 
     unsigned short Assign(BluetoothService *service);
     unsigned short Assign(BluetoothAttribute *attribute);
