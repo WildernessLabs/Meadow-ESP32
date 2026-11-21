@@ -232,10 +232,7 @@ void Thread::TakeExecutionSemaphore()
     {
         return;
     }
-    else
-    {
-        throw ThreadPoolException("Task cannot take the execution mutex.");
-    }
+    throw ThreadPoolException("Task cannot take the execution mutex.");
 }
 
 /**

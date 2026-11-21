@@ -154,7 +154,11 @@ Uuid128::Uuid128(const uint8_t * const other)
  */
 std::string Uuid128::ToString() const
 {
-    char one[10], two[6], three[6], four[6], five[14];
+    char one[10];
+    char two[6];
+    char three[6];
+    char four[6];
+    char five[14];
 
     snprintf(one, 10, "%02x%02x%02x%02x", data[15], data[14], data[13], data[12]);
     snprintf(two, 6, "%02x%02x", data[11], data[10]);
@@ -185,11 +189,11 @@ Uuid128::Uuid128(const char * const fromString)
     bool lookingForFirstChar = true;
     unsigned nextByte = 0;
 
-    auto len = strlen(fromString);
+    const auto len = strlen(fromString);
 
     for (int i = len - 1; i >= 0; i--)
     {
-        char ch = fromString[i];
+        const char ch = fromString[i];
 
         if (ch == '-')
         {

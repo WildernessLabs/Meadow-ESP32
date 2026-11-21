@@ -174,15 +174,14 @@ void Encoders::EncodeUInt32(const uint32_t value, uint8_t * const buffer)
  *  @returns
  *      32-bit unsigned integer extracted from the first 4 bytes in the buffer.
  */
-uint32_t Encoders::ExtractInt32(const uint8_t * const buffer)
+int32_t Encoders::ExtractInt32(const uint8_t * const buffer)
 {
-    uint32_t result;
-
-    result = buffer[0];
+    uint32_t result = buffer[0];
     result |= (static_cast<uint32_t>(buffer[1]) << 8U);
     result |= (static_cast<uint32_t>(buffer[2]) << 16U);
     result |= (static_cast<uint32_t>(buffer[3]) << 24U);
-    return (result);
+
+    return (static_cast<int32_t>(result));
 }
 
 /**

@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 #include <cerrno>
 #include <cinttypes>
+#include <utility>
 
 #include "esp_idf_version.h"
 #include "unity.h"
@@ -80,10 +81,10 @@ static const uint32_t LARGEST_FILE_SIZE = 20000;
  */
 static uint8_t ExpectedByte(const char *name, const uint32_t position)
 {
-    uint32_t hash = 2166136261u;
+    uint32_t hash = 2166136261U;
     for (const char *character = name; *character != '\0'; character++)
     {
-        hash = (hash ^ static_cast<uint8_t>(*character)) * 16777619u;
+        hash = (hash ^ static_cast<uint8_t>(*character)) * 16777619U;
     }
     return (static_cast<uint8_t>(hash + (position * 31) + (position >> 8U)));
 }
@@ -132,7 +133,7 @@ static bool CheckCompatibilityFile(const char *name, const uint32_t size, uint8_
 {
     FillExpectedContents(name, expected, size);
     const int length = ReadTestFile(name, actual, LARGEST_FILE_SIZE + 1);
-    if (length != static_cast<int>(size))
+    if (std::cmp_not_equal(length, size))
     {
         printf("  %s: read %d bytes, expected %" PRIu32 "\n", name, length, size);
         return (false);
@@ -203,7 +204,7 @@ TEST_CASE("Check the LittleFS compatibility files", CLASS_OF_TESTS)
     {
         CompatibilityFileName(idfMajor, FILE_SIZES[0], false, name, sizeof(name));
         std::string firstFile = FileSystem::PARTITION_PATH_NAME;
-        firstFile += "/";
+        firstFile += '/';
         firstFile += name;
         struct stat information;
         if (stat(firstFile.c_str(), &information) != 0)

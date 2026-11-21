@@ -68,7 +68,7 @@ public:
         TEST_ASSERT_NOT_NULL(request);
         if (function == WiFiFunction::SetAntenna)
         {
-            handler->SetAntennaRequest(request);
+            WiFiRequestHandler::SetAntennaRequest(request);
         }
         else
         {

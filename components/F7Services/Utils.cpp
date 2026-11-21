@@ -49,12 +49,12 @@ std::string Utils::NumberWithCommas(uint64_t number)
         return std::string(buffer);
     }
 
-    int commas = (len - 1) / 3;
+    size_t commas = (len - 1) / 3;
     char temp[27];
     memcpy(temp, buffer, len + 1);
 
-    int tempIndex = len;
-    int bufIndex = len + commas;
+    size_t tempIndex = len;
+    size_t bufIndex = len + commas;
     buffer[bufIndex--] = '\0';
 
     int count = 0;

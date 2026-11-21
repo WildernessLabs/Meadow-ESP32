@@ -101,7 +101,7 @@ public:
     /**
      * @brief Number of bytes.
      */
-    uint32_t Length() const
+    [[nodiscard]] uint32_t Length() const
     {
         return (static_cast<uint32_t>(_bytes.size()));
     }
@@ -109,7 +109,7 @@ public:
     /**
      * @brief The bytes.
      */
-    const uint8_t *Bytes() const
+    [[nodiscard]] const uint8_t *Bytes() const
     {
         return (_bytes.data());
     }
@@ -302,7 +302,7 @@ TEST_CASE("Every decoder accepts its payload and refuses every shorter one", CLA
         {.Name = "IoctlRequest", .Decode = DecodeIoctlRequest, .Valid = Payload().UInt32(1)},
         {.Name = "GetSockPeerNameRequest", .Decode = DecodeGetSockPeerNameRequest, .Valid = Payload().UInt32(1)},
         {.Name = "SetAntennaRequest", .Decode = DecodeSetAntennaRequest, .Valid = Payload().Byte(1).Byte(0)},
-        {.Name = "BTStackConfig", .Decode = DecodeBTStackConfig, .Valid = Payload().Text("{\"deviceName\":\"x\"}")},
+        {.Name = "BTStackConfig", .Decode = DecodeBTStackConfig, .Valid = Payload().Text(R"({"deviceName":"x"})")},
         {.Name = "BTServerDataSet", .Decode = DecodeBTServerDataSet, .Valid = Payload().UInt16(1).UInt32(2).Fill(2)},
         {.Name = "FileDetails", .Decode = DecodeFileDetails, .Valid = Payload().Text("file.txt").UInt16(5)},
         {.Name = "FileNameAndContents", .Decode = DecodeFileNameAndContents, .Valid = Payload().Text("file.txt").UInt32(3).Fill(3)},

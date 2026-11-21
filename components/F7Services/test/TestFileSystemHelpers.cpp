@@ -103,7 +103,7 @@ int WriteTestFile(const char *filename, const uint8_t *buffer, int length)
     int result = 0;
 
     std::string fullPath = FileSystem::PARTITION_PATH_NAME;
-    fullPath += "/";
+    fullPath += '/';
     fullPath += filename;
 
     FILE *file = fopen(fullPath.c_str(), "w");
@@ -134,7 +134,7 @@ int ReadTestFile(const char *filename, uint8_t *buffer, int maxLength)
     int result = 0;
 
     std::string fullPath = FileSystem::PARTITION_PATH_NAME;
-    fullPath += "/";
+    fullPath += '/';
     fullPath += filename;
 
     FILE *file = fopen(fullPath.c_str(), "r");
