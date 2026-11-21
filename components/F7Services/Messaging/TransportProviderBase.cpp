@@ -128,7 +128,7 @@ Message *TransportProviderBase::GetOutboundMessage()
 
 /**
  *  @brief Dump the message at the head of the message queue (if there is one)
- *  to as LOGI informaiton.
+ *  to as LOGI information.
  *
  *  This method is intended for debugging.
  *

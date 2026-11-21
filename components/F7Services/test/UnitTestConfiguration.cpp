@@ -13,6 +13,7 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <utility>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -149,7 +150,7 @@ static void ReadString(const cJSON * const json, const char *name, char **value)
     {
         return;
     }
-    if (!cJSON_IsString(item) || (item->valuestring == nullptr))
+    if ((cJSON_IsString(item) == 0) || (item->valuestring == nullptr))
     {
         Halt("A setting that should be text is not.");
     }
@@ -184,7 +185,7 @@ static void ReadUInt32(const cJSON * const json, const char *name, uint32_t *val
     {
         return;
     }
-    if (!cJSON_IsNumber(item) || (item->valuedouble < 0))
+    if ((cJSON_IsNumber(item) == 0) || (item->valuedouble < 0))
     {
         Halt("A setting that should be a number is not, or is negative.");
     }
@@ -222,7 +223,7 @@ static char *ReadConfigurationFile(const char *path)
     const long length = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    if ((length < 0) || (static_cast<size_t>(length) > MAXIMUM_CONFIGURATION_FILE_SIZE))
+    if ((length < 0) || (std::cmp_greater(length, MAXIMUM_CONFIGURATION_FILE_SIZE)))
     {
         fclose(file);
         Halt("The configuration file is not a size a configuration file should be.");
@@ -271,7 +272,7 @@ void UnitTestConfiguration::Load()
     }
 
     std::string path = FileSystem::PARTITION_PATH_NAME;
-    path += "/";
+    path += '/';
     path += CONFIGURATION_FILE_NAME;
 
     char *contents = ReadConfigurationFile(path.c_str());

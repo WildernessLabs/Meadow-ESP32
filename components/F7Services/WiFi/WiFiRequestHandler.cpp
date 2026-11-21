@@ -204,8 +204,9 @@ const char *WiFiRequestHandler::PASSWORD_NAME = "Password";
  *        It is important that this code is "01" as this is the code that the ESP32 recognises as the default
  *        world wide code that is safe for all regions.
  */
-const char * const WiFiRequestHandler::_validCountryCodes[] = {"01", "AT", "AU", "BE", "BG", "BR", "CA", "CH", "CN", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "GB", "GR", "HK", "HR", "HU", "IE",
-                                                               "IN", "IS", "IT", "JP", "KR", "LI", "LT", "LU", "LV", "MT", "MX", "NL", "NO", "NZ", "PL", "PT", "RO", "SE", "SI", "SK", "TW", "US"};
+const char * const WiFiRequestHandler::_validCountryCodes[] = {
+    "01", "AT", "AU", "BE", "BG", "BR", "CA", "CH", "CN", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "GB", "GR", "HK", "HR", "HU", "IE", "IN", "IS", "IT", "JP", "KR", "LI", "LT", "LU", "LV", "MT", "MX", "NL", "NO", "NZ", "PL", "PT", "RO", "SE", "SI", "SK", "TW", "US",
+};
 
 /**
  * @brief Name of the storage in NVS holding the country code.
@@ -316,7 +317,7 @@ const char *WiFiRequestHandler::DEFAULT_WIFI_TIMEOUT_NAME = "WiFiTimeout";
 /**
  * @brief Empty string used when SSID and password are not available.
  */
-char WiFiRequestHandler::_emptyString[1] = {0};
+char WiFiRequestHandler::_emptyString[1] = {};
 
 /*
  * ----------------------------------------------------------------------------
@@ -335,10 +336,7 @@ WiFiRequestHandler::WiFiRequestHandler()
     {
         throw MultipleInstancesException();
     }
-    else
-    {
-        _instance = this;
-    }
+    _instance = this;
     //
     //  Get configuration from NVS.
     //
@@ -2231,7 +2229,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
     if (result == StatusCodes::CompletedOk)
     {
         _currentRetryCount = 0;
-        char zeroLengthString[1] = {0};
+        char zeroLengthString[1] = {};
         if (password == nullptr)
         {
             password = zeroLengthString;
@@ -2327,14 +2325,11 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
         //  Static IP addresses must have a valid subnet mask and gateway address set.
         //
         bool staticIpIsValid = true;
-        if (accessPointInformation->IpAddress != 0)
+        if ((accessPointInformation->IpAddress != 0) && ((accessPointInformation->SubnetMask == 0) || (accessPointInformation->Gateway == 0)))
         {
-            if ((accessPointInformation->SubnetMask == 0) || (accessPointInformation->Gateway == 0))
-            {
-                staticIpIsValid = false;
-                result = StatusCodes::InvalidIp;
-                RaiseErrorEvent(result, nullptr, 0);
-            }
+            staticIpIsValid = false;
+            result = StatusCodes::InvalidIp;
+            RaiseErrorEvent(result, nullptr, 0);
         }
 
         if (staticIpIsValid)
@@ -2788,7 +2783,7 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
                             else
                             {
                                 uint8_t *currentLocation = accessPointList->AccessPoints;
-                                for (int index = 0; index < apCount; index++)
+                                for (uint32_t index = 0; index < apCount; index++)
                                 {
                                     memset(accessPoint, 0, sizeof(Esp32Messaging::AccessPoint));
                                     memcpy(accessPoint->Ssid, &accessPoints[index].ssid, sizeof(accessPoint->Ssid));

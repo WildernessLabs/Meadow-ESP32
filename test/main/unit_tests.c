@@ -24,14 +24,14 @@ bool _generateHeapTraceData = false;
 //  Defined in UnitTestConfiguration.cpp.  Reads the settings the tests use from a file
 //  on the device, in place of the values that used to be compiled in through secrets.h.
 //
-extern void UnitTestConfigurationLoad(void);
+extern void UnitTestConfigurationLoad();
 
 static void print_banner(const char *text)
 {
     printf("\n#### %s #####\n\n", text);
 }
 
-void app_main(void)
+void app_main()
 {
     //
     //  Initialise the NVS storage.

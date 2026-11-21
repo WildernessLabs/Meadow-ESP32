@@ -953,7 +953,8 @@ TEST_CASE("WriteFile returns Failure on a full filesystem", SLOW_TESTS)
     TEST_ASSERT_NOT_NULL(fillBuffer);
     memset(fillBuffer, 0xFF, LITTLEFS_BLOCK_SIZE);
 
-    size_t total = 0, used = 0;
+    size_t total = 0;
+    size_t used = 0;
     TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_info(FileSystem::PARTITION_LABEL, &total, &used));
 
     int fillIndex = 0;
