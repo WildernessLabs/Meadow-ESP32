@@ -25,6 +25,11 @@
 #   readability-redundant-parentheses      The project writes return (value); and the
 #                                          parentheses are by choice.  Newer clang-tidy only
 #                                          (CLion's); esp-clang 21 does not have it.
+#   bugprone-reserved-identifier           The _camelCase naming of private members is also used
+#                                          for file-scope statics (Mapping.cpp's _unknown, for
+#                                          example), which the check reports as reserved in the
+#                                          global namespace.
+#   readability-identifier-length          Turned off by choice; short names are not reported.
 #
 #   readability-implicit-bool-conversion stays on, but allows if (pointer), which the code
 #   uses throughout.
@@ -44,7 +49,9 @@ Checks: >
   -readability-avoid-const-params-in-decls,
   -performance-enum-size,
   -bugprone-easily-swappable-parameters,
-  -readability-redundant-parentheses
+  -readability-redundant-parentheses,
+  -bugprone-reserved-identifier,
+  -readability-identifier-length
 
 WarningsAsErrors: ''
 
