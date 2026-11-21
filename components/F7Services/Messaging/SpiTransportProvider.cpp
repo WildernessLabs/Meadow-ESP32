@@ -1175,7 +1175,7 @@ void SpiTransportProvider::Task(void *pvParameters)
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 
-    spi_slave_transaction_t *transaction = sender->CreateSpiTransaction(nullptr);
+    spi_slave_transaction_t *transaction = SpiTransportProvider::CreateSpiTransaction(nullptr);
     while (true)
     {
         TRACE_MESSAGE("");
@@ -1188,7 +1188,7 @@ void SpiTransportProvider::Task(void *pvParameters)
     //  The documentation for FreeRTOS states that we should delete the task
     //  should we get here.
     //
-    vTaskDelete(sender->_transportProviderTaskHandle);
+    vTaskDelete(SpiTransportProvider::_transportProviderTaskHandle);
 }
 
 /**
@@ -1231,6 +1231,6 @@ void SpiTransportProvider::SynchronisationTask(void *pvParameters)
         //
         [[maybe_unused]] const bool signalled = (xSemaphoreTake(sender->_synchronisationSemaphore, sender->GetControlSignalDelay()) == pdTRUE);
         TRACE_MESSAGE("SynchronisationTask: %s", signalled ? "given by the post setup callback" : "timed out, sending the signal again");
-        sender->SendControlMessageToStm32(sender->GetControlSignalMessage());
+        SpiTransportProvider::SendControlMessageToStm32(sender->GetControlSignalMessage());
     }
 }

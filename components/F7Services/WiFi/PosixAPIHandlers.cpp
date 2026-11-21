@@ -274,7 +274,7 @@ void WiFiRequestHandler::GetAddrInfo(void * const vpMessage)
         ERROR_MESSAGE("GetAddrInfo: Received a null message; cannot process the request.");
         if (_instance != nullptr)
         {
-            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+            WiFiRequestHandler::RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
         TRACE_MESSAGE("GetAddrInfo: Exit");
         return;
@@ -377,7 +377,7 @@ void WiFiRequestHandler::Socket(void * const vpMessage)
         ERROR_MESSAGE("Socket: Received a null message; cannot process the request.");
         if (_instance != nullptr)
         {
-            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+            WiFiRequestHandler::RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
         TRACE_MESSAGE("Socket: Exit");
         return;
@@ -493,7 +493,7 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
         ERROR_MESSAGE("Connect: Received a null message; cannot process the request.");
         if (_instance != nullptr)
         {
-            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+            WiFiRequestHandler::RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
         TRACE_MESSAGE("Connect: Exit");
         return;
@@ -636,7 +636,7 @@ void WiFiRequestHandler::FreeAddrInfo(void * const vpMessage)
         ERROR_MESSAGE("FreeAddrInfo: Received a null message; cannot process the request.");
         if (_instance != nullptr)
         {
-            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+            WiFiRequestHandler::RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
         TRACE_MESSAGE("FreeAddrInfo: Exit");
         return;
@@ -861,7 +861,7 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
         ERROR_MESSAGE("GetSockOpt: Received a null message; cannot process the request.");
         if (_instance != nullptr)
         {
-            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+            WiFiRequestHandler::RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
         TRACE_MESSAGE("GetSockOpt: Exit");
         return;
@@ -1254,7 +1254,7 @@ void WiFiRequestHandler::SetSockOpt(void * const vpMessage)
         ERROR_MESSAGE("SetSockOpt: Received a null message; cannot process the request.");
         if (_instance != nullptr)
         {
-            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+            WiFiRequestHandler::RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
         TRACE_MESSAGE("SetSockOpt: Exit");
         return;
@@ -1343,7 +1343,7 @@ void WiFiRequestHandler::Close(void * const vpMessage)
         ERROR_MESSAGE("Close: Received a null message; cannot process the request.");
         if (_instance != nullptr)
         {
-            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+            WiFiRequestHandler::RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
         TRACE_MESSAGE("Close: Exit");
         return;
@@ -1449,7 +1449,7 @@ void WiFiRequestHandler::Send(void * const vpMessage)
         ERROR_MESSAGE("Send: Received a null message; cannot process the request.");
         if (_instance != nullptr)
         {
-            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+            WiFiRequestHandler::RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
         TRACE_MESSAGE("Send: Exit");
         return;
@@ -1687,7 +1687,7 @@ void WiFiRequestHandler::SendTo(void * const vpMessage)
         ERROR_MESSAGE("SendTo: Received a null message; cannot process the request.");
         if (_instance != nullptr)
         {
-            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+            WiFiRequestHandler::RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
         TRACE_MESSAGE("SendTo: Exit");
         return;
@@ -1908,7 +1908,7 @@ void WiFiRequestHandler::RecvFrom(void * const vpMessage)
         ERROR_MESSAGE("RecvFrom: Received a null message; cannot process the request.");
         if (_instance != nullptr)
         {
-            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+            WiFiRequestHandler::RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
         TRACE_MESSAGE("RecvFrom: Exit");
         return;
@@ -2111,7 +2111,7 @@ void WiFiRequestHandler::SendMsg(void * const vpMessage)
         ERROR_MESSAGE("SendMsg: Received a null message; cannot process the request.");
         if (_instance != nullptr)
         {
-            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+            WiFiRequestHandler::RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
         TRACE_MESSAGE("SendMsg: Exit");
         return;
@@ -2268,7 +2268,7 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
         ERROR_MESSAGE("RecvMsg: Received a null message; cannot process the request.");
         if (_instance != nullptr)
         {
-            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+            WiFiRequestHandler::RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
         TRACE_MESSAGE("RecvMsg: Exit");
         return;
@@ -2552,7 +2552,7 @@ void WiFiRequestHandler::Bind(void * const vpMessage)
         ERROR_MESSAGE("Bind: Received a null message; cannot process the request.");
         if (_instance != nullptr)
         {
-            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+            WiFiRequestHandler::RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
         TRACE_MESSAGE("Bind: Exit");
         return;
@@ -2636,7 +2636,7 @@ void WiFiRequestHandler::Listen(void * const vpMessage)
         ERROR_MESSAGE("Listen: Received a null message; cannot process the request.");
         if (_instance != nullptr)
         {
-            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+            WiFiRequestHandler::RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
         TRACE_MESSAGE("Listen: Exit");
         return;
@@ -2732,7 +2732,7 @@ void WiFiRequestHandler::Shutdown(void * const vpMessage)
         ERROR_MESSAGE("Shutdown: Received a null message; cannot process the request.");
         if (_instance != nullptr)
         {
-            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+            WiFiRequestHandler::RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
         TRACE_MESSAGE("Shutdown: Exit");
         return;
@@ -2903,7 +2903,7 @@ void WiFiRequestHandler::Accept(void * const vpMessage)
         ERROR_MESSAGE("Accept: Received a null message; cannot process the request.");
         if (_instance != nullptr)
         {
-            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+            WiFiRequestHandler::RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
         TRACE_MESSAGE("Accept: Exit");
         return;
@@ -2992,7 +2992,7 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
         ERROR_MESSAGE("Ioctl: Received a null message; cannot process the request.");
         if (_instance != nullptr)
         {
-            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+            WiFiRequestHandler::RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
         TRACE_MESSAGE("Ioctl: Exit");
         return;
@@ -3284,7 +3284,7 @@ void WiFiRequestHandler::GetSockPeerName(void * const vpMessage, const WiFiFunct
         ERROR_MESSAGE("GetSockPeerName: Received a null message; cannot process the request.");
         if (_instance != nullptr)
         {
-            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+            WiFiRequestHandler::RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
         TRACE_MESSAGE("GetSockPeerName: Exit");
         return;
@@ -3898,7 +3898,7 @@ void WiFiRequestHandler::Poll(void * const vpMessage)
         ERROR_MESSAGE("Poll: Received a null message; cannot process the request.");
         if (_instance != nullptr)
         {
-            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+            WiFiRequestHandler::RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
         TRACE_MESSAGE("Poll: Exit");
         return;
