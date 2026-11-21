@@ -760,7 +760,7 @@ StatusCodes::StatusCodes BluetoothRequestHandler::PrepareForDeepSleep()
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (bluetoothHandler != nullptr)
     {
-        if (!bluetoothHandler->StopBluetoothService())
+        if (!BluetoothRequestHandler::StopBluetoothService())
         {
             result = StatusCodes::Failure;
         }
@@ -824,7 +824,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
     }
 
     TRACE_MESSAGE("Start: esp_ble_gatts_register_callback");
-    ret = esp_ble_gatts_register_callback(this->GATTSProfileEventHandler);
+    ret = esp_ble_gatts_register_callback(BluetoothRequestHandler::GATTSProfileEventHandler);
     if (ret != ESP_OK)
     {
         ERROR_MESSAGE("gatts register error, error code = %" PRIi32, ret);
@@ -833,7 +833,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
     }
 
     TRACE_MESSAGE("Start: esp_ble_gap_register_callback");
-    ret = esp_ble_gap_register_callback(this->GAPEventHandler);
+    ret = esp_ble_gap_register_callback(BluetoothRequestHandler::GAPEventHandler);
     if (ret != ESP_OK)
     {
         ERROR_MESSAGE("gap register error, error code = %" PRIi32, ret);
@@ -1336,7 +1336,7 @@ void BluetoothRequestHandler::RaisePairingEvent(const BluetoothFunction::Bluetoo
         return;
     }
     Encoders::EncodeBTPairingEventData(&data, payload);
-    instance->RaiseEvent(Esp32Interfaces::BlueTooth, event, StatusCodes::CompletedOk, payload, payloadLength);
+    BluetoothRequestHandler::RaiseEvent(Esp32Interfaces::BlueTooth, event, StatusCodes::CompletedOk, payload, payloadLength);
 }
 
 /**
@@ -1385,7 +1385,7 @@ void BluetoothRequestHandler::OnAuthenticationComplete(const esp_ble_auth_cmpl_t
         return;
     }
     Encoders::EncodeBTAuthenticationCompleteEventData(&data, payload);
-    instance->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::AuthenticationCompleteEvent, complete.success ? StatusCodes::CompletedOk : StatusCodes::Failure, payload, payloadLength);
+    BluetoothRequestHandler::RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::AuthenticationCompleteEvent, complete.success ? StatusCodes::CompletedOk : StatusCodes::Failure, payload, payloadLength);
 }
 
 /**
@@ -1675,7 +1675,7 @@ void BluetoothRequestHandler::OnDataWriteRequest(const uint16_t handle, uint8_t 
     Encoders::EncodeBTDataWriteRequest(request, payload);
     Utils::DeleteAndNullifyPointer(request);
 
-    instance->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientWriteRequestEvent, StatusCodes::CompletedOk, payload, payloadLength);
+    BluetoothRequestHandler::RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientWriteRequestEvent, StatusCodes::CompletedOk, payload, payloadLength);
 
     TRACE_MESSAGE("OnDataWriteRequest: Exit");
 }
@@ -2114,7 +2114,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                     ERROR_MESSAGE("Update connection parameters failed, error code = %" PRIi32 ", %s", ret, esp_err_to_name(ret));
                 }
             }
-            instance->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientConnectedEvent, StatusCodes::CompletedOk);
+            BluetoothRequestHandler::RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientConnectedEvent, StatusCodes::CompletedOk);
             break;
         case ESP_GATTS_DISCONNECT_EVT:
             TRACE_MESSAGE("ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%" PRIx32, param->disconnect.reason);
@@ -2130,7 +2130,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 ERROR_MESSAGE("Start advertising failed, error code = %" PRIi32 ", %s", ret, esp_err_to_name(ret));
             }
             _connectionHandle = INVALID_CONNECTION_HANDLE;
-            instance->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientDisconnectedEvent, StatusCodes::CompletedOk);
+            BluetoothRequestHandler::RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientDisconnectedEvent, StatusCodes::CompletedOk);
             break;
         case ESP_GATTS_OPEN_EVT:
             TRACE_MESSAGE("ESP_GATTS_OPEN_EVT");

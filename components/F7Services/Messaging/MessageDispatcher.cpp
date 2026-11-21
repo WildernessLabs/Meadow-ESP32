@@ -146,7 +146,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
  */
 bool MessageDispatcher::QueueMessageForStm32(Message *response)
 {
-    return (_transportProvider->QueueMessageForStm32(response));
+    return (TransportProviderBase::QueueMessageForStm32(response));
 }
 
 /**

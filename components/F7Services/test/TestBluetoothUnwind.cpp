@@ -57,7 +57,7 @@ public:
         TEST_ASSERT_NOT_NULL(dispatcher);
         BluetoothRequestHandler *handler = BluetoothRequestHandler::GetInstance(dispatcher);
         TEST_ASSERT_NOT_NULL(handler);
-        handler->TearDownStack();
+        BluetoothRequestHandler::TearDownStack();
         CheckStackIsDown();
         return (handler);
     }
@@ -164,7 +164,8 @@ public:
      */
     static bool StopWhenNothingIsRunning()
     {
-        return (Handler()->StopBluetoothService());
+        Handler();
+        return (BluetoothRequestHandler::StopBluetoothService());
     }
 };
 

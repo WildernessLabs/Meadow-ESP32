@@ -84,7 +84,7 @@ public:
      */
     static void CallDeleteTransaction(SpiTransportProvider *provider, spi_slave_transaction_t *&transaction)
     {
-        provider->DeleteTransaction(transaction);
+        SpiTransportProvider::DeleteTransaction(transaction);
     }
 
     /**
@@ -92,7 +92,7 @@ public:
      */
     static spi_slave_transaction_t *CallCreateAcknowledgementTransaction(SpiTransportProvider *provider, Message *message, const StatusCodes::StatusCodes code, const uint8_t messageType)
     {
-        return (provider->CreateAcknowledgementTransaction(message, code, messageType));
+        return (SpiTransportProvider::CreateAcknowledgementTransaction(message, code, messageType));
     }
 
     /**
@@ -116,7 +116,7 @@ public:
      */
     static spi_slave_transaction_t *CallCreateSpiTransaction(SpiTransportProvider *provider, Message *message)
     {
-        return (provider->CreateSpiTransaction(message));
+        return (SpiTransportProvider::CreateSpiTransaction(message));
     }
 
     /**
@@ -231,7 +231,7 @@ public:
      */
     static void CallUpdatePacketInformation(SpiTransportProvider *provider, Message *message)
     {
-        provider->UpdatePacketInformation(message);
+        SpiTransportProvider::UpdatePacketInformation(message);
     }
 
     /**

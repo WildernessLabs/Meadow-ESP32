@@ -110,9 +110,9 @@ static MessageDispatcher *SetupDispatcher()
  */
 static void DrainTransport()
 {
-    while (_transport->OutboundMessageQueueLength() > 0)
+    while (MockTransportProvider::OutboundMessageQueueLength() > 0)
     {
-        Message *message = _transport->GetOutboundMessage();
+        Message *message = MockTransportProvider::GetOutboundMessage();
         if (message != nullptr)
         {
             Message::DeleteMessage(message);
@@ -133,9 +133,9 @@ static Message *WaitForTransportMessage(const uint32_t timeout)
 
     while (waited < timeout)
     {
-        if (_transport->OutboundMessageQueueLength() > 0)
+        if (MockTransportProvider::OutboundMessageQueueLength() > 0)
         {
-            return (_transport->GetOutboundMessage());
+            return (MockTransportProvider::GetOutboundMessage());
         }
         vTaskDelay(RESPONSE_POLL_INTERVAL / portTICK_PERIOD_MS);
         waited += RESPONSE_POLL_INTERVAL;
@@ -194,7 +194,7 @@ TEST_CASE("MessageDispatcher passes a response to the transport", CLASS_OF_TESTS
     TEST_ASSERT_TRUE(dispatcher->QueueMessageForStm32(response));
     TEST_ASSERT_EQUAL(1, _transport->OutboundMessageQueueLength());
 
-    Message *queued = _transport->GetOutboundMessage();
+    Message *queued = MockTransportProvider::GetOutboundMessage();
     ASSERT_RESPONSE(queued, Esp32Interfaces::System, SystemFunction::GetConfiguration, StatusCodes::CompletedOk);
     ASSERT_MESSAGE_ID(queued, TEST_MESSAGE_ID);
 
@@ -397,7 +397,7 @@ TEST_CASE("MessageWaiting is sent after the outbound queue mutex is released", C
     TEST_ASSERT_TRUE_MESSAGE(_messageWaitingSeen, "The MessageWaiting control message was not written.");
     TEST_ASSERT_FALSE_MESSAGE(_mutexHeldDuringMessageWaiting, "MessageWaiting was written while the outbound queue mutex was held.");
 
-    Message *sent = _transport->GetOutboundMessage();
+    Message *sent = MockTransportProvider::GetOutboundMessage();
     ASSERT_MESSAGE_ID(sent, TEST_MESSAGE_ID);
     Message::DeleteMessage(sent);
     TEST_ASSERT_EQUAL(0, _transport->OutboundMessageQueueLength());

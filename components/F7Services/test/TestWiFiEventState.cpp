@@ -111,7 +111,7 @@ public:
      */
     static void DestroyNetworkInterfaces(WiFiRequestHandler *handler)
     {
-        handler->DestroyNetworkInterfaces();
+        WiFiRequestHandler::DestroyNetworkInterfaces();
     }
 
     /**
@@ -125,7 +125,7 @@ public:
             WiFiRequestHandler::_xWiFiEventGroup = xEventGroupCreate();
             TEST_ASSERT_NOT_NULL(WiFiRequestHandler::_xWiFiEventGroup);
         }
-        handler->StationStoppedEvent();
+        WiFiRequestHandler::StationStoppedEvent();
         if (madeEventGroup)
         {
             vEventGroupDelete(WiFiRequestHandler::_xWiFiEventGroup);
@@ -252,7 +252,7 @@ public:
      */
     static MockMessageDispatcher *Dispatcher(WiFiRequestHandler *handler)
     {
-        auto *dispatcher = static_cast<MockMessageDispatcher *>(handler->_messageDispatcher);
+        auto *dispatcher = static_cast<MockMessageDispatcher *>(WiFiRequestHandler::_messageDispatcher);
         TEST_ASSERT_NOT_NULL(dispatcher);
         return (dispatcher);
     }
@@ -289,7 +289,7 @@ public:
      */
     static void AccessPointStarted(WiFiRequestHandler *handler)
     {
-        handler->AccessPointStartedEvent();
+        WiFiRequestHandler::AccessPointStartedEvent();
     }
 
     /**
