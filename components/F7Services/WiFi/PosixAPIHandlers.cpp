@@ -263,7 +263,7 @@ void WiFiRequestHandler::GetAddrInfo(void * const vpMessage)
 {
     TRACE_MESSAGE("GetAddrInfo: Enter");
 
-    const auto message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     if (message == nullptr)
     {
@@ -366,7 +366,7 @@ void WiFiRequestHandler::Socket(void * const vpMessage)
 {
     TRACE_MESSAGE("Socket: Enter");
 
-    const auto message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     if (message == nullptr)
     {
@@ -482,7 +482,7 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
 {
     TRACE_MESSAGE("Connect: Enter");
 
-    const auto message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     if (message == nullptr)
     {
@@ -625,7 +625,7 @@ void WiFiRequestHandler::FreeAddrInfo(void * const vpMessage)
 {
     TRACE_MESSAGE("FreeAddrInfo: Enter");
 
-    const auto message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     if (message == nullptr)
     {
@@ -850,7 +850,7 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
 {
     TRACE_MESSAGE("GetSockOpt: Enter");
 
-    const auto message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     if (message == nullptr)
     {
@@ -1055,7 +1055,7 @@ uint8_t *WiFiRequestHandler::GetSocketOptionValue(const int name, const uint8_t 
             case SO_SNDTIMEO: /* Set the send timeout */
             case SO_RCVTIMEO: /* Set the receive timeout */
                 {
-                    auto value = static_cast<struct timeval *>(pvPortMalloc(sizeof(struct timeval)));
+                    auto *value = static_cast<struct timeval *>(pvPortMalloc(sizeof(struct timeval)));
                     if (value != nullptr)
                     {
                         Esp32Messaging::TimeVal *tv = Encoders::ExtractTimeVal(optionValue, optionValueLength);
@@ -1243,7 +1243,7 @@ void WiFiRequestHandler::SetSockOpt(void * const vpMessage)
 {
     TRACE_MESSAGE("SetSockOpt: Enter");
 
-    const auto message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     if (message == nullptr)
     {
@@ -1332,7 +1332,7 @@ void WiFiRequestHandler::Close(void * const vpMessage)
 {
     TRACE_MESSAGE("Close: Enter");
 
-    const auto message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     if (message == nullptr)
     {
@@ -1438,7 +1438,7 @@ void WiFiRequestHandler::Send(void * const vpMessage)
 {
     TRACE_MESSAGE("Send: Enter");
 
-    const auto message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     if (message == nullptr)
     {
@@ -1676,7 +1676,7 @@ void WiFiRequestHandler::SendTo(void * const vpMessage)
 {
     TRACE_MESSAGE("SendTo: Enter");
 
-    const auto message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     if (message == nullptr)
     {
@@ -1897,7 +1897,7 @@ void WiFiRequestHandler::RecvFrom(void * const vpMessage)
 {
     TRACE_MESSAGE("RecvFrom: Enter");
 
-    const auto message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     if (message == nullptr)
     {
@@ -2100,7 +2100,7 @@ void WiFiRequestHandler::SendMsg(void * const vpMessage)
 {
     TRACE_MESSAGE("SendMsg: Enter");
 
-    const auto message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     if (message == nullptr)
     {
@@ -2257,7 +2257,7 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
 {
     TRACE_MESSAGE("RecvMsg: Enter");
 
-    auto const message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     if (message == nullptr)
     {
@@ -2541,7 +2541,7 @@ void WiFiRequestHandler::Bind(void * const vpMessage)
 {
     TRACE_MESSAGE("Bind: Enter");
 
-    const auto message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     if (message == nullptr)
     {
@@ -2625,7 +2625,7 @@ void WiFiRequestHandler::Listen(void * const vpMessage)
 {
     TRACE_MESSAGE("Listen: Enter");
 
-    const auto message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     if (message == nullptr)
     {
@@ -2721,7 +2721,7 @@ void WiFiRequestHandler::Shutdown(void * const vpMessage)
 {
     TRACE_MESSAGE("Shutdown: Enter");
 
-    const auto message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     if (message == nullptr)
     {
@@ -2850,7 +2850,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::Accept(Esp32Messaging::AcceptReques
         {
             memset(sockAddr, 0, sizeof(Esp32Messaging::SockAddr));
             Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int8_t *>(&sockAddr->Family));
-            auto sin = reinterpret_cast<struct sockaddr_in *>(&sa);
+            auto *sin = reinterpret_cast<struct sockaddr_in *>(&sa);
             sockAddr->Port = sin->sin_port;
             memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
             response.AddrLength = Encoders::EncodedSockAddrBufferSize(sockAddr);
@@ -2892,7 +2892,7 @@ void WiFiRequestHandler::Accept(void * const vpMessage)
 {
     TRACE_MESSAGE("Accept: Enter");
 
-    const auto message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     if (message == nullptr)
     {
@@ -2981,7 +2981,7 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
 {
     TRACE_MESSAGE("Ioctl: Enter");
 
-    const auto message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     if (message == nullptr)
     {
@@ -3217,7 +3217,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(const Esp32Messagin
     }
     if (response.Result == 0)
     {
-        auto sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
+        auto *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
         if (sockAddr == nullptr)
         {
             response.AddrLength = 0;
@@ -3228,7 +3228,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(const Esp32Messagin
         }
         memset(sockAddr, 0, sizeof(Esp32Messaging::SockAddr));
         Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int8_t *>(&sockAddr->Family));
-        auto sin = reinterpret_cast<struct sockaddr_in *>(&sa);
+        auto *sin = reinterpret_cast<struct sockaddr_in *>(&sa);
         sockAddr->Port = sin->sin_port;
         memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
         response.AddrLength = Encoders::EncodedSockAddrBufferSize(sockAddr);
@@ -3273,7 +3273,7 @@ void WiFiRequestHandler::GetSockPeerName(void * const vpMessage, const WiFiFunct
 {
     TRACE_MESSAGE("GetSockPeerName: Enter");
 
-    const auto message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     if (message == nullptr)
     {
@@ -3572,7 +3572,7 @@ void WiFiRequestHandler::DumpActivePollRequests()
  */
 WiFiRequestHandler::ActivePoll *WiFiRequestHandler::CreateActivePoll(const int descriptor, const int32_t events, const uint32_t requestId, const int32_t timeoutMs)
 {
-    auto activePoll = static_cast<ActivePoll *>(pvPortMalloc(sizeof(ActivePoll)));
+    auto *activePoll = static_cast<ActivePoll *>(pvPortMalloc(sizeof(ActivePoll)));
     if (activePoll == nullptr)
     {
         return (nullptr);
@@ -3627,7 +3627,7 @@ int WiFiRequestHandler::PollSetup(void * const vpMessage)
     {
         return (-1);
     }
-    const auto request = static_cast<Esp32Messaging::PollRequest *>(vpMessage);
+    auto * const request = static_cast<Esp32Messaging::PollRequest *>(vpMessage);
     int descriptor = -1;
     if (!FindSocket(request->SocketHandle, &descriptor))
     {
@@ -3692,7 +3692,7 @@ int WiFiRequestHandler::PollTeardown(void * const vpMessage)
     TRACE_MESSAGE("PollTeardown: Enter");
     int result = 0;
 
-    const auto request = static_cast<Esp32Messaging::PollRequest *>(vpMessage);
+    auto * const request = static_cast<Esp32Messaging::PollRequest *>(vpMessage);
 
 #ifdef WIFI_DEBUG
     DumpActivePollRequests();
@@ -3776,7 +3776,7 @@ void WiFiRequestHandler::PollSocket(void * const activePollPointer)
 {
     TRACE_MESSAGE("PollSocket: Enter");
 
-    auto activePoll = static_cast<ActivePoll *>(activePollPointer);
+    auto *activePoll = static_cast<ActivePoll *>(activePollPointer);
     Esp32Messaging::InterruptPollResponse response = {};
 
     LockPollRequests();
@@ -3844,7 +3844,7 @@ void WiFiRequestHandler::PollSocket(void * const activePollPointer)
         return;
     }
 
-    auto message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
+    auto *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
     if (message == nullptr)
     {
         //
@@ -3887,7 +3887,7 @@ void WiFiRequestHandler::PollSocket(void * const activePollPointer)
 void WiFiRequestHandler::Poll(void * const vpMessage)
 {
     TRACE_MESSAGE("Poll: Enter");
-    const auto message = static_cast<Message *>(vpMessage);
+    auto * const message = static_cast<Message *>(vpMessage);
 
     if (message == nullptr)
     {

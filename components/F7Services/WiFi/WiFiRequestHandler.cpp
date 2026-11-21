@@ -766,7 +766,7 @@ const char *WiFiRequestHandler::FindCountryCode(const char *code)
 
     if (code != nullptr)
     {
-        for (auto _validCountryCode: WiFiRequestHandler::_validCountryCodes)
+        for (const auto *_validCountryCode: WiFiRequestHandler::_validCountryCodes)
         {
             if (strcmp(code, _validCountryCode) == 0)
             {
@@ -1315,12 +1315,12 @@ void WiFiRequestHandler::RaiseConnectToAccessPointEvent(const StatusCodes::Statu
 {
     TRACE_MESSAGE("RaiseConnectToAccessPointEvent: Enter");
 
-    auto ed = static_cast<Esp32Messaging::ConnectEventData *>(pvPortMalloc(sizeof(Esp32Messaging::ConnectEventData)));
+    auto *ed = static_cast<Esp32Messaging::ConnectEventData *>(pvPortMalloc(sizeof(Esp32Messaging::ConnectEventData)));
     if (ed != nullptr)
     {
         PopulateConnectionEventDataStructure(ed);
         uint32_t payloadLength = Encoders::EncodedConnectEventDataBufferSize(ed);
-        auto payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+        auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
         if (payload != nullptr)
         {
             Encoders::EncodeConnectEventData(ed, payload);
@@ -1348,7 +1348,7 @@ void WiFiRequestHandler::RaiseDisconnectEvent()
 {
     TRACE_MESSAGE("RaiseDisconnectEvent: Enter");
 
-    auto ed = static_cast<Esp32Messaging::DisconnectEventData *>(pvPortMalloc(sizeof(Esp32Messaging::DisconnectEventData)));
+    auto *ed = static_cast<Esp32Messaging::DisconnectEventData *>(pvPortMalloc(sizeof(Esp32Messaging::DisconnectEventData)));
 
     if (ed != nullptr)
     {
@@ -1372,7 +1372,7 @@ void WiFiRequestHandler::RaiseDisconnectEvent()
         memcpy(&ed->Reason, &disconnectData.reason, sizeof(ed->Reason));
 
         uint32_t payloadLength = Encoders::EncodedDisconnectEventDataBufferSize(ed);
-        auto payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+        auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
         if (payload != nullptr)
         {
             Encoders::EncodeDisconnectEventData(ed, payload);
@@ -1471,7 +1471,7 @@ void WiFiRequestHandler::RaiseNetworkGotIpEvent()
         ERROR_MESSAGE("Failed to get DNS information for the station network interface.");
     }
 
-    auto ed = static_cast<Esp32Messaging::GotIpEventData *>(pvPortMalloc(sizeof(Esp32Messaging::GotIpEventData)));
+    auto *ed = static_cast<Esp32Messaging::GotIpEventData *>(pvPortMalloc(sizeof(Esp32Messaging::GotIpEventData)));
     if (ed != nullptr)
     {
         memset(ed, 0, sizeof(Esp32Messaging::GotIpEventData));
@@ -1480,7 +1480,7 @@ void WiFiRequestHandler::RaiseNetworkGotIpEvent()
             memcpy(&ed->DnsAddress, &dnsInformation.ip.u_addr.ip4.addr, sizeof(ed->DnsAddress));
         }
         uint32_t payloadLength = Encoders::EncodedGotIpEventDataBufferSize(ed);
-        auto payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+        auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
         if (payload != nullptr)
         {
             Encoders::EncodeGotIpEventData(ed, payload);
@@ -1657,7 +1657,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
 void WiFiRequestHandler::EventHandler(void *arg, esp_event_base_t eventBase, int32_t eventId, void *eventData)
 {
     TRACE_MESSAGE("EventHandler: Enter");
-    auto sender = static_cast<WiFiRequestHandler *>(arg);
+    auto *sender = static_cast<WiFiRequestHandler *>(arg);
     sender->EventHandlerHelper(eventBase, eventId, eventData);
     TRACE_MESSAGE("EventHandler: Exit");
 }
@@ -2752,9 +2752,9 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
                     //  of the scan results is released instead, as esp_wifi_scan_get_ap_records
                     //  would otherwise have done.
                     //
-                    auto accessPointList = static_cast<Esp32Messaging::AccessPointList *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointList)));
-                    auto accessPoints = static_cast<wifi_ap_record_t *>(pvPortMalloc(apCount * sizeof(wifi_ap_record_t)));
-                    auto accessPoint = static_cast<Esp32Messaging::AccessPoint *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPoint)));
+                    auto *accessPointList = static_cast<Esp32Messaging::AccessPointList *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointList)));
+                    auto *accessPoints = static_cast<wifi_ap_record_t *>(pvPortMalloc(apCount * sizeof(wifi_ap_record_t)));
+                    auto *accessPoint = static_cast<Esp32Messaging::AccessPoint *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPoint)));
                     if ((accessPointList == nullptr) || (accessPoints == nullptr) || (accessPoint == nullptr))
                     {
                         esp_wifi_clear_ap_list();
