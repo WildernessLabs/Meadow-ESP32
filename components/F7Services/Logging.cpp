@@ -229,6 +229,11 @@ void Logging::WriteInPieces(const esp_log_level_t level, const char * const comp
  *  - when another task has held it for longer than MESSAGE_MUTEX_WAIT_MS, so a stuck writer cannot stop the
  *    log.
  *
+ * The mutex is held while the message is written, which on the UART takes a few milliseconds a line, and a
+ * FreeRTOS mutex is not handed to the task waiting for it: the task giving it can take it again first.  So a
+ * task can wait for many of another's messages, and the wait is long enough that two tasks logging hard do
+ * not end up writing in pieces.
+ *
  * @param level Level of the message.
  * @param component Name of the component the message is for: the tag the level is set against.
  * @param format Format of the message, as for printf.
@@ -236,11 +241,11 @@ void Logging::WriteInPieces(const esp_log_level_t level, const char * const comp
  */
 void Logging::Write(const esp_log_level_t level, const char * const component, const char * const format, va_list arguments)
 {
-    if ((level > LOG_LOCAL_LEVEL) || (level > esp_log_level_get(component)))
+    if (level > LOG_LOCAL_LEVEL)
     {
         return;
     }
-    if (xPortInIsrContext() || (xTaskGetSchedulerState() != taskSCHEDULER_RUNNING))
+    if ((xPortInIsrContext() != pdFALSE) || (xTaskGetSchedulerState() != taskSCHEDULER_RUNNING))
     {
         WriteInPieces(level, component, format, arguments);
         return;
@@ -249,6 +254,16 @@ void Logging::Write(const esp_log_level_t level, const char * const component, c
     if ((xSemaphoreGetMutexHolder(mutex) == xTaskGetCurrentTaskHandle()) || (xSemaphoreTake(mutex, pdMS_TO_TICKS(MESSAGE_MUTEX_WAIT_MS)) != pdTRUE))
     {
         WriteInPieces(level, component, format, arguments);
+        return;
+    }
+    //
+    //  The component's level is read while the buffer is held, not before.  ESP-IDF reads it again in the log
+    //  macro under its own lock, waiting at most a tick and dropping the message if the lock is busy, so a
+    //  task reading the level here while another writes its message could make the other's message vanish.
+    //
+    if (level > esp_log_level_get(component))
+    {
+        xSemaphoreGive(mutex);
         return;
     }
     vsnprintf(_messageBuffer, sizeof(_messageBuffer), format, arguments);

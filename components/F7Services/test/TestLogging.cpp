@@ -4,7 +4,7 @@
  *  Tests that Logging::Configure applies the destination and the UDP port it is given, that a request
  *  replaces the one before it, and that one it cannot honour is refused and changes nothing (issue #356).
  *  Also that the level methods' shared message buffer is neither overwritten nor waited on by a message
- *  logged while another is being written, and that two tasks logging at once both get whole messages.
+ *  logged while another is being written, and that two tasks logging at once do not overwrite each other's.
  */
 
 #include "sdkconfig.h"
@@ -247,6 +247,11 @@ TEST_CASE("JTAG logging sends the log messages to SystemView and puts the output
 static const char * const BUFFER_TEST_COMPONENT = "LoggingBufferTest";
 
 /**
+ * @brief Number of messages each task logs in the concurrency test.
+ */
+static const uint32_t MESSAGES_PER_TASK = 500;
+
+/**
  * @brief State shared between the message buffer tests and the log output function they install.
  */
 struct LogCapture
@@ -285,6 +290,11 @@ struct LogCapture
      * @brief Number of the test's messages that did not arrive whole.
      */
     volatile uint32_t Damaged;
+
+    /**
+     * @brief Number of times each task's message of each number arrived: the tasks are A and B.
+     */
+    uint8_t Arrivals[2][MESSAGES_PER_TASK];
 };
 
 /**
@@ -351,15 +361,11 @@ TEST_CASE("A message logged while another is being written does not wait for it 
 }
 
 /**
- * @brief Number of messages each task logs in the concurrency test.
- */
-static const uint32_t MESSAGES_PER_TASK = 500;
-
-/**
- * @brief Log output for the concurrency test: counts the test's messages and those that did not arrive whole.
+ * @brief Log output for the concurrency test: counts the arrivals of each of the test's messages.
  *
- * Each message is a letter, a count and the same letter again, so one formatted over by the other task's
- * message has letters that do not match.
+ * Each message is a letter, a number and the same letter again.  A message formatted over by the other
+ * task's arrives as that one, so one number is missing and another arrives twice; one formatted over part
+ * way has letters that do not match.
  */
 static int CountingOutput(const char *format, va_list arguments)
 {
@@ -377,10 +383,14 @@ static int CountingOutput(const char *format, va_list arguments)
     char first = 0;
     char last = 0;
     unsigned count = 0;
-    const bool whole = (sscanf(body, "%c %u %c", &first, &count, &last) == 3) && (first == last);
+    const bool whole = (sscanf(body, "%c %u %c", &first, &count, &last) == 3) && (first == last) && ((first == 'A') || (first == 'B')) && (count < MESSAGES_PER_TASK);
     taskENTER_CRITICAL(&_captureLock);
     _capture.Seen = _capture.Seen + 1;
-    if (!whole)
+    if (whole)
+    {
+        _capture.Arrivals[first - 'A'][count]++;
+    }
+    else
     {
         _capture.Damaged = _capture.Damaged + 1;
     }
@@ -424,7 +434,7 @@ static void LoggingTask(void *parameters)
     vTaskDelete(nullptr);
 }
 
-TEST_CASE("Messages logged by two tasks at once arrive whole", CLASS_OF_TESTS)
+TEST_CASE("Messages logged by two tasks at once are not overwritten", CLASS_OF_TESTS)
 {
     memset(&_capture, 0, sizeof(_capture));
     esp_log_level_set(BUFFER_TEST_COMPONENT, ESP_LOG_INFO);
@@ -454,7 +464,26 @@ TEST_CASE("Messages logged by two tasks at once arrive whole", CLASS_OF_TESTS)
     vSemaphoreDelete(start);
     vSemaphoreDelete(finished);
 
+    uint32_t missing = 0;
+    uint32_t repeated = 0;
+    for (uint32_t task = 0; task < 2; task++)
+    {
+        for (uint32_t number = 0; number < MESSAGES_PER_TASK; number++)
+        {
+            missing += (_capture.Arrivals[task][number] == 0) ? 1 : 0;
+            repeated += (_capture.Arrivals[task][number] > 1) ? 1 : 0;
+        }
+    }
+    char summary[96];
+    snprintf(summary, sizeof(summary), "%" PRIu32 " arrived, %" PRIu32 " missing, %" PRIu32 " repeated, %" PRIu32 " damaged.", _capture.Seen, missing, repeated, _capture.Damaged);
+
     TEST_ASSERT_TRUE_MESSAGE(bothFinished, "The logging tasks did not finish.");
-    TEST_ASSERT_EQUAL_UINT32_MESSAGE(2 * MESSAGES_PER_TASK, _capture.Seen, "Not every message arrived.");
-    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, _capture.Damaged, "A message was overwritten by the other task's.");
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, _capture.Damaged, summary);
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, repeated, summary);
+    //
+    //  A missing message on its own is not asserted on: ESP-IDF drops a message when its own log lock is busy
+    //  for more than a tick, which another task using the log can cause at any time.  A message formatted over
+    //  by the other task's leaves one missing and another repeated, so the repeats are what show the buffer
+    //  being shared.
+    //
 }
