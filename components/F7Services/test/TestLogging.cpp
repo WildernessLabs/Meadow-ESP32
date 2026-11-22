@@ -3,13 +3,21 @@
  *
  *  Tests that Logging::Configure applies the destination and the UDP port it is given, that a request
  *  replaces the one before it, and that one it cannot honour is refused and changes nothing (issue #356).
+ *  Also that the level methods' shared message buffer is neither overwritten nor waited on by a message
+ *  logged while another is being written, and that two tasks logging at once both get whole messages.
  */
 
 #include "sdkconfig.h"
 
+#include <cinttypes>
+#include <cstdio>
 #include <cstring>
 #include "esp_log.h"
 #include "esp_netif.h"
+#include "esp_timer.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
+#include "freertos/task.h"
 #include "lwip/sockets.h"
 #include "unity.h"
 #ifdef CONFIG_MEADOW_SYSVIEW
@@ -232,3 +240,221 @@ TEST_CASE("JTAG logging sends the log messages to SystemView and puts the output
 }
 
 #endif
+
+/**
+ * @brief Tag the message buffer tests log under, so the capturing output can tell their messages from others.
+ */
+static const char * const BUFFER_TEST_COMPONENT = "LoggingBufferTest";
+
+/**
+ * @brief State shared between the message buffer tests and the log output function they install.
+ */
+struct LogCapture
+{
+    /**
+     * @brief The output that was in place before the test's own.
+     */
+    vprintf_like_t Previous;
+
+    /**
+     * @brief Whether the output should log a second message from inside the first.
+     */
+    volatile bool LogFromInside;
+
+    /**
+     * @brief Whether the second message is being logged now, so everything written belongs to it.
+     */
+    volatile bool Inside;
+
+    /**
+     * @brief The first message the output wrote, as it was when the output came to write it.
+     */
+    char Outer[128];
+
+    /**
+     * @brief The message logged from inside the first.
+     */
+    char Inner[128];
+
+    /**
+     * @brief Number of the test's messages the output has seen.
+     */
+    volatile uint32_t Seen;
+
+    /**
+     * @brief Number of the test's messages that did not arrive whole.
+     */
+    volatile uint32_t Damaged;
+};
+
+/**
+ * @brief The capture the installed log output writes to.
+ */
+static LogCapture _capture;
+
+/**
+ * @brief Guards the capture's counts when two tasks log at once.
+ */
+static portMUX_TYPE _captureLock = portMUX_INITIALIZER_UNLOCKED;
+
+/**
+ * @brief Log output for the re-entrancy test: the first message logs a second before it is written.
+ *
+ * The first message is formatted only after the second has been logged, so if the second had been formatted
+ * in the same buffer the first would come out as the second.
+ */
+static int ReentrantOutput(const char *format, va_list arguments)
+{
+    va_list copy;
+    va_copy(copy, arguments);
+    char line[128];
+    vsnprintf(line, sizeof(line), format, copy);
+    va_end(copy);
+    if (_capture.Inside)
+    {
+        //
+        //  The inner message comes in pieces, and only the first carries the tag: keep them all.
+        //
+        strlcat(_capture.Inner, line, sizeof(_capture.Inner));
+        return (0);
+    }
+    if ((strstr(line, BUFFER_TEST_COMPONENT) == nullptr) || !_capture.LogFromInside)
+    {
+        return (_capture.Previous(format, arguments));
+    }
+    _capture.LogFromInside = false;
+    _capture.Inside = true;
+    Logging::Information(BUFFER_TEST_COMPONENT, "inner message %d", 2);
+    _capture.Inside = false;
+    vsnprintf(_capture.Outer, sizeof(_capture.Outer), format, arguments);
+    return (0);
+}
+
+TEST_CASE("A message logged while another is being written does not wait for it or overwrite it", CLASS_OF_TESTS)
+{
+    memset(&_capture, 0, sizeof(_capture));
+    esp_log_level_set(BUFFER_TEST_COMPONENT, ESP_LOG_INFO);
+    _capture.Previous = esp_log_set_vprintf(ReentrantOutput);
+    _capture.LogFromInside = true;
+
+    const int64_t start = esp_timer_get_time();
+    Logging::Information(BUFFER_TEST_COMPONENT, "outer message %d", 1);
+    const int64_t elapsedMs = (esp_timer_get_time() - start) / 1000;
+
+    esp_log_set_vprintf(_capture.Previous);
+    esp_log_level_set(BUFFER_TEST_COMPONENT, ESP_LOG_NONE);
+
+    TEST_ASSERT_NOT_NULL_MESSAGE(strstr(_capture.Outer, "outer message 1"), "The first message was overwritten by the one logged from inside it.");
+    TEST_ASSERT_NOT_NULL_MESSAGE(strstr(_capture.Inner, "inner message 2"), "The message logged from inside the first was lost.");
+    TEST_ASSERT_NOT_NULL_MESSAGE(strstr(_capture.Inner, BUFFER_TEST_COMPONENT), "The message logged from inside the first has no prefix.");
+    TEST_ASSERT_LESS_THAN_MESSAGE(50, elapsedMs, "The message logged from inside the first waited for the buffer.");
+}
+
+/**
+ * @brief Number of messages each task logs in the concurrency test.
+ */
+static const uint32_t MESSAGES_PER_TASK = 500;
+
+/**
+ * @brief Log output for the concurrency test: counts the test's messages and those that did not arrive whole.
+ *
+ * Each message is a letter, a count and the same letter again, so one formatted over by the other task's
+ * message has letters that do not match.
+ */
+static int CountingOutput(const char *format, va_list arguments)
+{
+    va_list copy;
+    va_copy(copy, arguments);
+    char line[128];
+    vsnprintf(line, sizeof(line), format, copy);
+    va_end(copy);
+    const char *body = strstr(line, BUFFER_TEST_COMPONENT);
+    if (body == nullptr)
+    {
+        return (_capture.Previous(format, arguments));
+    }
+    body += strlen(BUFFER_TEST_COMPONENT) + 2;
+    char first = 0;
+    char last = 0;
+    unsigned count = 0;
+    const bool whole = (sscanf(body, "%c %u %c", &first, &count, &last) == 3) && (first == last);
+    taskENTER_CRITICAL(&_captureLock);
+    _capture.Seen = _capture.Seen + 1;
+    if (!whole)
+    {
+        _capture.Damaged = _capture.Damaged + 1;
+    }
+    taskEXIT_CRITICAL(&_captureLock);
+    return (0);
+}
+
+/**
+ * @brief What each logging task in the concurrency test is given.
+ */
+struct LoggingTaskArguments
+{
+    /**
+     * @brief Letter the task puts at each end of its messages.
+     */
+    char Letter;
+
+    /**
+     * @brief Given by the test to let the tasks start together.
+     */
+    SemaphoreHandle_t Start;
+
+    /**
+     * @brief Given by each task when it has logged its messages.
+     */
+    SemaphoreHandle_t Finished;
+};
+
+/**
+ * @brief Log the test's messages as fast as possible.
+ */
+static void LoggingTask(void *parameters)
+{
+    const LoggingTaskArguments *arguments = static_cast<LoggingTaskArguments *>(parameters);
+    xSemaphoreTake(arguments->Start, portMAX_DELAY);
+    for (uint32_t index = 0; index < MESSAGES_PER_TASK; index++)
+    {
+        Logging::Information(BUFFER_TEST_COMPONENT, "%c %" PRIu32 " %c", arguments->Letter, index, arguments->Letter);
+    }
+    xSemaphoreGive(arguments->Finished);
+    vTaskDelete(nullptr);
+}
+
+TEST_CASE("Messages logged by two tasks at once arrive whole", CLASS_OF_TESTS)
+{
+    memset(&_capture, 0, sizeof(_capture));
+    esp_log_level_set(BUFFER_TEST_COMPONENT, ESP_LOG_INFO);
+    _capture.Previous = esp_log_set_vprintf(CountingOutput);
+
+    const SemaphoreHandle_t start = xSemaphoreCreateCounting(2, 0);
+    const SemaphoreHandle_t finished = xSemaphoreCreateCounting(2, 0);
+    TEST_ASSERT_NOT_NULL(start);
+    TEST_ASSERT_NOT_NULL(finished);
+    LoggingTaskArguments arguments[2] = {{'A', start, finished}, {'B', start, finished}};
+    //
+    //  The test runs above the tasks while it starts them, so that neither begins before the other exists.
+    //
+    const UBaseType_t priority = uxTaskPriorityGet(nullptr);
+    vTaskPrioritySet(nullptr, tskIDLE_PRIORITY + 10);
+    for (int index = 0; index < 2; index++)
+    {
+        TEST_ASSERT_EQUAL(pdPASS, xTaskCreatePinnedToCore(LoggingTask, "LoggingTest", 4096, &arguments[index], tskIDLE_PRIORITY + 5, nullptr, index));
+    }
+    xSemaphoreGive(start);
+    xSemaphoreGive(start);
+    vTaskPrioritySet(nullptr, priority);
+    const bool bothFinished = (xSemaphoreTake(finished, pdMS_TO_TICKS(30000)) == pdTRUE) && (xSemaphoreTake(finished, pdMS_TO_TICKS(30000)) == pdTRUE);
+
+    esp_log_set_vprintf(_capture.Previous);
+    esp_log_level_set(BUFFER_TEST_COMPONENT, ESP_LOG_NONE);
+    vSemaphoreDelete(start);
+    vSemaphoreDelete(finished);
+
+    TEST_ASSERT_TRUE_MESSAGE(bothFinished, "The logging tasks did not finish.");
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(2 * MESSAGES_PER_TASK, _capture.Seen, "Not every message arrived.");
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, _capture.Damaged, "A message was overwritten by the other task's.");
+}
