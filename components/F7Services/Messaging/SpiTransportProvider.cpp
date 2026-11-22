@@ -148,7 +148,15 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     //  Without the SPI bus there is no link to the STM32, so this is a start-up failure with nothing
     //  to recover to.  ESP_ERROR_CHECK is kept, and resets the board (issue #248).
     //
-    ESP_ERROR_CHECK(spi_slave_initialize(SPI3_HOST, &spiBusConfiguration, &slaveConfiguration, 1));
+    //  The ESP32 keeps DMA channel 1.  Chips with GDMA, such as the ESP32-S3 of the emulator
+    //  build, take only SPI_DMA_CH_AUTO and reject a channel number.
+    //
+#if CONFIG_IDF_TARGET_ESP32
+    const spi_dma_chan_t dmaChannel = SPI_DMA_CH1;
+#else
+    const spi_dma_chan_t dmaChannel = SPI_DMA_CH_AUTO;
+#endif
+    ESP_ERROR_CHECK(spi_slave_initialize(SPI3_HOST, &spiBusConfiguration, &slaveConfiguration, dmaChannel));
 
     /*
      *  The initial state is to wait for a message header to be sent by the STM32.

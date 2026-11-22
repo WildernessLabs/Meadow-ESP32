@@ -11,7 +11,7 @@ list(FILTER F7SERVICES_SOURCES EXCLUDE REGEX ".*/test/.*")
 idf_component_register( SRCS    ${F7SERVICES_SOURCES}
                         INCLUDE_DIRS "."
                                 "../../main"
-                                "../../build/config"
+                                "${CMAKE_BINARY_DIR}/config"
                                 "WiFi"
                                 "System"
                                 "Messaging"

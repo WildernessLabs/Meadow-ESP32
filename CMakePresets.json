@@ -16,6 +16,23 @@
           "toolchain": "ESP-IDF 6.1"
         }
       }
+    },
+    {
+      "name": "Emulator-ESP-IDF 6.1",
+      "displayName": "Emulator-ESP-IDF 6.1",
+      "description": "ESP-IDF 6.1 build for esp-emu (build.sh --emulator): ESP32-S3 target, built into build-esp32s3/ with its own sdkconfig so the ESP32 build in build/ is untouched.",
+      "generator": "Ninja",
+      "binaryDir": "build-esp32s3",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "IDF_TARGET": "esp32s3",
+        "SDKCONFIG": "${sourceDir}/build-esp32s3/sdkconfig"
+      },
+      "vendor": {
+        "jetbrains.com/clion": {
+          "toolchain": "ESP-IDF 6.1"
+        }
+      }
     }
   ]
 }

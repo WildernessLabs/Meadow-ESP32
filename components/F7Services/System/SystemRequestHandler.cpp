@@ -166,7 +166,11 @@ SystemRequestHandler::~SystemRequestHandler()
     //
     if (_adc1CalibrationHandle != nullptr)
     {
+#if ADC_CALI_SCHEME_LINE_FITTING_SUPPORTED
         adc_cali_delete_scheme_line_fitting(_adc1CalibrationHandle);
+#else
+        adc_cali_delete_scheme_curve_fitting(_adc1CalibrationHandle);
+#endif
         _adc1CalibrationHandle = nullptr;
     }
     if (_adc1Handle != nullptr)
@@ -919,11 +923,24 @@ void SystemRequestHandler::ConfigureADC1()
             adcChannelConfig.atten = ADC_ATTEN_DB_12;
             if (adc_oneshot_config_channel(_adc1Handle, ADC_CHANNEL_7, &adcChannelConfig) == ESP_OK)
             {
+                //
+                //  The ESP32 calibrates by line fitting.  The ESP32-S3 (the emulator build)
+                //  has only curve fitting, which is per channel.
+                //
+#if ADC_CALI_SCHEME_LINE_FITTING_SUPPORTED
                 adc_cali_line_fitting_config_t adcCalibrationConfig = {};
                 adcCalibrationConfig.unit_id = ADC_UNIT_1;
                 adcCalibrationConfig.atten = ADC_ATTEN_DB_12;
                 adcCalibrationConfig.bitwidth = ADC_BITWIDTH_DEFAULT;
                 if (adc_cali_create_scheme_line_fitting(&adcCalibrationConfig, &_adc1CalibrationHandle) != ESP_OK)
+#else
+                adc_cali_curve_fitting_config_t adcCalibrationConfig = {};
+                adcCalibrationConfig.unit_id = ADC_UNIT_1;
+                adcCalibrationConfig.chan = ADC_CHANNEL_7;
+                adcCalibrationConfig.atten = ADC_ATTEN_DB_12;
+                adcCalibrationConfig.bitwidth = ADC_BITWIDTH_DEFAULT;
+                if (adc_cali_create_scheme_curve_fitting(&adcCalibrationConfig, &_adc1CalibrationHandle) != ESP_OK)
+#endif
                 {
                     TRACE_MESSAGE("Failed to create calibration scheme.");
                     _adc1CalibrationHandle = nullptr;

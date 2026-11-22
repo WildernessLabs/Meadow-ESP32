@@ -108,4 +108,13 @@ endif()
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
+#
+#   The emulator build (build.sh --emulator, ESP32-S3) keeps its own component lock file.
+#   The component manager writes the target into the lock, so sharing dependencies.lock
+#   would rewrite it each time the build changed between the ESP32 and the S3.
+#
+if (IDF_TARGET STREQUAL "esp32s3")
+    idf_build_set_property(DEPENDENCIES_LOCK "${CMAKE_SOURCE_DIR}/dependencies.lock.esp32s3")
+endif()
+
 project("MeadowComms")

@@ -53,6 +53,8 @@ bld/
 [Ll]og/
 OnBoardFlash.dat.*
 [Bb]uild
+#   The emulator (ESP32-S3) build: build.sh --emulator.
+build-esp32s3/
 packages
 
 # VisualGDB Specific Files
