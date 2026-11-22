@@ -17,6 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./build.sh --develop                    # Build with debug symbols (DDEBUG=1)
 ./build.sh --build --flash --monitor    # Build, flash, and monitor
 ./build.sh --fullclean                  # Full rebuild (use when incremental fails)
+./build.sh --emulator --build           # ESP32-S3 build for esp-emu: build-esp32s3/merged_flash.bin
 ./build.sh --help                       # All options
 
 # Debug subsystems: WIFI, SPI, BT, SYSTEM

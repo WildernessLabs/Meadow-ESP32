@@ -1,0 +1,9 @@
+#
+#   ESP32-S3 additions to sdkconfig.defaults, for the emulator build (build.sh --emulator).
+#   ESP-IDF merges this file after sdkconfig.defaults when the target is esp32s3.
+#
+#   The S3's Bluedroid defaults to the BLE 5.0 extended advertising API only.  Meadow uses
+#   the legacy (BLE 4.2) advertising API, which is all the ESP32 has, so switch to that.
+#
+CONFIG_BT_BLE_42_FEATURES_SUPPORTED=y
+CONFIG_BT_BLE_50_FEATURES_SUPPORTED=n

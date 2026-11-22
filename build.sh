@@ -56,6 +56,7 @@ FLASH=false
 GENERATE_SBOM=false
 BUILD=false
 QEMU=false
+EMULATOR=false
 
 #
 #   Work out which options are on the command line.
@@ -84,6 +85,9 @@ case $i in
     ;;
     -q|--qemu)
     QEMU=true
+    ;;
+    --emulator)
+    EMULATOR=true
     ;;
     -tm|--tracemessages)
     IDF_DEFINES+=" -DTRACE_MESSAGES=1"
@@ -146,6 +150,8 @@ if $HELP; then
     echo "-m | --monitor          Connect to the serial port for application monitoring"
     echo "-q | --qemu             Generate a QEMU flash image from the build output"
     echo "--fullclean             Perform a full clean followed by a build"
+    echo "--emulator              Build for esp-emu: ESP32-S3 target in build-esp32s3/, plus build-esp32s3/merged_flash.bin."
+    echo "                        The ESP32 build in build/ is left as it is.  Cannot be used with --flash."
     echo "-v | --verbose          Display commands as they are executed (default)"
     echo "-s | --silent           Execute commands silently"
     echo "-tm | --tracemessages   Enable trace and debug message output."
@@ -158,6 +164,21 @@ if $HELP; then
     echo "--heaptrace             With --sysview, send every allocation and free to the host (merges sdkconfig.heaptrace)."
     echo ""
     exit 0
+fi
+
+#
+#   The emulator build targets the ESP32-S3 (esp-emu has no ESP32) through its own CMake
+#   preset, so it has its own build directory, sdkconfig and component lock file.  idf.py
+#   takes the preset from IDF_PRESET; the name has spaces, so it cannot go in IDF_FLAGS.
+#
+BUILD_DIR="$scriptdir/build"
+if $EMULATOR; then
+    if $FLASH; then
+        echo "--emulator builds for the ESP32-S3 in esp-emu and cannot be flashed to a Meadow board."
+        exit 1
+    fi
+    export IDF_PRESET="Emulator-ESP-IDF 6.1"
+    BUILD_DIR="$scriptdir/build-esp32s3"
 fi
 
 run_command() {
@@ -339,10 +360,12 @@ cd "$scriptdir"
 #   from its cache on the next build.
 #
 if $FULLCLEAN; then
-    run_command "rm -Rf $scriptdir/build"
+    run_command "rm -Rf $BUILD_DIR"
     run_command "rm -Rf $scriptdir/managed_components"
     run_command " $IDF fullclean"
-    run_command "rm -f $scriptdir/sdkconfig"
+    if ! $EMULATOR; then
+        run_command "rm -f $scriptdir/sdkconfig"
+    fi
 fi
 
 #
@@ -368,7 +391,7 @@ fi
 #
 if $GENERATE_SBOM; then
   echo "Generating SBOM..."
-  esp-idf-sbom create --rem-unused --rem-config -o $scriptdir/sbom/MeadowComms.spdx $scriptdir/build/project_description.json
+  esp-idf-sbom create --rem-unused --rem-config -o $scriptdir/sbom/MeadowComms.spdx $BUILD_DIR/project_description.json
   esp-idf-sbom check $scriptdir/sbom/MeadowComms.spdx -o $scriptdir/sbom/MeadowComms.txt
 fi
 
@@ -376,9 +399,16 @@ fi
 # Generate checksums for binaries
 #
 if $BUILD; then
-  md5sum  $scriptdir/build/MeadowComms.bin | cut -d ' ' -f 1 > $scriptdir/build/MeadowComms.bin.md5
-  md5sum  $scriptdir/build/bootloader/bootloader.bin | cut -d ' ' -f 1 > $scriptdir/build/bootloader/bootloader.bin.md5
-  md5sum  $scriptdir/build/partition_table/partition-table.bin | cut -d ' ' -f 1 > $scriptdir/build/partition_table/partition-table.bin.md5
+  md5sum  $BUILD_DIR/MeadowComms.bin | cut -d ' ' -f 1 > $BUILD_DIR/MeadowComms.bin.md5
+  md5sum  $BUILD_DIR/bootloader/bootloader.bin | cut -d ' ' -f 1 > $BUILD_DIR/bootloader/bootloader.bin.md5
+  md5sum  $BUILD_DIR/partition_table/partition-table.bin | cut -d ' ' -f 1 > $BUILD_DIR/partition_table/partition-table.bin.md5
+fi
+
+#
+#   esp-emu takes the whole flash as one image: bootloader, partition table and application.
+#
+if $EMULATOR && $BUILD; then
+  $IDF merge-bin -o $BUILD_DIR/merged_flash.bin
 fi
 
 #
@@ -386,7 +416,7 @@ fi
 #   application and test builds produce images the same way.
 #
 if $QEMU; then
-  $scriptdir/qemu-image.sh $scriptdir/build
+  $scriptdir/qemu-image.sh $BUILD_DIR
 fi
 
 now=$(date +"%T")
