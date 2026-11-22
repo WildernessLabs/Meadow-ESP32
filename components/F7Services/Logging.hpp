@@ -33,21 +33,21 @@
 //
 #ifdef TRACE_MESSAGES
 
-    #define TRACE_MESSAGE(format, ...) ESP_LOGI(COMPONENT_NAME, format, ##__VA_ARGS__)
-    #define DEBUG_MESSAGE(format, ...) ESP_LOGD(COMPONENT_NAME, format, ##__VA_ARGS__)
-    #define ERROR_MESSAGE(format, ...) ESP_LOGE(COMPONENT_NAME, format, ##__VA_ARGS__)
+    #define TRACE_MESSAGE(format, ...) Logging::Information(COMPONENT_NAME, format, ##__VA_ARGS__)
+    #define DEBUG_MESSAGE(format, ...) Logging::Debug(COMPONENT_NAME, format, ##__VA_ARGS__)
+    #define ERROR_MESSAGE(format, ...) Logging::Error(COMPONENT_NAME, format, ##__VA_ARGS__)
 
-    #define TRACE_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...) ESP_LOGI(component_name, format, ##__VA_ARGS__)
-    #define DEBUG_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...) ESP_LOGD(component_name, format, ##__VA_ARGS__)
-    #define ERROR_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...) ESP_LOGE(component_name, format, ##__VA_ARGS__)
+    #define TRACE_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...) Logging::Information(component_name, format, ##__VA_ARGS__)
+    #define DEBUG_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...) Logging::Debug(component_name, format, ##__VA_ARGS__)
+    #define ERROR_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...) Logging::Error(component_name, format, ##__VA_ARGS__)
 
-    #define TRACE_HEX_BUFFER(buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(COMPONENT_NAME, buffer, length, ESP_LOG_INFO)
-    #define DEBUG_HEX_BUFFER(buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(COMPONENT_NAME, buffer, length, ESP_LOG_DEBUG)
-    #define ERROR_HEX_BUFFER(buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(COMPONENT_NAME, buffer, length, ESP_LOG_ERROR)
+    #define TRACE_HEX_BUFFER(buffer, length) Logging::HexBuffer(COMPONENT_NAME, buffer, length, ESP_LOG_INFO)
+    #define DEBUG_HEX_BUFFER(buffer, length) Logging::HexBuffer(COMPONENT_NAME, buffer, length, ESP_LOG_DEBUG)
+    #define ERROR_HEX_BUFFER(buffer, length) Logging::HexBuffer(COMPONENT_NAME, buffer, length, ESP_LOG_ERROR)
 
-    #define TRACE_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(component_name, buffer, length, ESP_LOG_INFO)
-    #define DEBUG_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(component_name, buffer, length, ESP_LOG_DEBUG)
-    #define ERROR_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(component_name, buffer, length, ESP_LOG_ERROR)
+    #define TRACE_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length) Logging::HexBuffer(component_name, buffer, length, ESP_LOG_INFO)
+    #define DEBUG_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length) Logging::HexBuffer(component_name, buffer, length, ESP_LOG_DEBUG)
+    #define ERROR_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length) Logging::HexBuffer(component_name, buffer, length, ESP_LOG_ERROR)
 
 #else
 
@@ -136,6 +136,16 @@ private:
     static char _udpBuffer[UDP_LOG_MESSAGE_SIZE];
 
     /**
+     * @brief Largest log message, terminator included, that the level methods write; a longer one is cut.
+     */
+    static const int LOG_MESSAGE_SIZE = 256;
+
+    /**
+     * @brief Format a log message and write it at the level given.
+     */
+    static void Write(esp_log_level_t level, const char *component, const char *format, va_list arguments);
+
+    /**
      * @brief Set the log level of a component, or of every component in a named group.
      */
     static bool SetComponentLogging(const char *component, esp_log_level_t level);
@@ -202,6 +212,36 @@ public:
      * @brief Setup this class.
      */
     static void Setup();
+
+    /**
+     * @brief Write an error message for a component.
+     */
+    static void Error(const char *component, const char *format, ...) __attribute__((format(printf, 2, 3)));
+
+    /**
+     * @brief Write a warning message for a component.
+     */
+    static void Warning(const char *component, const char *format, ...) __attribute__((format(printf, 2, 3)));
+
+    /**
+     * @brief Write an information message for a component.
+     */
+    static void Information(const char *component, const char *format, ...) __attribute__((format(printf, 2, 3)));
+
+    /**
+     * @brief Write a debug message for a component.
+     */
+    static void Debug(const char *component, const char *format, ...) __attribute__((format(printf, 2, 3)));
+
+    /**
+     * @brief Write a verbose message for a component.
+     */
+    static void Verbose(const char *component, const char *format, ...) __attribute__((format(printf, 2, 3)));
+
+    /**
+     * @brief Write a buffer for a component as hexadecimal, at the level given.
+     */
+    static void HexBuffer(const char *component, const void *buffer, uint16_t length, esp_log_level_t level);
 
     /**
      * @brief Configure the logging system.

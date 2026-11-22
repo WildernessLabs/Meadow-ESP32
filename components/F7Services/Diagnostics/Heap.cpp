@@ -8,9 +8,9 @@
  *
  * @note The standard method of sending diagnostic information to the serial output is via
  *       the trace, debug, and error macros defined in Logging.hpp.  In general this is used
- *       except where heap information is being generated.  In these cases the ESP_LOG?
- *       macros are used as they do not need the --tracemessages flag to be used in order
- *       to output the heap information.
+ *       except where heap information is being generated.  In these cases the Logging level
+ *       methods (Logging::Information and so on) are used as they do not need the
+ *       --tracemessages flag to be used in order to output the heap information.
  */
 
 #include "sdkconfig.h"
@@ -275,12 +275,12 @@ void Heap::ReportStatistics()
         return;
     }
 
-    ESP_LOGI(COMPONENT_NAME, "Heap trace statistics:");
-    ESP_LOGI(COMPONENT_NAME, "    Records: %" PRIu32, (uint32_t) summary.count);
-    ESP_LOGI(COMPONENT_NAME, "    Allocations: %" PRIu32, (uint32_t) summary.total_allocations);
-    ESP_LOGI(COMPONENT_NAME, "    Frees: %" PRIu32, (uint32_t) summary.total_frees);
-    ESP_LOGI(COMPONENT_NAME, "    Highwatermark: %" PRIu32, (uint32_t) summary.high_water_mark);
-    ESP_LOGI(COMPONENT_NAME, "    Overflowed: %s", summary.has_overflowed ? "true" : "false");
+    Logging::Information(COMPONENT_NAME, "Heap trace statistics:");
+    Logging::Information(COMPONENT_NAME, "    Records: %" PRIu32, (uint32_t) summary.count);
+    Logging::Information(COMPONENT_NAME, "    Allocations: %" PRIu32, (uint32_t) summary.total_allocations);
+    Logging::Information(COMPONENT_NAME, "    Frees: %" PRIu32, (uint32_t) summary.total_frees);
+    Logging::Information(COMPONENT_NAME, "    Highwatermark: %" PRIu32, (uint32_t) summary.high_water_mark);
+    Logging::Information(COMPONENT_NAME, "    Overflowed: %s", summary.has_overflowed ? "true" : "false");
 
     TRACE_MESSAGE("ReportStatistics: Exit");
 }

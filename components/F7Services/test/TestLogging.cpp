@@ -179,7 +179,7 @@ TEST_CASE("Log messages are sent over UDP to the port asked for, and stop when t
 
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, Logging::Configure("WiFi", Esp32LogDestination::UDP, TEST_UDP_PORT));
     TEST_ASSERT_TRUE(TestLogging::UdpIsOn());
-    ESP_LOGI(WiFiRequestHandler::COMPONENT_NAME, "udp log message %d", 356);
+    Logging::Information(WiFiRequestHandler::COMPONENT_NAME, "udp log message %d", 356);
 
     char buffer[256] = {};
     const int received = recv(receiver, buffer, sizeof(buffer) - 1, 0);
@@ -191,7 +191,7 @@ TEST_CASE("Log messages are sent over UDP to the port asked for, and stop when t
     //
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, Logging::Configure("WiFi", Esp32LogDestination::Uart, 0));
     TEST_ASSERT_FALSE(TestLogging::UdpIsOn());
-    ESP_LOGI(WiFiRequestHandler::COMPONENT_NAME, "udp log message %d", 357);
+    Logging::Information(WiFiRequestHandler::COMPONENT_NAME, "udp log message %d", 357);
     TEST_ASSERT_EQUAL_INT_MESSAGE(-1, recv(receiver, buffer, sizeof(buffer) - 1, 0), "A log message was sent over UDP after UDP logging was turned off.");
     const vprintf_like_t outputAfter = esp_log_set_vprintf(vprintf);
     esp_log_set_vprintf(outputAfter);

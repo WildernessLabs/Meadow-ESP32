@@ -9,6 +9,7 @@
 
 #include "Encoders.hpp"
 #include "PayloadReader.hpp"
+#include "SpiTransportProvider.hpp"
 #include "Logging.hpp"
 #include "Utils.hpp"
 

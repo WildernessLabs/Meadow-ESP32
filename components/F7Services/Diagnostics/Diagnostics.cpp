@@ -6,7 +6,7 @@
  *
  * @copyright Copyright (c) 2025 Wilderness Labs
  *
- * @note The records are written with ESP_LOGI rather than the trace macros in Logging.hpp, so
+ * @note The records are written with Logging::Information rather than the trace macros, so
  *       that they do not need the --tracemessages flag, and they go wherever the log goes
  *       (UART, UDP or SystemView).
  */
@@ -34,6 +34,7 @@
 #endif
 
 #include "Diagnostics.hpp"
+#include "Logging.hpp"
 #include "Metrics.hpp"
 #include "Utils.hpp"
 
@@ -103,7 +104,7 @@ void Diagnostics::Setup(const uint32_t periodMilliseconds)
     if (xTaskCreate(Task, "Diagnostics", TASK_STACK_SIZE, nullptr, TASK_PRIORITY, &_taskHandle) != pdPASS)
     {
         _taskHandle = nullptr;
-        ESP_LOGE(COMPONENT_NAME, "Failed to create the diagnostics task");
+        Logging::Error(COMPONENT_NAME, "Failed to create the diagnostics task");
     }
 }
 
@@ -205,7 +206,7 @@ void Diagnostics::WriteRecord(const char *format, ...)
     va_start(arguments, format);
     vsnprintf(record + prefixLength, sizeof(record) - prefixLength, format, arguments);
     va_end(arguments);
-    ESP_LOGI(COMPONENT_NAME, "%s", record);
+    Logging::Information(COMPONENT_NAME, "%s", record);
 }
 
 /**
@@ -257,7 +258,7 @@ void Diagnostics::WriteTasks(const uint32_t sequence)
     auto *tasks = static_cast<TaskStatus_t *>(pvPortMalloc(capacity * sizeof(TaskStatus_t)));
     if (tasks == nullptr)
     {
-        ESP_LOGE(COMPONENT_NAME, "Cannot allocate memory for task information.");
+        Logging::Error(COMPONENT_NAME, "Cannot allocate memory for task information.");
         return;
     }
 
@@ -370,7 +371,7 @@ void Diagnostics::WriteTaskHeap(const uint32_t sequence)
     }
     else
     {
-        ESP_LOGE(COMPONENT_NAME, "Cannot read the heap use by task: %s", esp_err_to_name(result));
+        Logging::Error(COMPONENT_NAME, "Cannot read the heap use by task: %s", esp_err_to_name(result));
     }
     heap_caps_free_all_task_stat_arrays(&allTasksStatistics);
 #endif

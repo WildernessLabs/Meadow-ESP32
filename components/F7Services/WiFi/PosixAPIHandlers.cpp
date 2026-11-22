@@ -418,7 +418,7 @@ void WiFiRequestHandler::Socket(void * const vpMessage)
                     response.Result = socket(request->Domain, request->Type, request->Protocol);
                     if (response.Result < 0)
                     {
-                        TRACE_MESSAGE("Socket: Error code: %" PRIi32 " - %s", errno, strerror(errno));
+                        TRACE_MESSAGE("Socket: Error code: %" PRIi32 " - %s", static_cast<int32_t>(errno), strerror(errno));
                         response.ResponseErrno = Mapping::NuttxErrno(errno);
                     }
                     else
@@ -1626,9 +1626,9 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(const Esp32Messaging::SendTo
                 psa = reinterpret_cast<struct sockaddr *>(&sa);
                 lenSa = sizeof(sa);
                 TRACE_MESSAGE("SendTo: Connecting socket: %" PRIi32, request->SocketHandle);
-                TRACE_MESSAGE("SendTo: Family: %" PRIi32, sa.sin_family);
+                TRACE_MESSAGE("SendTo: Family: %" PRIi32, static_cast<int32_t>(sa.sin_family));
                 TRACE_MESSAGE("SendTo: IP address: %s", Utils::Ipv4AddressToString(sa.sin_addr.s_addr).c_str());
-                TRACE_MESSAGE("SendTo: Port: %" PRIi32, ntohs(sa.sin_port));
+                TRACE_MESSAGE("SendTo: Port: %" PRIi32, static_cast<int32_t>(ntohs(sa.sin_port)));
             }
         }
 
@@ -2501,7 +2501,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::Bind(const Esp32Messaging::BindRequ
         sa.sin_port = socketAddress->Port;
         memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(socketAddress->Ip4Address));
         TRACE_MESSAGE("Bind: Socket handle: %" PRIi32, request->SocketHandle);
-        TRACE_MESSAGE("Bind: Family: %" PRIi32, sa.sin_family);
+        TRACE_MESSAGE("Bind: Family: %" PRIi32, static_cast<int32_t>(sa.sin_family));
         TRACE_MESSAGE("Bind: IP address: %s", Utils::Ipv4AddressToString(sa.sin_addr.s_addr).c_str());
         TRACE_MESSAGE("Bind: Port: %" PRIu16, ntohs(sa.sin_port));
         int descriptor = -1;
@@ -2525,7 +2525,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::Bind(const Esp32Messaging::BindRequ
         response.ResponseErrno = Mapping::NuttxErrno(EAFNOSUPPORT);
     }
 
-    TRACE_MESSAGE("Bind: Error code: %" PRIi32 " - %s", errno, strerror(errno));
+    TRACE_MESSAGE("Bind: Error code: %" PRIi32 " - %s", static_cast<int32_t>(errno), strerror(errno));
     Utils::DeleteAndNullifyPointer(socketAddress);
 
     return (StatusCodes::CompletedOk);
@@ -3246,16 +3246,16 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(const Esp32Messagin
         Utils::DeleteAndNullifyPointer(sockAddr);
         response.ResponseErrno = 0;
         TRACE_MESSAGE("GetSockPeerName: Socket handle: %" PRIi32, request->SocketHandle);
-        TRACE_MESSAGE("GetSockPeerName: Family: %" PRIi32, sin->sin_family);
+        TRACE_MESSAGE("GetSockPeerName: Family: %" PRIi32, static_cast<int32_t>(sin->sin_family));
         TRACE_MESSAGE("GetSockPeerName: IP address: %s", Utils::Ipv4AddressToString(sin->sin_addr.s_addr).c_str());
-        TRACE_MESSAGE("GetSockPeerName: Port: %" PRIi32, ntohs(sin->sin_port));
+        TRACE_MESSAGE("GetSockPeerName: Port: %" PRIi32, static_cast<int32_t>(ntohs(sin->sin_port)));
     }
     else
     {
         response.AddrLength = 0;
         response.Addr = nullptr;
         response.ResponseErrno = Mapping::NuttxErrno(errno);
-        ERROR_MESSAGE("Failure: Result code %" PRIi32 " (%s), errno %" PRIi32 " (%s)", response.Result, esp_err_to_name(response.Result), errno, strerror(errno));
+        ERROR_MESSAGE("Failure: Result code %" PRIi32 " (%s), errno %" PRIi32 " (%s)", response.Result, esp_err_to_name(response.Result), static_cast<int32_t>(errno), strerror(errno));
     }
     return StatusCodes::CompletedOk;
 }

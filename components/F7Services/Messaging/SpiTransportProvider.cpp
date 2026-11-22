@@ -569,10 +569,10 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
                     _outboundMessage->PacketOffset = 0; // Initial state for the packet.
                     _outboundMessage->PacketLength = 0;
 
-                    TRACE_MESSAGE("");
+                    TRACE_MESSAGE("%s", "");
                     TRACE_MESSAGE("Preparing to send message:");
                     Logging::DumpMessage(COMPONENT_NAME, _outboundMessage);
-                    TRACE_MESSAGE("");
+                    TRACE_MESSAGE("%s", "");
 
                     _currentState = SendingPacketDetails;
                     response.PayloadLength = _outboundMessage->PayloadLength;
@@ -1178,9 +1178,9 @@ void SpiTransportProvider::Task(void *pvParameters)
     spi_slave_transaction_t *transaction = SpiTransportProvider::CreateSpiTransaction(nullptr);
     while (true)
     {
-        TRACE_MESSAGE("");
+        TRACE_MESSAGE("%s", "");
         TRACE_MESSAGE("****************************** New State ******************************");
-        TRACE_MESSAGE("");
+        TRACE_MESSAGE("%s", "");
         transaction = sender->ProcessMessages(transaction);
     }
     //

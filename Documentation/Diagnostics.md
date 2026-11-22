@@ -25,7 +25,7 @@ defines `TRACE_MESSAGES`:
 `--debug=WIFI,SPI,BT,SYSTEM` adds the per-subsystem defines that some classes use for
 more detailed output; see `./build.sh --help`.
 
-The diagnostic snapshots use `ESP_LOGI` directly, so their output does not depend on
+The diagnostic snapshots use `Logging::Information` directly, so their output does not depend on
 `--tracemessages`.
 
 ## Build Options

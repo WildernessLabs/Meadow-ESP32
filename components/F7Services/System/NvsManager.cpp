@@ -19,6 +19,7 @@
 
 #include <cstring>
 
+#include "Logging.hpp"
 #include "NvsManager.hpp"
 #include "Utils.hpp"
 
@@ -82,7 +83,7 @@ void NvsManager::Setup()
     esp_err_t result = nvs_flash_init();
     if ((result == ESP_ERR_NVS_NO_FREE_PAGES) || (result == ESP_ERR_NVS_NEW_VERSION_FOUND))
     {
-        ESP_LOGI(__func__, "Formatting NVS.");
+        Logging::Information(__func__, "Formatting NVS.");
         result = nvs_flash_erase();
         if (result == ESP_OK)
         {
@@ -98,7 +99,7 @@ void NvsManager::Setup()
     _nvsAvailable = (result == ESP_OK);
     if (!_nvsAvailable)
     {
-        ESP_LOGE(__func__, "NVS is not available, error %" PRIi32 " (%s).  Defaults will be used and nothing will be saved.", static_cast<int32_t>(result), esp_err_to_name(result));
+        Logging::Error(__func__, "NVS is not available, error %" PRIi32 " (%s).  Defaults will be used and nothing will be saved.", static_cast<int32_t>(result), esp_err_to_name(result));
     }
 }
 

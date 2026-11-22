@@ -515,7 +515,7 @@ bool WiFiRequestHandler::GetAutomaticReconnect()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetAutomaticReconnect(bool value)
 {
-    TRACE_MESSAGE("WiFiRequestHandler::SetAutomaticReconnect: %" PRIi32, value ? 1 : 0);
+    TRACE_MESSAGE("WiFiRequestHandler::SetAutomaticReconnect: %" PRIi32, static_cast<int32_t>(value ? 1 : 0));
     _automaticReconnect = value;
     return (StatusCodes::CompletedOk);
 }
@@ -539,7 +539,7 @@ bool WiFiRequestHandler::GetAutomaticallyStartNetwork()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetAutomaticallyStartNetwork(bool value)
 {
-    TRACE_MESSAGE("WiFiRequestHandler::SetAutomaticallyStartNetwork: %" PRIi32, value ? 1 : 0);
+    TRACE_MESSAGE("WiFiRequestHandler::SetAutomaticallyStartNetwork: %" PRIi32, static_cast<int32_t>(value ? 1 : 0));
     _automaticallyStartNetwork = value;
     return (StatusCodes::CompletedOk);
 }
@@ -563,7 +563,7 @@ bool WiFiRequestHandler::GetUseDhcp()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetUseDhcp(bool value)
 {
-    TRACE_MESSAGE("WiFiRequestHandler::SetUseDhcp: %" PRIi32, value ? 1 : 0);
+    TRACE_MESSAGE("WiFiRequestHandler::SetUseDhcp: %" PRIi32, static_cast<int32_t>(value ? 1 : 0));
     _useDhcp = value;
     return (StatusCodes::CompletedOk);
 }
@@ -1164,7 +1164,7 @@ uint16_t WiFiRequestHandler::LimitAccessPointCount(const uint16_t found)
 {
     if (found > MAXIMUM_ACCESS_POINTS)
     {
-        ESP_LOGW(COMPONENT_NAME, "Found %" PRIu16 " access points, reporting the first %" PRIu16 ".", found, static_cast<uint16_t>(MAXIMUM_ACCESS_POINTS));
+        Logging::Warning(COMPONENT_NAME, "Found %" PRIu16 " access points, reporting the first %" PRIu16 ".", found, static_cast<uint16_t>(MAXIMUM_ACCESS_POINTS));
         return (MAXIMUM_ACCESS_POINTS);
     }
     return (found);
@@ -1231,7 +1231,7 @@ void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
         //
         //  Make sure the old antenna is switched off before the new one is turned on.
         //
-        TRACE_MESSAGE("SwitchAntenna: Switching from antenna %" PRIu32 " to %" PRIu32, oldAntennaPin, newAntennaPin);
+        TRACE_MESSAGE("SwitchAntenna: Switching from antenna %" PRIu32 " to %" PRIu32, static_cast<uint32_t>(oldAntennaPin), static_cast<uint32_t>(newAntennaPin));
         gpio_set_level(oldAntennaPin, 0);
         gpio_set_level(newAntennaPin, 1);
         SystemRequestHandler::SetConfigurationValue(ANTENNA_TYPE_NAME, static_cast<uint8_t>(newAntenna));
@@ -2045,7 +2045,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
 
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT);
 
-    TRACE_MESSAGE("StopWiFIAdapter(): Exit, ESP error code %" PRIi32 " (%s)", result, esp_err_to_name(result));
+    TRACE_MESSAGE("StopWiFIAdapter(): Exit, ESP error code %" PRIi32 " (%s)", static_cast<int32_t>(result), esp_err_to_name(result));
     return (Mapping::GetStatusCode(result));
 }
 
@@ -2650,7 +2650,7 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
             //  This used to be followed by ESP_ERROR_CHECK(result), which reset the board for
             //  a start that failed, such as one that was refused a configuration (issue #248).
             //
-            ESP_LOGE(COMPONENT_NAME, "StartWiFiInterface: the interface could not be started, error %" PRIi32 " (%s)", static_cast<int32_t>(result), esp_err_to_name(result));
+            Logging::Error(COMPONENT_NAME, "StartWiFiInterface: the interface could not be started, error %" PRIi32 " (%s)", static_cast<int32_t>(result), esp_err_to_name(result));
             //
             //  Undo the driver initialisation so the next start makes it again.  ESP-IDF 6
             //  refuses esp_wifi_init on a driver that is already initialised
@@ -2723,7 +2723,7 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
             const esp_err_t scanResult = esp_wifi_scan_start(nullptr, true);
             if (scanResult != ESP_OK)
             {
-                ESP_LOGE(COMPONENT_NAME, "ScanForAccessPoints: the scan could not be started, error %" PRIi32 " (%s)", static_cast<int32_t>(scanResult), esp_err_to_name(scanResult));
+                Logging::Error(COMPONENT_NAME, "ScanForAccessPoints: the scan could not be started, error %" PRIi32 " (%s)", static_cast<int32_t>(scanResult), esp_err_to_name(scanResult));
                 result = Mapping::GetStatusCode(scanResult);
                 scanRefused = true;
                 bits = 0;
@@ -2765,7 +2765,7 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
                             //  The results could not be read out, so the driver's copy is released
                             //  as it would have been, and the scan is reported as failed.
                             //
-                            ESP_LOGE(COMPONENT_NAME, "ScanForAccessPoints: the results could not be read, error %" PRIi32 " (%s)", static_cast<int32_t>(recordsResult), esp_err_to_name(recordsResult));
+                            Logging::Error(COMPONENT_NAME, "ScanForAccessPoints: the results could not be read, error %" PRIi32 " (%s)", static_cast<int32_t>(recordsResult), esp_err_to_name(recordsResult));
                             esp_wifi_clear_ap_list();
                             result = Mapping::GetStatusCode(recordsResult);
                         }
