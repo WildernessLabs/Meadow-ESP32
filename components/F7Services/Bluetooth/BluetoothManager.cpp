@@ -824,7 +824,7 @@ uint32_t BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCha
             //
             if (!is128bits && (static_cast<uint16_t>(uuid16bits) == CLIENT_CHARACTERISTIC_CONFIGURATION_UUID) && (length != CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH))
             {
-                ESP_LOGW(COMPONENT_NAME, "The client characteristic configuration descriptor is declared %" PRIu16 " bytes long; using %d.", length, CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH);
+                Logging::Warning(COMPONENT_NAME, "The client characteristic configuration descriptor is declared %" PRIu16 " bytes long; using %d.", length, CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH);
                 length = CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH;
             }
 

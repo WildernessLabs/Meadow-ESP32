@@ -153,6 +153,7 @@ assuming one.
 - `const` wherever appropriate
 - Use whole words, not abbreviations
 - Spaces around operators, after commas, after casts
+- Log through the `Logging` class (`Logging::Error`, `Warning`, `Information`, `Debug`, `Verbose`, `HexBuffer`), not the `ESP_LOGx` macros, so that logging stays in one place.  The level methods cut a message at 255 characters.
 - No `else if` chains — use a nested `else { if (...) { ... } }` instead. `clang-format` will not flag `else if`, so this has to be right when written.
 
 ## Key Build Notes

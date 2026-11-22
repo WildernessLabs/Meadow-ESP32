@@ -282,11 +282,11 @@ void Thread::Task(void *taskParameters)
             }
             catch (const std::exception &exception)
             {
-                ESP_LOGE(COMPONENT_NAME, "A method run on thread %s threw: %s", sender->_name, exception.what());
+                Logging::Error(COMPONENT_NAME, "A method run on thread %s threw: %s", sender->_name, exception.what());
             }
             catch (...)
             {
-                ESP_LOGE(COMPONENT_NAME, "A method run on thread %s threw something that is not an exception.", sender->_name);
+                Logging::Error(COMPONENT_NAME, "A method run on thread %s threw something that is not an exception.", sender->_name);
             }
         }
         //

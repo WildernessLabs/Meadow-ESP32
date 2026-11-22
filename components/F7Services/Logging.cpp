@@ -17,6 +17,7 @@
     //
     #include "esp_sysview_heap_trace_module.h"
 #endif
+#include <cstdio>
 #include <cstring>
 
 #include "SharedEnums.hpp"
@@ -144,8 +145,133 @@ void Logging::Setup()
     esp_log_level_set(Heap::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
-    TRACE_MESSAGE("Logging redirected to UART_NUM_0 on pins %" PRIu32 " (Tx), %" PRIu32 " (Rx)", Gpio::LOGGING_TX_PIN, Gpio::LOGGING_RX_PIN);
+    TRACE_MESSAGE("Logging redirected to UART_NUM_0 on pins %" PRIu32 " (Tx), %" PRIu32 " (Rx)", static_cast<uint32_t>(Gpio::LOGGING_TX_PIN), static_cast<uint32_t>(Gpio::LOGGING_RX_PIN));
     TRACE_MESSAGE("Logging setup complete.");
+}
+
+/**
+ * @brief Format a log message and write it at the level given.
+ *
+ * ESP-IDF's log macros build their prefix by joining it to the format at compile time, so they need a string
+ * literal.  The message is formatted here, on the stack so that writing one does not allocate, and passed to the
+ * macro for the level as a single string.  Nothing is formatted when the level would not be written.
+ *
+ * @param level Level of the message.
+ * @param component Name of the component the message is for: the tag the level is set against.
+ * @param format Format of the message, as for printf.
+ * @param arguments Values for the format.
+ */
+void Logging::Write(const esp_log_level_t level, const char * const component, const char * const format, va_list arguments)
+{
+    if ((level > LOG_LOCAL_LEVEL) || (level > esp_log_level_get(component)))
+    {
+        return;
+    }
+    char message[LOG_MESSAGE_SIZE];
+    vsnprintf(message, sizeof(message), format, arguments);
+    switch (level)
+    {
+        case ESP_LOG_ERROR:
+            ESP_LOGE(component, "%s", message);
+            break;
+        case ESP_LOG_WARN:
+            ESP_LOGW(component, "%s", message);
+            break;
+        case ESP_LOG_INFO:
+            ESP_LOGI(component, "%s", message);
+            break;
+        case ESP_LOG_DEBUG:
+            ESP_LOGD(component, "%s", message);
+            break;
+        case ESP_LOG_VERBOSE:
+            ESP_LOGV(component, "%s", message);
+            break;
+        default:
+            break;
+    }
+}
+
+/**
+ * @brief Write an error message for a component.
+ *
+ * @param component Name of the component the message is for.
+ * @param format Format of the message, as for printf, followed by its values.
+ */
+void Logging::Error(const char * const component, const char * const format, ...)
+{
+    va_list arguments;
+    va_start(arguments, format);
+    Write(ESP_LOG_ERROR, component, format, arguments);
+    va_end(arguments);
+}
+
+/**
+ * @brief Write a warning message for a component.
+ *
+ * @param component Name of the component the message is for.
+ * @param format Format of the message, as for printf, followed by its values.
+ */
+void Logging::Warning(const char * const component, const char * const format, ...)
+{
+    va_list arguments;
+    va_start(arguments, format);
+    Write(ESP_LOG_WARN, component, format, arguments);
+    va_end(arguments);
+}
+
+/**
+ * @brief Write an information message for a component.
+ *
+ * @param component Name of the component the message is for.
+ * @param format Format of the message, as for printf, followed by its values.
+ */
+void Logging::Information(const char * const component, const char * const format, ...)
+{
+    va_list arguments;
+    va_start(arguments, format);
+    Write(ESP_LOG_INFO, component, format, arguments);
+    va_end(arguments);
+}
+
+/**
+ * @brief Write a debug message for a component.
+ *
+ * @param component Name of the component the message is for.
+ * @param format Format of the message, as for printf, followed by its values.
+ */
+void Logging::Debug(const char * const component, const char * const format, ...)
+{
+    va_list arguments;
+    va_start(arguments, format);
+    Write(ESP_LOG_DEBUG, component, format, arguments);
+    va_end(arguments);
+}
+
+/**
+ * @brief Write a verbose message for a component.
+ *
+ * @param component Name of the component the message is for.
+ * @param format Format of the message, as for printf, followed by its values.
+ */
+void Logging::Verbose(const char * const component, const char * const format, ...)
+{
+    va_list arguments;
+    va_start(arguments, format);
+    Write(ESP_LOG_VERBOSE, component, format, arguments);
+    va_end(arguments);
+}
+
+/**
+ * @brief Write a buffer for a component as hexadecimal, at the level given.
+ *
+ * @param component Name of the component the buffer is for.
+ * @param buffer Bytes to be written.
+ * @param length Number of bytes in the buffer.
+ * @param level Level of the output.
+ */
+void Logging::HexBuffer(const char * const component, const void * const buffer, const uint16_t length, const esp_log_level_t level)
+{
+    ESP_LOG_BUFFER_HEX_LEVEL(component, buffer, length, level);
 }
 
 /**

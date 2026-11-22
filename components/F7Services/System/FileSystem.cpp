@@ -233,7 +233,7 @@ bool FileSystem::MountIfNecessary()
 StatusCodes::StatusCodes FileSystem::Setup()
 {
     TRACE_MESSAGE("Setup: Enter");
-    ESP_LOGI(COMPONENT_NAME, "Setting up file system");
+    Logging::Information(COMPONENT_NAME, "Setting up file system");
 
     StatusCodes::StatusCodes result;
     if (Mount())
@@ -274,7 +274,7 @@ void FileSystem::Format(Message * const message)
         ret = esp_littlefs_info(PARTITION_LABEL, &total, &used);
         if (ret == ESP_OK)
         {
-            TRACE_MESSAGE("Partition size: total: %" PRIu32 ", used: %" PRIu32, total, used);
+            TRACE_MESSAGE("Partition size: total: %" PRIu32 ", used: %" PRIu32, static_cast<uint32_t>(total), static_cast<uint32_t>(used));
             result = StatusCodes::CompletedOk;
         }
     }

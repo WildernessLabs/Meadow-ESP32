@@ -86,7 +86,7 @@ MessageDispatcher *_messageDispatcher = nullptr;
  */
 void heap_caps_alloc_failed_hook(size_t requestedSize, uint32_t caps, const char *functionName)
 {
-    ESP_LOGE(COMPONENT_NAME, "%s failed to allocate %" PRIu32 " bytes with 0x%" PRIx32 " capabilities.", functionName, static_cast<uint32_t>(requestedSize), caps);
+    Logging::Error(COMPONENT_NAME, "%s failed to allocate %" PRIu32 " bytes with 0x%" PRIx32 " capabilities.", functionName, static_cast<uint32_t>(requestedSize), caps);
 }
 
 /*
@@ -113,7 +113,7 @@ extern "C" void app_main()
     char month_text[4];
     strftime(month_text, 4, "%b", &t);
 
-    ESP_LOGI(
+    Logging::Information(
         COMPONENT_NAME, "Version: %" PRIu32 ".%" PRIu32 ".%" PRIu32 ".%" PRIu32 ", built %02" PRIu8 " %s 20%02" PRIu8 " %02" PRIu8 ":%02" PRIu8 ":%02" PRIu8 " UTC (%08" PRIu32 ":%s)", g_application_version.major, g_application_version.minor, g_application_version.revision,
         g_application_version.build, g_application_version.day, month_text, g_application_version.year, g_application_version.hour, g_application_version.minute, g_application_version.second, g_application_version.hash, g_application_version.branch_name);
 
@@ -143,7 +143,7 @@ extern "C" void app_main()
     // }
     // else
     // {
-    //     ESP_LOGE(COMPONENT_NAME, "Failed to allocate dummy buffer.");
+    //     Logging::Error(COMPONENT_NAME, "Failed to allocate dummy buffer.");
     // }
     // heap_caps_print_heap_info(MALLOC_CAP_DEFAULT);
 
