@@ -143,7 +143,7 @@ private:
     /**
      * @brief Longest a level method waits for another task to finish with the message buffer, in milliseconds.
      */
-    static const uint32_t MESSAGE_MUTEX_WAIT_MS = 100;
+    static const uint32_t MESSAGE_MUTEX_WAIT_MS = 1000;
 
     /**
      * @brief Buffer the level methods format a message in, guarded by MessageMutex.
