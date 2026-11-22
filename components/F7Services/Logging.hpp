@@ -141,6 +141,26 @@ private:
     static const int LOG_MESSAGE_SIZE = 256;
 
     /**
+     * @brief Longest a level method waits for another task to finish with the message buffer, in milliseconds.
+     */
+    static const uint32_t MESSAGE_MUTEX_WAIT_MS = 100;
+
+    /**
+     * @brief Buffer the level methods format a message in, guarded by MessageMutex.
+     */
+    static char _messageBuffer[LOG_MESSAGE_SIZE];
+
+    /**
+     * @brief The mutex guarding the message buffer, made the first time it is wanted.
+     */
+    static SemaphoreHandle_t MessageMutex();
+
+    /**
+     * @brief Write a log message in pieces, without a buffer, when the message buffer cannot be had.
+     */
+    static void WriteInPieces(esp_log_level_t level, const char *component, const char *format, va_list arguments);
+
+    /**
      * @brief Format a log message and write it at the level given.
      */
     static void Write(esp_log_level_t level, const char *component, const char *format, va_list arguments);
