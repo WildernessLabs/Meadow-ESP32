@@ -38,6 +38,16 @@ if (HEAPTRACE EQUAL 1)
     message(STATUS "Enabling heap tracing to the host.")
     set(SDKCONFIG_FILES "${SDKCONFIG_FILES}\;../sdkconfig.heaptrace")
 endif()
+
+#
+#   Emulated Ethernet for the socket tests under QEMU (build.sh --qemuethernet).  build.sh
+#   always states this value, so that it cannot stay on in the CMake cache for a later
+#   build meant for a board.
+#
+if (QEMU_ETHERNET EQUAL 1)
+    message(STATUS "Enabling emulated Ethernet for QEMU.")
+    set(SDKCONFIG_FILES "${SDKCONFIG_FILES}\;sdkconfig.qemuethernet")
+endif()
 set(SDKCONFIG_DEFAULTS ${SDKCONFIG_FILES})
 
 # Set the components to include the tests for.

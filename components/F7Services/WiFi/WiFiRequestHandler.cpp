@@ -2207,6 +2207,13 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
         return (StatusCodes::WiFiAlreadyStarted);
     }
 
+#if CONFIG_ETH_USE_OPENETH
+    //
+    //  A QEMU build with emulated Ethernet has no radio to join a network with.
+    //
+    return (ConnectToEmulatedEthernet());
+#endif
+
     if ((accessPointInformation->NetworkName == nullptr) || (strlen(accessPointInformation->NetworkName) == 0))
     {
         return (StatusCodes::InvalidWiFiCredentials);

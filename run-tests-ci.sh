@@ -10,7 +10,8 @@
 #       docker run --rm -v $PWD:/project -w /project espressif/idf:release-v6.1 \
 #           ./run-tests-ci.sh
 #
-#   Only the tests that need no radio and no analogue hardware are run.  See
+#   Only the tests that need no radio and no analogue hardware are run.  The [POSIX]
+#   tests run last, from a second image that uses QEMU's emulated Ethernet.  See
 #   Documentation/TestAutomationPlan.md for how the suite is divided.
 #
 
@@ -149,14 +150,51 @@ set +e
     "$EXPECT_REBOOT" \
     "${SELECTORS[@]}"
 RESULT=$?
+
+#
+#   The socket tests need a network, so they run from a second image built with QEMU's
+#   emulated Ethernet.  That build replaces the WiFi connection, which is why it cannot
+#   serve the tests above.  This stage runs even when they failed, so that one run reports
+#   both.  A failed build leaves the image without Ethernet, and the tests then fail.
+#
+printf "Building the tests with emulated Ethernet...\n"
+"$scriptdir/test/build.sh" --build --qemuethernet
+POSIX_RESULT=$?
+
+if [ $POSIX_RESULT -eq 0 ]; then
+    printf "Running the POSIX tests...\n"
+    "$scriptdir/test/run-tests.sh" \
+        --junit="$RESULTS_DIR/qemu-posix-tests.xml" \
+        --transcript="$RESULTS_DIR/qemu-posix-console.log" \
+        '[POSIX]'
+    POSIX_RESULT=$?
+fi
 set -e
 
-case $RESULT in
-    0) printf "\nAll tests passed.\n" ;;
-    1) printf "\nA test failed.\n" ;;
-    2) printf "\nA selector timed out.\n" ;;
-    3) printf "\nThe device rebooted during a test.\n" ;;
-    *) printf "\nThe test run failed with status %s.\n" "$RESULT" ;;
-esac
+#
+#   Print what a stage's exit status means.
+#
+#   $1  Name of the stage.
+#   $2  Exit status of the stage.
+#
+report_result() {
+    case $2 in
+        0) printf "\n%s: all tests passed.\n" "$1" ;;
+        1) printf "\n%s: a test failed.\n" "$1" ;;
+        2) printf "\n%s: a selector timed out.\n" "$1" ;;
+        3) printf "\n%s: the device rebooted during a test.\n" "$1" ;;
+        *) printf "\n%s: the test run failed with status %s.\n" "$1" "$2" ;;
+    esac
+}
 
-exit $RESULT
+report_result "Emulated tests" "$RESULT"
+report_result "POSIX tests" "$POSIX_RESULT"
+
+#
+#   The job fails if either stage failed, with the status of the first that did.
+#
+if [ $RESULT -ne 0 ]; then
+    exit $RESULT
+fi
+
+exit $POSIX_RESULT

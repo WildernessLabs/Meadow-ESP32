@@ -1,0 +1,7 @@
+#
+#   Emulated Ethernet for the socket tests under QEMU (build.sh --qemuethernet).
+#
+#   The OpenCores driver only works under QEMU, so an image built with this file cannot
+#   reach a network on a board.  build.sh refuses to flash one.
+#
+CONFIG_ETH_USE_OPENETH=y

@@ -407,7 +407,15 @@ const char *UnitTestConfiguration::LargeTestFile()
  */
 const char *UnitTestConfiguration::WebServerIpAddress()
 {
+#if CONFIG_ETH_USE_OPENETH
+    //
+    //  QEMU's user networking presents the host at this address, and TestRunner.py serves
+    //  the test page there.
+    //
+    return ("10.0.2.2");
+#else
     return ((_webServerIpAddress == nullptr) ? "" : _webServerIpAddress);
+#endif
 }
 
 /**
@@ -415,7 +423,14 @@ const char *UnitTestConfiguration::WebServerIpAddress()
  */
 uint32_t UnitTestConfiguration::WebServerPort()
 {
+#if CONFIG_ETH_USE_OPENETH
+    //
+    //  Must match EMULATED_WEB_SERVER_PORT in TestRunner.py.
+    //
+    return (18080);
+#else
     return (_webServerPort);
+#endif
 }
 
 /**
@@ -423,7 +438,15 @@ uint32_t UnitTestConfiguration::WebServerPort()
  */
 uint32_t UnitTestConfiguration::PosixIterations()
 {
+#if CONFIG_ETH_USE_OPENETH
+    //
+    //  An emulated fetch is far slower than a real one, and the menu runs [POSIX] as one
+    //  batch, so the full soak would outlast the runner's timeout.
+    //
+    return (100);
+#else
     return (_posixIterations);
+#endif
 }
 
 /**
