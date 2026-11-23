@@ -42,7 +42,8 @@ idf_component_register( SRCS    ${F7SERVICES_SOURCES}
                                 vfs 
                                 wpa_supplicant 
                                 xtensa
-                                esp_netif 
+                                esp_eth
+                                esp_netif
                                 esp_system 
                                 esp_wifi 
                                 espcoredump 

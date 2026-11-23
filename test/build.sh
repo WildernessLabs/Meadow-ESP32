@@ -41,6 +41,7 @@ DEBUG_SELECTIONS=""
 TEST_SELECTIONS=""
 FLASH=false
 QEMU=false
+QEMU_ETHERNET=0
 
 #
 #   Work out which options are on the command line.
@@ -65,6 +66,10 @@ case $i in
     ;;
     -q|--qemu)
     QEMU=true
+    ;;
+    --qemuethernet)
+    QEMU=true
+    QEMU_ETHERNET=1
     ;;
     -tm|--tracemessages)
     IDF_DEFINES+=" -DTRACE_MESSAGES=1"
@@ -123,6 +128,7 @@ if $HELP; then
     echo "-f | --flash            Flash the ESP32 with the bootloader, partition table and application code"
     echo "-m | --monitor          Connect to the serial port for application monitoring"
     echo "-q | --qemu             Generate a QEMU flash image from the build output"
+    echo "--qemuethernet          Build for QEMU with emulated Ethernet so the [POSIX] tests can run (implies --qemu)"
     echo "--fullclean             Perform a full clean followed by a build"
     echo "-tm | --tracemessages   Enable heap tracing."
     echo "--sysview               Build with SEGGER SystemView tracing over JTAG (merges ../sdkconfig.sysview)."
@@ -241,12 +247,27 @@ if $FULLCLEAN; then
     run_command "rm -f $scriptdir/sdkconfig"
 fi
 
+#
+#   Always stated, because CMake would otherwise keep the last value in its cache and a
+#   build meant for a board could silently stay on emulated Ethernet.
+#
+IDF_DEFINES+=" -DQEMU_ETHERNET=$QEMU_ETHERNET"
+
 if [[ ! -z $IDF_FLAGS ]]; then
     run_command "$IDF $IDF_DEFINES $IDF_FLAGS"
 fi
 
 if [ $? -eq 0 ]; then
   if $FLASH; then
+    #
+    #   The emulated Ethernet driver only works under QEMU, and it replaces the WiFi
+    #   connection, so an image containing it must not reach a board.
+    #
+    if grep -q '^CONFIG_ETH_USE_OPENETH=y' "$scriptdir/sdkconfig"; then
+      printf "${red}This build uses QEMU's emulated Ethernet and cannot run on a board.${reset}\n"
+      printf "Rebuild without --qemuethernet before flashing.\n"
+      exit 1
+    fi
     $scriptdir/flash.sh
   fi
 fi

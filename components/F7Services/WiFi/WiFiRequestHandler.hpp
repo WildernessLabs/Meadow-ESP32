@@ -801,6 +801,18 @@ private:
      */
     StatusCodes::StatusCodes ConnectToAccessPoint(const Esp32Messaging::AccessPointInformation *accessPointInformation);
 
+#if CONFIG_ETH_USE_OPENETH
+    /**
+     *  @brief Bring up QEMU's emulated Ethernet in place of joining an access point.
+     */
+    StatusCodes::StatusCodes ConnectToEmulatedEthernet();
+
+    /**
+     *  @brief Handle the emulated Ethernet interface being given an address.
+     */
+    static void EmulatedEthernetGotIp(void *arg, esp_event_base_t eventBase, int32_t eventId, void *eventData);
+#endif
+
     /**
      *  @brief Connect to an access point.
      */

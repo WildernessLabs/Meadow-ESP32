@@ -320,9 +320,30 @@ flash, UART and timers, but not the radio and not the ADC.
 | `[CoreDump]` | Yes — the emulator saves a dump and reads it back as the hardware does, including a full retrieval |
 | `[System]` | No — reads a real ADC, and the read never returns under QEMU |
 | `[WiFi]`, `[Bluetooth]` | No — there is no radio to emulate |
-| `[POSIX]` | No — needs a radio and a web server on the local network |
+| `[POSIX]` | Only in a `--qemuethernet` build, described below |
 
 Everything in that last group carries `[HardwareOnly]`.
+
+### Socket Tests Over Emulated Ethernet
+
+QEMU has no radio, but it does emulate an OpenCores Ethernet controller. A test build
+made with `--qemuethernet` brings that up when asked to join an access point, so the
+socket handlers can run without a board:
+
+```bash
+cd test
+./build.sh --build --qemuethernet
+./run-tests.sh '[POSIX]'
+```
+
+The test runner serves the test page from the host on port 18080, and the firmware
+reaches it at 10.0.2.2 through QEMU's user networking. No WiFi settings or bench web
+server are needed. The page-fetch soak test makes 100 fetches in this build rather than
+the configured number, so that the tag finishes within the runner's timeout.
+
+This build replaces the WiFi connection, so it is only for `[POSIX]`. `build.sh` refuses
+to flash it, and the next build without the option goes back to WiFi. The tests still
+need a board to prove the real WiFi path.
 
 ### Installing the Emulator
 
@@ -395,6 +416,10 @@ application and then the tests, and finally runs everything carrying the `[Emula
 tag, followed by the handful of selectors named in the script that run under QEMU but
 cannot join that batch. It writes no configuration file: the emulated tests need none,
 and the run reports that none was found.
+
+It then rebuilds the tests with `--qemuethernet` and runs `[POSIX]`, writing
+`qemu-posix-tests.xml` and `qemu-posix-console.log` beside the main results. This stage
+runs even if the first one failed, and the job fails if either does.
 
 ### How Tests Opt In
 

@@ -51,7 +51,9 @@ import socket
 import subprocess
 import sys
 import tempfile
+import threading
 import time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from xml.dom import minidom
 
 #
@@ -182,6 +184,57 @@ def HostPairedDevices():
     return devices
 
 
+#
+#   A build made with --qemuethernet fetches its test page from the host.  The port must
+#   match UnitTestConfiguration::WebServerPort(), and the page must contain the heading and
+#   paragraph TestPosix.cpp looks for.
+#
+EMULATED_WEB_SERVER_PORT = 18080
+EMULATED_WEB_PAGE = (b'<html><body><h1>Simple Web Page</h1>'
+                     b'<p>This is a small web page.</p></body></html>')
+
+
+class EmulatedWebPageHandler(BaseHTTPRequestHandler):
+    '''Answers every request with the page the POSIX tests expect.'''
+
+    protocol_version = 'HTTP/1.1'
+
+    def do_GET(self):
+        '''Send the page and close the connection, which is how the tests see it end.'''
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/html')
+        self.send_header('Content-Length', str(len(EMULATED_WEB_PAGE)))
+        self.send_header('Connection', 'close')
+        self.end_headers()
+        self.wfile.write(EMULATED_WEB_PAGE)
+        self.close_connection = True
+
+    def log_message(self, format, *args):
+        '''Keep request logging out of the test output.'''
+
+
+def StartEmulatedWebServer(buildDirectory):
+    '''
+    Start the host web server if this build uses QEMU's emulated Ethernet.
+
+    It listens on the loopback interface only, which is where QEMU's user networking
+    delivers connections made to the host address.
+
+    Returns the server, or None if the build does not use emulated Ethernet.
+    '''
+    try:
+        with open(os.path.join(buildDirectory, 'config', 'sdkconfig.json')) as configuration:
+            if not json.load(configuration).get('ETH_USE_OPENETH', False):
+                return None
+    except (OSError, ValueError):
+        return None
+
+    server = ThreadingHTTPServer(('127.0.0.1', EMULATED_WEB_SERVER_PORT), EmulatedWebPageHandler)
+    server.daemon_threads = True
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    return server
+
+
 class Transport:
     '''Common interface over a QEMU socket and a hardware serial port.'''
 
@@ -210,6 +263,7 @@ class QemuTransport(Transport):
 
     def __init__(self, buildDirectory, port, fresh, qemuScript):
         self._buildDirectory = buildDirectory
+        self._webServer = StartEmulatedWebServer(buildDirectory)
 
         command = [
             qemuScript,
@@ -234,6 +288,7 @@ class QemuTransport(Transport):
                 time.sleep(0.5)
         if self._socket is None:
             self._process.kill()
+            self._StopWebServer()
             raise RuntimeError(f'QEMU did not open a console on port {port}')
         self._socket.settimeout(1.0)
 
@@ -250,6 +305,14 @@ class QemuTransport(Transport):
         self._socket.close()
         self._process.kill()
         self._process.wait()
+        self._StopWebServer()
+
+    def _StopWebServer(self):
+        '''Stop the host web server if one was started for this run.'''
+        if self._webServer is not None:
+            self._webServer.shutdown()
+            self._webServer.server_close()
+            self._webServer = None
 
 
 class SerialTransport(Transport):
