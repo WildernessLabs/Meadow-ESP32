@@ -73,7 +73,7 @@ do
     fi
 done
 
-cppcheck --error-exitcode=1 --quiet --check-level=exhaustive --force --inline-suppr -iCMakeLists.txt -imanaged_components -ibuild $CMAKE_BUILD_EXCLUDES .
+cppcheck --error-exitcode=1 --quiet --check-level=exhaustive --force --inline-suppr -iCMakeLists.txt -imanaged_components -ibuild -ibuild-esp32s3 $CMAKE_BUILD_EXCLUDES .
 
 #
 #   Our code is everything under these directories; third party code (managed_components) and

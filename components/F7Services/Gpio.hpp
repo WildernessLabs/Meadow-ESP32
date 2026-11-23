@@ -121,6 +121,6 @@ namespace Gpio
      */
     const gpio_num_t CHIP_SELECT_PIN = GPIO_NUM_10;
 #else
-#error "Gpio.hpp has no pin map for this target."
+    #error "Gpio.hpp has no pin map for this target."
 #endif
 } // namespace Gpio
