@@ -156,6 +156,11 @@ private:
     static SemaphoreHandle_t MessageMutex();
 
     /**
+     * @brief The colour and the letter that mark a log message of a level.
+     */
+    static void LevelMarkers(esp_log_level_t level, const char *&colour, char &letter);
+
+    /**
      * @brief Write a log message in pieces, without a buffer, when the message buffer cannot be had.
      */
     static void WriteInPieces(esp_log_level_t level, const char *component, const char *format, va_list arguments);

@@ -480,10 +480,5 @@ TEST_CASE("Messages logged by two tasks at once are not overwritten", CLASS_OF_T
     TEST_ASSERT_TRUE_MESSAGE(bothFinished, "The logging tasks did not finish.");
     TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, _capture.Damaged, summary);
     TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, repeated, summary);
-    //
-    //  A missing message on its own is not asserted on: ESP-IDF drops a message when its own log lock is busy
-    //  for more than a tick, which another task using the log can cause at any time.  A message formatted over
-    //  by the other task's leaves one missing and another repeated, so the repeats are what show the buffer
-    //  being shared.
-    //
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, missing, summary);
 }

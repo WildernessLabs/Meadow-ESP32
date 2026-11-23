@@ -9,6 +9,7 @@
 
 #include "sdkconfig.h"
 
+#include "esp_private/log_print.h"
 #include "lwip/sockets.h"
 #ifdef CONFIG_MEADOW_SYSVIEW
     //
@@ -172,20 +173,14 @@ SemaphoreHandle_t Logging::MessageMutex()
 }
 
 /**
- * @brief Write a log message in pieces, the prefix, the message and the end of the line, without a buffer.
- *
- * This is used when the message buffer cannot be had.  The output is the same as the log macros give, but it
- * is three writes, so another task's message can come between them and UDP logging sends three datagrams.
+ * @brief The colour and the letter that mark a log message of a level.
  *
  * @param level Level of the message.
- * @param component Name of the component the message is for.
- * @param format Format of the message, as for printf.
- * @param arguments Values for the format.
+ * @param colour Set to the colour for the level; left alone for the information level.
+ * @param letter Set to the letter for the level; left alone for the information level.
  */
-void Logging::WriteInPieces(const esp_log_level_t level, const char * const component, const char * const format, va_list arguments)
+void Logging::LevelMarkers(const esp_log_level_t level, const char *&colour, char &letter)
 {
-    const char *colour = "";
-    char letter = 'I';
     switch (level)
     {
         case ESP_LOG_ERROR:
@@ -205,9 +200,26 @@ void Logging::WriteInPieces(const esp_log_level_t level, const char * const comp
             letter = 'V';
             break;
         default:
-            colour = LOG_COLOR_I;
             break;
     }
+}
+
+/**
+ * @brief Write a log message in pieces, the prefix, the message and the end of the line, without a buffer.
+ *
+ * This is used when the message buffer cannot be had.  The output is the same as the log macros give, but it
+ * is three writes, so another task's message can come between them and UDP logging sends three datagrams.
+ *
+ * @param level Level of the message.
+ * @param component Name of the component the message is for.
+ * @param format Format of the message, as for printf.
+ * @param arguments Values for the format.
+ */
+void Logging::WriteInPieces(const esp_log_level_t level, const char * const component, const char * const format, va_list arguments)
+{
+    const char *colour = LOG_COLOR_I;
+    char letter = 'I';
+    LevelMarkers(level, colour, letter);
     esp_log_write(level, component, "%s%c (%" PRIu32 ") %s: ", colour, letter, esp_log_timestamp(), component);
     esp_log_writev(level, component, format, arguments);
     esp_log_write(level, component, "%s\n", LOG_RESET_COLOR);
@@ -216,10 +228,12 @@ void Logging::WriteInPieces(const esp_log_level_t level, const char * const comp
 /**
  * @brief Format a log message and write it at the level given.
  *
- * ESP-IDF's log macros build their prefix by joining it to the format at compile time, so they need a string
- * literal.  The message is formatted here, in a static buffer so that logging costs a task no more stack than
- * the macros do and does not allocate, and passed to the macro for the level as a single string.  Nothing is
- * formatted when the level would not be written.
+ * The level is checked first, without the mutex, so a message that will not be written never waits for one
+ * that is being written.  The message is formatted in a static buffer, so that logging costs a task no more
+ * stack than the macros do and does not allocate, and passed to the log output as a single line.
+ *
+ * The line does not go through the ESP_LOGx macros.  They read the level again under ESP-IDF's log lock,
+ * waiting at most a tick and silently dropping the message if the lock is busy.
  *
  * The buffer is guarded by a mutex.  When the mutex cannot be had the message is written in pieces instead:
  *
@@ -250,43 +264,21 @@ void Logging::Write(const esp_log_level_t level, const char * const component, c
         WriteInPieces(level, component, format, arguments);
         return;
     }
+    if (level > esp_log_level_get(component))
+    {
+        return;
+    }
     const SemaphoreHandle_t mutex = MessageMutex();
     if ((xSemaphoreGetMutexHolder(mutex) == xTaskGetCurrentTaskHandle()) || (xSemaphoreTake(mutex, pdMS_TO_TICKS(MESSAGE_MUTEX_WAIT_MS)) != pdTRUE))
     {
         WriteInPieces(level, component, format, arguments);
         return;
     }
-    //
-    //  The component's level is read while the buffer is held, not before.  ESP-IDF reads it again in the log
-    //  macro under its own lock, waiting at most a tick and dropping the message if the lock is busy, so a
-    //  task reading the level here while another writes its message could make the other's message vanish.
-    //
-    if (level > esp_log_level_get(component))
-    {
-        xSemaphoreGive(mutex);
-        return;
-    }
     vsnprintf(_messageBuffer, sizeof(_messageBuffer), format, arguments);
-    switch (level)
-    {
-        case ESP_LOG_ERROR:
-            ESP_LOGE(component, "%s", _messageBuffer);
-            break;
-        case ESP_LOG_WARN:
-            ESP_LOGW(component, "%s", _messageBuffer);
-            break;
-        case ESP_LOG_INFO:
-            ESP_LOGI(component, "%s", _messageBuffer);
-            break;
-        case ESP_LOG_DEBUG:
-            ESP_LOGD(component, "%s", _messageBuffer);
-            break;
-        case ESP_LOG_VERBOSE:
-            ESP_LOGV(component, "%s", _messageBuffer);
-            break;
-        default:
-            break;
-    }
+    const char *colour = LOG_COLOR_I;
+    char letter = 'I';
+    LevelMarkers(level, colour, letter);
+    esp_log_printf(ESP_LOG_CONFIG_INIT(level), "%s%c (%" PRIu32 ") %s: %s%s\n", colour, letter, esp_log_timestamp(), component, _messageBuffer, LOG_RESET_COLOR);
     xSemaphoreGive(mutex);
 }
 
