@@ -133,7 +133,7 @@ static void HandleTask(void *parameter)
 {
     auto *arguments = static_cast<HandleTaskArguments *>(parameter);
     HandleTaskContext *context = arguments->Context;
-    const uintptr_t base = 0x10000000u + (arguments->Index * 0x01000000u);
+    const uintptr_t base = 0x10000000U + (arguments->Index * 0x01000000U);
     xSemaphoreTake(context->Start, portMAX_DELAY);
 
     for (uint32_t iteration = 0; iteration < HANDLES_PER_TASK; iteration++)
