@@ -30,6 +30,8 @@
 #                                          example), which the check reports as reserved in the
 #                                          global namespace.
 #   readability-identifier-length          Turned off by choice; short names are not reported.
+#   readability-function-cognitive-complexity
+#                                          Turned off by choice; complexity is not reported.
 #
 #   readability-implicit-bool-conversion stays on, but allows if (pointer), which the code
 #   uses throughout.
@@ -51,7 +53,8 @@ Checks: >
   -bugprone-easily-swappable-parameters,
   -readability-redundant-parentheses,
   -bugprone-reserved-identifier,
-  -readability-identifier-length
+  -readability-identifier-length,
+  -readability-function-cognitive-complexity
 
 WarningsAsErrors: ''
 
