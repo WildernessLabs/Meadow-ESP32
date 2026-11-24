@@ -633,9 +633,9 @@ TEST_CASE("Start reports failure when the attribute table is too large", CLASS_O
     {
         if (index > 0)
         {
-            configuration += ",";
+            configuration += ',';
         }
-        configuration += "{\"uuid\":" + std::to_string(0x2a00 + index) + ",\"permission\":17,\"props\":2,\"len\":4}";
+        configuration += R"({"uuid":)" + std::to_string(0x2a00 + index) + R"(,"permission":17,"props":2,"len":4})";
     }
     configuration += "]}]}";
 

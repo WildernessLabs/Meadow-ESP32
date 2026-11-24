@@ -33,7 +33,7 @@
  */
 static std::string DescriptorJson(const int uuid, const int length)
 {
-    return ("{\"uuid\":" + std::to_string(uuid) + ",\"permission\":17,\"len\":" + std::to_string(length) + ",\"value\":0}");
+    return (R"({"uuid":)" + std::to_string(uuid) + R"(,"permission":17,"len":)" + std::to_string(length) + R"(,"value":0})");
 }
 
 /**
@@ -47,12 +47,12 @@ static std::string DescriptorJson(const int uuid, const int length)
  */
 static std::string CharacteristicJson(const int uuid, const int length, const std::string &descriptors)
 {
-    std::string json = "{\"uuid\":" + std::to_string(uuid) + ",\"permission\":17,\"props\":10,\"len\":" + std::to_string(length);
+    std::string json = R"({"uuid":)" + std::to_string(uuid) + R"(,"permission":17,"props":10,"len":)" + std::to_string(length);
     if (!descriptors.empty())
     {
-        json += ",\"descriptors\":[" + descriptors + "]";
+        json += R"(,"descriptors":[)" + descriptors + ']';
     }
-    return (json + "}");
+    return (json + '}');
 }
 
 /**
@@ -64,7 +64,7 @@ static std::string CharacteristicJson(const int uuid, const int length, const st
  */
 static std::string ServiceJson(const std::string &characteristics)
 {
-    return ("{\"deviceName\":\"MeadowTest\",\"services\":[{\"name\":\"Test service\",\"uuid\":254,\"characteristics\":[" + characteristics + "]}]}");
+    return (R"({"deviceName":"MeadowTest","services":[{"name":"Test service","uuid":254,"characteristics":[)" + characteristics + "]}]}");
 }
 
 /**
@@ -119,7 +119,7 @@ TEST_CASE("BuildGraphFromJson accepts a characteristic of the GATT maximum lengt
 TEST_CASE("BuildGraphFromJson refuses a characteristic longer than the GATT maximum", CLASS_OF_TESTS)
 {
     BluetoothManager manager;
-    const std::string characteristics = CharacteristicJson(0x2a01, ESP_GATT_MAX_ATTR_LEN, "") + "," + CharacteristicJson(0x2a02, ESP_GATT_MAX_ATTR_LEN + 1, "");
+    const std::string characteristics = CharacteristicJson(0x2a01, ESP_GATT_MAX_ATTR_LEN, "") + ',' + CharacteristicJson(0x2a02, ESP_GATT_MAX_ATTR_LEN + 1, "");
     CheckConfigurationIsRefused(manager, ServiceJson(characteristics), "A characteristic longer than the GATT maximum was accepted.");
 }
 
@@ -146,7 +146,7 @@ TEST_CASE("BuildGraphFromJson refuses a descriptor longer than the GATT maximum"
     BluetoothManager manager;
     for (const int length: {ESP_GATT_MAX_ATTR_LEN + 1, 0})
     {
-        const std::string descriptors = DescriptorJson(0x2902, 2) + "," + DescriptorJson(0x2901, length);
+        const std::string descriptors = DescriptorJson(0x2902, 2) + ',' + DescriptorJson(0x2901, length);
         CheckConfigurationIsRefused(manager, ServiceJson(CharacteristicJson(0x2a01, 4, descriptors)), "A descriptor with an invalid length was accepted.");
     }
 }
@@ -161,12 +161,12 @@ TEST_CASE("BuildGraphFromJson refuses a descriptor longer than the GATT maximum"
 TEST_CASE("BuildGraphFromJson refuses a configuration holding a malformed service", CLASS_OF_TESTS)
 {
     BluetoothManager manager;
-    const std::string valid = "{\"name\":\"Good\",\"uuid\":254,\"characteristics\":[" + CharacteristicJson(0x2a01, 4, "") + "]}";
-    const std::string noName = "{\"uuid\":253,\"characteristics\":[" + CharacteristicJson(0x2a02, 4, "") + "]}";
-    const std::string textUuid = "{\"name\":\"Bad\",\"uuid\":\"fd\",\"characteristics\":[" + CharacteristicJson(0x2a03, 4, "") + "]}";
+    const std::string valid = R"({"name":"Good","uuid":254,"characteristics":[)" + CharacteristicJson(0x2a01, 4, "") + "]}";
+    const std::string noName = R"({"uuid":253,"characteristics":[)" + CharacteristicJson(0x2a02, 4, "") + "]}";
+    const std::string textUuid = R"({"name":"Bad","uuid":"fd","characteristics":[)" + CharacteristicJson(0x2a03, 4, "") + "]}";
 
-    CheckConfigurationIsRefused(manager, "{\"deviceName\":\"MeadowTest\",\"services\":[" + noName + "," + valid + "]}", "A malformed first service was accepted.");
-    CheckConfigurationIsRefused(manager, "{\"deviceName\":\"MeadowTest\",\"services\":[" + valid + "," + textUuid + "]}", "A malformed later service was accepted.");
+    CheckConfigurationIsRefused(manager, R"({"deviceName":"MeadowTest","services":[)" + noName + ',' + valid + "]}", "A malformed first service was accepted.");
+    CheckConfigurationIsRefused(manager, R"({"deviceName":"MeadowTest","services":[)" + valid + ',' + textUuid + "]}", "A malformed later service was accepted.");
 }
 
 /**
@@ -178,9 +178,9 @@ TEST_CASE("BuildGraphFromJson refuses a configuration holding a malformed servic
 TEST_CASE("BuildGraphFromJson refuses a configuration with no services", CLASS_OF_TESTS)
 {
     BluetoothManager manager;
-    CheckConfigurationIsRefused(manager, "{\"deviceName\":\"MeadowTest\",\"services\":[]}", "An empty services array was accepted.");
-    CheckConfigurationIsRefused(manager, "{\"deviceName\":\"MeadowTest\"}", "A configuration with no services key was accepted.");
-    CheckConfigurationIsRefused(manager, "{\"deviceName\":\"MeadowTest\",\"services\":{}}", "A services key that is not an array was accepted.");
+    CheckConfigurationIsRefused(manager, R"({"deviceName":"MeadowTest","services":[]})", "An empty services array was accepted.");
+    CheckConfigurationIsRefused(manager, R"({"deviceName":"MeadowTest"})", "A configuration with no services key was accepted.");
+    CheckConfigurationIsRefused(manager, R"({"deviceName":"MeadowTest","services":{}})", "A services key that is not an array was accepted.");
 }
 
 /**
@@ -197,7 +197,7 @@ TEST_CASE("BuildGraphFromJson refuses a configuration with no services", CLASS_O
  */
 static std::string NamedServiceJson(const std::string &deviceName)
 {
-    return ("{\"deviceName\":\"" + deviceName + "\",\"services\":[{\"name\":\"Test service\",\"uuid\":254,\"characteristics\":[" + CharacteristicJson(0x2a01, 4, "") + "]}]}");
+    return (R"({"deviceName":")" + deviceName + R"(","services":[{"name":"Test service","uuid":254,"characteristics":[)" + CharacteristicJson(0x2a01, 4, "") + "]}]}");
 }
 
 /**
@@ -246,12 +246,12 @@ TEST_CASE("BuildGraphFromJson refuses a device name too long for the scan respon
  */
 static std::string PropertiesCharacteristicJson(const int properties, const std::string &descriptors)
 {
-    std::string json = "{\"uuid\":10755,\"permission\":17,\"props\":" + std::to_string(properties) + ",\"len\":4";
+    std::string json = R"({"uuid":10755,"permission":17,"props":)" + std::to_string(properties) + R"(,"len":4)";
     if (!descriptors.empty())
     {
-        json += ",\"descriptors\":[" + descriptors + "]";
+        json += R"(,"descriptors":[)" + descriptors + ']';
     }
-    return (json + "}");
+    return (json + '}');
 }
 
 /**
@@ -304,7 +304,7 @@ TEST_CASE("BuildGraphFromJson keeps a client configuration descriptor the config
     BluetoothManager manager;
     const std::string declared = DescriptorJson(CLIENT_CHARACTERISTIC_CONFIGURATION_UUID, CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH);
     const std::string other = DescriptorJson(0x2901, 4);
-    const std::vector<BluetoothCharacteristic *> characteristics = BuildSingleService(manager, ServiceJson(PropertiesCharacteristicJson(PROPERTIES_NOTIFY, other + "," + declared)));
+    const std::vector<BluetoothCharacteristic *> characteristics = BuildSingleService(manager, ServiceJson(PropertiesCharacteristicJson(PROPERTIES_NOTIFY, other + ',' + declared)));
     TEST_ASSERT_EQUAL_UINT32_MESSAGE(1, ClientConfigurationDescriptors(characteristics[0]).size(), "A second client configuration descriptor was added.");
     TEST_ASSERT_EQUAL_UINT32_MESSAGE(2, characteristics[0]->GetDescriptorDefinitions().size(), "The declared descriptors were not all kept.");
 }
@@ -330,7 +330,7 @@ TEST_CASE("BuildGraphFromJson corrects a client configuration descriptor declare
 TEST_CASE("The client configuration descriptor takes the handle after the characteristic's value", CLASS_OF_TESTS)
 {
     BluetoothManager manager;
-    const std::string json = "{\"deviceName\":\"MeadowTest\",\"services\":[{\"name\":\"S\",\"uuid\":254,\"characteristics\":[" + PropertiesCharacteristicJson(PROPERTIES_NOTIFY, "") + "," + PropertiesCharacteristicJson(PROPERTIES_READ_WRITE, "") + "]}]}";
+    const std::string json = R"({"deviceName":"MeadowTest","services":[{"name":"S","uuid":254,"characteristics":[)" + PropertiesCharacteristicJson(PROPERTIES_NOTIFY, "") + ',' + PropertiesCharacteristicJson(PROPERTIES_READ_WRITE, "") + "]}]}";
     TEST_ASSERT_TRUE(manager.BuildGraphFromJson(json.c_str()));
     //
     //  Service, then declaration, value and descriptor of the first characteristic, then the
@@ -358,7 +358,7 @@ TEST_CASE("The client configuration handle is found from the characteristic's va
 {
     BluetoothManager manager;
     const std::string json =
-        "{\"deviceName\":\"MeadowTest\",\"services\":[{\"name\":\"S\",\"uuid\":254,\"characteristics\":[" + PropertiesCharacteristicJson(PROPERTIES_NOTIFY, "") + "," + PropertiesCharacteristicJson(PROPERTIES_READ_WRITE, "") + "," + PropertiesCharacteristicJson(PROPERTIES_NOTIFY, "") + "]}]}";
+        R"({"deviceName":"MeadowTest","services":[{"name":"S","uuid":254,"characteristics":[)" + PropertiesCharacteristicJson(PROPERTIES_NOTIFY, "") + ',' + PropertiesCharacteristicJson(PROPERTIES_READ_WRITE, "") + ',' + PropertiesCharacteristicJson(PROPERTIES_NOTIFY, "") + "]}]}";
     TEST_ASSERT_TRUE(manager.BuildGraphFromJson(json.c_str()));
     //
     //  Service; declaration, value and descriptor of the first characteristic; declaration
@@ -385,8 +385,8 @@ TEST_CASE("The client configuration handle is found from the characteristic's va
 TEST_CASE("BuildGraphFromJson refuses characteristics or descriptors that are not arrays", CLASS_OF_TESTS)
 {
     BluetoothManager manager;
-    CheckConfigurationIsRefused(manager, "{\"deviceName\":\"MeadowTest\",\"services\":[{\"name\":\"S\",\"uuid\":254,\"characteristics\":{}}]}", "A characteristics object was accepted.");
-    const std::string characteristic = "{\"uuid\":10755,\"permission\":17,\"props\":10,\"len\":4,\"descriptors\":7}";
+    CheckConfigurationIsRefused(manager, R"({"deviceName":"MeadowTest","services":[{"name":"S","uuid":254,"characteristics":{}}]})", "A characteristics object was accepted.");
+    const std::string characteristic = R"({"uuid":10755,"permission":17,"props":10,"len":4,"descriptors":7})";
     CheckConfigurationIsRefused(manager, ServiceJson(characteristic), "A descriptors number was accepted.");
 }
 
