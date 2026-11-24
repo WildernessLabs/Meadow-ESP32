@@ -280,7 +280,7 @@ static int CaptureLogOutput(const char *format, va_list arguments)
     const int length = vsnprintf(_captured + _capturedLength, space, format, arguments);
     if (length > 0)
     {
-        _capturedLength += ((size_t) length < space) ? (size_t) length : (space - 1);
+        _capturedLength += (static_cast<size_t>(length) < space) ? static_cast<size_t>(length) : (space - 1);
     }
     return (length);
 }
@@ -369,7 +369,7 @@ TEST_CASE("A snapshot writes each kind of record with its sequence number", CLAS
     for (const char *start: starts)
     {
         char wanted[48];
-        snprintf(wanted, sizeof(wanted), start, (unsigned long) sequence);
+        snprintf(wanted, sizeof(wanted), start, static_cast<unsigned long>(sequence));
         char record[Diagnostics::RECORD_SIZE];
         char message[96];
         snprintf(message, sizeof(message), "No record starting @diag,%s was written.", wanted);
@@ -381,7 +381,7 @@ TEST_CASE("Every record of a snapshot carries its sequence number", CLASS_OF_TES
 {
     const uint32_t sequence = CaptureSnapshot();
     char expected[16];
-    snprintf(expected, sizeof(expected), ",%lu", (unsigned long) sequence);
+    snprintf(expected, sizeof(expected), ",%lu", static_cast<unsigned long>(sequence));
 
     uint32_t records = 0;
     for (const char *found = strstr(_captured, "@diag,"); found != nullptr; found = strstr(found + 1, "@diag,"))
@@ -409,7 +409,7 @@ TEST_CASE("A snapshot lists the task that took it", CLASS_OF_TESTS)
     char wanted[48];
     snprintf(wanted, sizeof(wanted), ",%s,", pcTaskGetName(nullptr));
     char prefix[24];
-    snprintf(prefix, sizeof(prefix), "@diag,task,%lu,", (unsigned long) sequence);
+    snprintf(prefix, sizeof(prefix), "@diag,task,%lu,", static_cast<unsigned long>(sequence));
 
     bool found = false;
     for (const char *record = strstr(_captured, prefix); (record != nullptr) && !found; record = strstr(record + 1, prefix))
@@ -427,7 +427,7 @@ TEST_CASE("A histogram record holds a count for every bucket", CLASS_OF_TESTS)
 {
     const uint32_t sequence = CaptureSnapshot();
     char wanted[48];
-    snprintf(wanted, sizeof(wanted), "histogram,%lu,SystemHandlerTime,", (unsigned long) sequence);
+    snprintf(wanted, sizeof(wanted), "histogram,%lu,SystemHandlerTime,", static_cast<unsigned long>(sequence));
     char record[Diagnostics::RECORD_SIZE];
     TEST_ASSERT_TRUE(FindRecord(wanted, record, sizeof(record)));
     //

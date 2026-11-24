@@ -276,10 +276,10 @@ void Heap::ReportStatistics()
     }
 
     Logging::Information(COMPONENT_NAME, "Heap trace statistics:");
-    Logging::Information(COMPONENT_NAME, "    Records: %" PRIu32, (uint32_t) summary.count);
-    Logging::Information(COMPONENT_NAME, "    Allocations: %" PRIu32, (uint32_t) summary.total_allocations);
-    Logging::Information(COMPONENT_NAME, "    Frees: %" PRIu32, (uint32_t) summary.total_frees);
-    Logging::Information(COMPONENT_NAME, "    Highwatermark: %" PRIu32, (uint32_t) summary.high_water_mark);
+    Logging::Information(COMPONENT_NAME, "    Records: %" PRIu32, static_cast<uint32_t>(summary.count));
+    Logging::Information(COMPONENT_NAME, "    Allocations: %" PRIu32, static_cast<uint32_t>(summary.total_allocations));
+    Logging::Information(COMPONENT_NAME, "    Frees: %" PRIu32, static_cast<uint32_t>(summary.total_frees));
+    Logging::Information(COMPONENT_NAME, "    Highwatermark: %" PRIu32, static_cast<uint32_t>(summary.high_water_mark));
     Logging::Information(COMPONENT_NAME, "    Overflowed: %s", summary.has_overflowed ? "true" : "false");
 
     TRACE_MESSAGE("ReportStatistics: Exit");
