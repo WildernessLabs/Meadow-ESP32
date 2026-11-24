@@ -7,6 +7,7 @@
  * @copyright Copyright (c) 2021 Wilderness Labs
  */
 
+#include <algorithm>
 #include <utility>
 
 #include "cJSON.h"
@@ -840,21 +841,13 @@ uint32_t BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCha
             memset(valueBuffer, 0, length);
             if (cJSON_IsString(value) != 0)
             {
-                size_t contentLength = strlen(value->valuestring);
-                if (contentLength > length)
-                {
-                    contentLength = length;
-                }
+                const size_t contentLength = std::min(strlen(value->valuestring), static_cast<size_t>(length));
                 memcpy(valueBuffer, value->valuestring, contentLength);
             }
             else
             {
                 int numericValue = value->valueint;
-                size_t contentLength = sizeof(numericValue);
-                if (contentLength > length)
-                {
-                    contentLength = length;
-                }
+                const size_t contentLength = std::min(sizeof(numericValue), static_cast<size_t>(length));
                 memcpy(valueBuffer, &numericValue, contentLength);
             }
 

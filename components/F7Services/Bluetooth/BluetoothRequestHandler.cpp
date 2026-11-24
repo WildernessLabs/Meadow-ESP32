@@ -15,6 +15,7 @@
 #include "freertos/queue.h"
 #include "esp_log.h"
 #include "esp_mac.h"
+#include <algorithm>
 #include <cstring>
 #include <utility>
 
@@ -1722,10 +1723,7 @@ esp_gatt_status_t BluetoothRequestHandler::PrepareWrite(const uint16_t handle, c
     {
         memcpy(_preparedWriteValue + offset, value, length);
     }
-    if ((offset + length) > _preparedWriteLength)
-    {
-        _preparedWriteLength = offset + length;
-    }
+    _preparedWriteLength = std::max(_preparedWriteLength, static_cast<uint16_t>(offset + length));
     return (ESP_GATT_OK);
 }
 
