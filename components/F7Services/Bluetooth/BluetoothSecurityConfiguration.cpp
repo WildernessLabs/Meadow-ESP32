@@ -35,12 +35,12 @@ static bool ParseBoolean(const cJSON * const security, const char * const key, b
     {
         return (true);
     }
-    if (!cJSON_IsBool(item))
+    if (cJSON_IsBool(item) == 0)
     {
         ERROR_MESSAGE_SPECIFY_COMPONENT(BLUETOOTH_COMPONENT_NAME, "Security setting %s is not true or false.", key);
         return (false);
     }
-    value = cJSON_IsTrue(item);
+    value = (cJSON_IsTrue(item) != 0);
     return (true);
 }
 
@@ -66,7 +66,7 @@ bool BluetoothSecurityConfiguration::Parse(const cJSON * const security)
     {
         return (true);
     }
-    if (!cJSON_IsObject(security))
+    if (cJSON_IsObject(security) == 0)
     {
         ERROR_MESSAGE(SECURITY_KEY " is not an object.");
         return (false);
@@ -82,7 +82,7 @@ bool BluetoothSecurityConfiguration::Parse(const cJSON * const security)
         //  A number such as 1.5 is refused rather than truncated, as is anything outside the five
         //  capabilities the Bluetooth Core Specification defines.
         //
-        if (!cJSON_IsNumber(capability) || (capability->valuedouble != static_cast<double>(capability->valueint)) || (capability->valueint < std::to_underlying(IoCapability::DisplayOnly)) || (capability->valueint > std::to_underlying(IoCapability::KeyboardDisplay)))
+        if ((cJSON_IsNumber(capability) == 0) || (capability->valuedouble != static_cast<double>(capability->valueint)) || (capability->valueint < std::to_underlying(IoCapability::DisplayOnly)) || (capability->valueint > std::to_underlying(IoCapability::KeyboardDisplay)))
         {
             ERROR_MESSAGE("Security setting " IO_CAPABILITY_KEY " is not a number from 0 to 4.");
             valid = false;
