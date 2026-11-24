@@ -14,6 +14,8 @@
 #include "esp_err.h"
 #include "esp_partition.h"
 
+#include <algorithm>
+
 #include "Logging.hpp"
 #include "CoreDump.hpp"
 #include "Utils.hpp"
@@ -234,15 +236,7 @@ void CoreDump::GetFragment(void * const vpMessage)
                         }
                         else
                         {
-                            uint32_t fragmentSize = size - request->Offset;
-                            if (fragmentSize > request->Size)
-                            {
-                                fragmentSize = request->Size;
-                            }
-                            if (fragmentSize > MAXIMUM_FRAGMENT_SIZE)
-                            {
-                                fragmentSize = MAXIMUM_FRAGMENT_SIZE;
-                            }
+                            const uint32_t fragmentSize = std::min({size - request->Offset, request->Size, MAXIMUM_FRAGMENT_SIZE});
 
                             auto *data = static_cast<uint8_t *>(pvPortMalloc(fragmentSize));
                             if (data == nullptr)

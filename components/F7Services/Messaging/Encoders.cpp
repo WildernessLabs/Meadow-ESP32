@@ -7,6 +7,8 @@
  * @copyright Copyright (c) 2019 Wilderness Labs
  */
 
+#include <algorithm>
+
 #include "Encoders.hpp"
 #include "PayloadReader.hpp"
 #include "SpiTransportProvider.hpp"
@@ -41,10 +43,7 @@ uint32_t Encoders::CalculateSpiBufferSize(const uint32_t requestedSize)
     {
         result = (result & 0xfffffffc) + 4;
     }
-    if (result < 8)
-    {
-        result = 8;
-    }
+    result = std::max(result, static_cast<uint32_t>(8));
     //
     //  There is an issue with the SPI interface that can corrupt the last
     //  few bytes of a message to pad this message out and we will ignore
