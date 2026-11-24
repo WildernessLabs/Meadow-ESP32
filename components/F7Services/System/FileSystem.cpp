@@ -270,7 +270,8 @@ void FileSystem::Format(Message * const message)
     esp_err_t ret = esp_littlefs_format(PARTITION_LABEL);
     if (ret == ESP_OK)
     {
-        size_t total = 0, used = 0;
+        size_t total = 0;
+        size_t used = 0;
         ret = esp_littlefs_info(PARTITION_LABEL, &total, &used);
         if (ret == ESP_OK)
         {

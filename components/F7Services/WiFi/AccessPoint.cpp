@@ -332,7 +332,9 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
                 {
                     if (esp_netif_dhcps_stop(_softApNetIfHandle) == ESP_OK)
                     {
-                        char ipText[INET_ADDRSTRLEN], subnetMaskText[INET_ADDRSTRLEN], gatewayText[INET_ADDRSTRLEN];
+                        char ipText[INET_ADDRSTRLEN];
+                        char subnetMaskText[INET_ADDRSTRLEN];
+                        char gatewayText[INET_ADDRSTRLEN];
                         inet_ntoa_r(ipAddress, ipText, sizeof(ipText));
                         inet_ntoa_r(subnetMask, subnetMaskText, sizeof(subnetMaskText));
                         inet_ntoa_r(gateway, gatewayText, sizeof(gatewayText));
