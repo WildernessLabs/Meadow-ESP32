@@ -32,6 +32,9 @@
 #   readability-identifier-length          Turned off by choice; short names are not reported.
 #   readability-function-cognitive-complexity
 #                                          Turned off by choice; complexity is not reported.
+#   readability-trailing-comma             Turned off by choice; initialiser lists are not
+#                                          required to end in a comma.  Newer clang-tidy only
+#                                          (CLion's); esp-clang 21 does not have it.
 #
 #   readability-implicit-bool-conversion stays on, but allows if (pointer), which the code
 #   uses throughout.
@@ -54,7 +57,8 @@ Checks: >
   -readability-redundant-parentheses,
   -bugprone-reserved-identifier,
   -readability-identifier-length,
-  -readability-function-cognitive-complexity
+  -readability-function-cognitive-complexity,
+  -readability-trailing-comma
 
 WarningsAsErrors: ''
 
