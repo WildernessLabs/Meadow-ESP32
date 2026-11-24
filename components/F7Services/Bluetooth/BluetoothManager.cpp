@@ -343,7 +343,7 @@ bool BluetoothManager::SetHandles(const uint16_t * const handles, const uint16_t
 bool BluetoothManager::IsCharacteristicValueHandle(const uint16_t handle)
 {
     RecursiveMutexLock lock(_graphMutex);
-    return (_valueMap.find(handle) != _valueMap.end());
+    return (_valueMap.contains(handle));
 }
 
 /**
