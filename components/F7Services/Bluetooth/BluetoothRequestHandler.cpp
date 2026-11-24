@@ -110,10 +110,7 @@ BluetoothRequestHandler::BluetoothRequestHandler()
     {
         throw MultipleInstancesException();
     }
-    else
-    {
-        _instantiated = true;
-    }
+    _instantiated = true;
 }
 
 /**
