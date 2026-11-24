@@ -56,15 +56,15 @@
  */
 static std::string Configuration(const std::string &security, const int permission = PERMISSION_READ | PERMISSION_WRITE, const int properties = PROPERTY_READ | PROPERTY_WRITE, const std::string &descriptors = "")
 {
-    std::string json = "{\"deviceName\":\"MeadowSecure\",";
+    std::string json = R"({"deviceName":"MeadowSecure",)";
     if (!security.empty())
     {
-        json += "\"security\":" + security + ",";
+        json += R"("security":)" + security + ',';
     }
-    json += "\"services\":[{\"name\":\"Secure service\",\"uuid\":254,\"characteristics\":[{\"uuid\":10755,\"permission\":" + std::to_string(permission) + ",\"props\":" + std::to_string(properties) + ",\"len\":4";
+    json += R"("services":[{"name":"Secure service","uuid":254,"characteristics":[{"uuid":10755,"permission":)" + std::to_string(permission) + R"(,"props":)" + std::to_string(properties) + R"(,"len":4)";
     if (!descriptors.empty())
     {
-        json += ",\"descriptors\":[" + descriptors + "]";
+        json += R"(,"descriptors":[)" + descriptors + ']';
     }
     return (json + "}]}]}");
 }
@@ -80,7 +80,7 @@ static std::string Configuration(const std::string &security, const int permissi
  */
 static std::string Descriptor(const int uuid, const int permission, const int length)
 {
-    return ("{\"uuid\":" + std::to_string(uuid) + ",\"permission\":" + std::to_string(permission) + ",\"len\":" + std::to_string(length) + ",\"value\":0}");
+    return (R"({"uuid":)" + std::to_string(uuid) + R"(,"permission":)" + std::to_string(permission) + R"(,"len":)" + std::to_string(length) + R"(,"value":0})");
 }
 
 /**
@@ -158,7 +158,7 @@ TEST_CASE("A configuration without security settings gets the defaults", CLASS_O
 TEST_CASE("Every security setting is read from the configuration", CLASS_OF_TESTS)
 {
     BluetoothManager manager;
-    BuildOne(manager, Configuration("{\"ioCapability\":1,\"bonding\":false,\"mitm\":true,\"secureConnectionsOnly\":true,\"encryptOnConnect\":true,\"acceptPairing\":false}"));
+    BuildOne(manager, Configuration(R"({"ioCapability":1,"bonding":false,"mitm":true,"secureConnectionsOnly":true,"encryptOnConnect":true,"acceptPairing":false})"));
 
     const BluetoothSecurityConfiguration security = manager.GetSecurityConfiguration();
     TEST_ASSERT_EQUAL(std::to_underlying(BluetoothSecurityConfiguration::IoCapability::DisplayYesNo), std::to_underlying(security.Capability));
@@ -182,7 +182,7 @@ TEST_CASE("Each input and output capability is accepted", CLASS_OF_TESTS)
     for (const BluetoothSecurityConfiguration::IoCapability capability: capabilities)
     {
         BluetoothManager manager;
-        BuildOne(manager, Configuration("{\"ioCapability\":" + std::to_string(std::to_underlying(capability)) + "}"));
+        BuildOne(manager, Configuration(R"({"ioCapability":)" + std::to_string(std::to_underlying(capability)) + '}'));
         TEST_ASSERT_EQUAL(std::to_underlying(capability), std::to_underlying(manager.GetSecurityConfiguration().Capability));
         manager.DeleteAllServices();
     }
@@ -195,7 +195,7 @@ TEST_CASE("Each input and output capability is accepted", CLASS_OF_TESTS)
 TEST_CASE("A malformed security setting refuses the configuration", CLASS_OF_TESTS)
 {
     const char *malformed[] = {
-        "[]", "1", "null", "{\"ioCapability\":5}", "{\"ioCapability\":-1}", "{\"ioCapability\":1.5}", "{\"ioCapability\":\"1\"}", "{\"bonding\":1}", "{\"mitm\":\"true\"}", "{\"secureConnectionsOnly\":null}", "{\"encryptOnConnect\":0}", "{\"acceptPairing\":\"no\"}",
+        "[]", "1", "null", R"({"ioCapability":5})", R"({"ioCapability":-1})", R"({"ioCapability":1.5})", R"({"ioCapability":"1"})", R"({"bonding":1})", R"({"mitm":"true"})", R"({"secureConnectionsOnly":null})", R"({"encryptOnConnect":0})", R"({"acceptPairing":"no"})",
     };
     for (const char *security: malformed)
     {
@@ -204,7 +204,7 @@ TEST_CASE("A malformed security setting refuses the configuration", CLASS_OF_TES
         //  Settings that differ from the defaults are accepted first, so the refusal can be seen
         //  to put the defaults back rather than keep the last settings.
         //
-        BuildOne(manager, Configuration("{\"ioCapability\":4,\"acceptPairing\":false}"));
+        BuildOne(manager, Configuration(R"({"ioCapability":4,"acceptPairing":false})"));
         manager.DeleteAllServices();
 
         printf("Security settings: %s\n", security);
@@ -223,10 +223,10 @@ TEST_CASE("A malformed security setting refuses the configuration", CLASS_OF_TES
 TEST_CASE("MITM protection without input or output refuses the configuration", CLASS_OF_TESTS)
 {
     BluetoothManager manager;
-    TEST_ASSERT_FALSE_MESSAGE(manager.BuildGraphFromJson(Configuration("{\"mitm\":true}").c_str()), "MITM protection was accepted with the default capability, NoInputNoOutput.");
-    TEST_ASSERT_FALSE_MESSAGE(manager.BuildGraphFromJson(Configuration("{\"ioCapability\":3,\"mitm\":true}").c_str()), "MITM protection was accepted with NoInputNoOutput.");
+    TEST_ASSERT_FALSE_MESSAGE(manager.BuildGraphFromJson(Configuration(R"({"mitm":true})").c_str()), "MITM protection was accepted with the default capability, NoInputNoOutput.");
+    TEST_ASSERT_FALSE_MESSAGE(manager.BuildGraphFromJson(Configuration(R"({"ioCapability":3,"mitm":true})").c_str()), "MITM protection was accepted with NoInputNoOutput.");
 
-    BuildOne(manager, Configuration("{\"ioCapability\":0,\"mitm\":true}"));
+    BuildOne(manager, Configuration(R"({"ioCapability":0,"mitm":true})"));
     TEST_ASSERT_TRUE(manager.GetSecurityConfiguration().Mitm);
     manager.DeleteAllServices();
 }
@@ -264,11 +264,11 @@ TEST_CASE("An attribute that needs MITM protection needs settings that demand it
 {
     BluetoothManager manager;
     TEST_ASSERT_FALSE_MESSAGE(manager.BuildGraphFromJson(Configuration("", PERMISSION_READ_MITM | PERMISSION_WRITE).c_str()), "A characteristic read only with MITM protection was accepted without it.");
-    TEST_ASSERT_FALSE_MESSAGE(manager.BuildGraphFromJson(Configuration("{\"ioCapability\":1}", PERMISSION_READ | PERMISSION_WRITE_MITM).c_str()), "A characteristic written only with MITM protection was accepted without it.");
+    TEST_ASSERT_FALSE_MESSAGE(manager.BuildGraphFromJson(Configuration(R"({"ioCapability":1})", PERMISSION_READ | PERMISSION_WRITE_MITM).c_str()), "A characteristic written only with MITM protection was accepted without it.");
     TEST_ASSERT_FALSE_MESSAGE(manager.BuildGraphFromJson(Configuration("", PERMISSION_READ | PERMISSION_WRITE, PROPERTY_READ | PROPERTY_WRITE, Descriptor(USER_DESCRIPTION_UUID, PERMISSION_READ_MITM, 8)).c_str()), "A descriptor read only with MITM protection was accepted without it.");
     TEST_ASSERT_EQUAL(0, manager.GetServiceDefinitions().size());
 
-    BuildOne(manager, Configuration("{\"ioCapability\":1,\"mitm\":true}", PERMISSION_READ_MITM | PERMISSION_WRITE_MITM));
+    BuildOne(manager, Configuration(R"({"ioCapability":1,"mitm":true})", PERMISSION_READ_MITM | PERMISSION_WRITE_MITM));
     manager.DeleteAllServices();
 
     BuildOne(manager, Configuration("", PERMISSION_READ_ENCRYPTED | PERMISSION_WRITE_ENCRYPTED));
@@ -299,7 +299,7 @@ TEST_CASE("Subscribing to a protected characteristic needs the security its valu
     TEST_ASSERT_EQUAL_HEX16_MESSAGE(plain | PERMISSION_WRITE_ENCRYPTED, std::to_underlying(configuration->Permission), "Subscribing to an encrypted characteristic does not need encryption.");
     manager.DeleteAllServices();
 
-    characteristic = BuildOne(manager, Configuration("{\"ioCapability\":4,\"mitm\":true}", PERMISSION_READ_MITM | PERMISSION_WRITE, PROPERTY_READ | PROPERTY_NOTIFY));
+    characteristic = BuildOne(manager, Configuration(R"({"ioCapability":4,"mitm":true})", PERMISSION_READ_MITM | PERMISSION_WRITE, PROPERTY_READ | PROPERTY_NOTIFY));
     configuration = FindDescriptor(characteristic, CLIENT_CHARACTERISTIC_CONFIGURATION_UUID);
     TEST_ASSERT_NOT_NULL(configuration);
     TEST_ASSERT_EQUAL_HEX16_MESSAGE(plain | PERMISSION_WRITE_MITM, std::to_underlying(configuration->Permission), "Subscribing to a MITM protected characteristic does not need MITM protection.");
@@ -308,7 +308,7 @@ TEST_CASE("Subscribing to a protected characteristic needs the security its valu
     //
     //  A descriptor the configuration declares is protected too, and other descriptors are left alone.
     //
-    const std::string descriptors = Descriptor(CLIENT_CHARACTERISTIC_CONFIGURATION_UUID, PERMISSION_READ | PERMISSION_WRITE, 2) + "," + Descriptor(USER_DESCRIPTION_UUID, PERMISSION_READ, 8);
+    const std::string descriptors = Descriptor(CLIENT_CHARACTERISTIC_CONFIGURATION_UUID, PERMISSION_READ | PERMISSION_WRITE, 2) + ',' + Descriptor(USER_DESCRIPTION_UUID, PERMISSION_READ, 8);
     characteristic = BuildOne(manager, Configuration("", PERMISSION_READ_ENCRYPTED | PERMISSION_WRITE_ENCRYPTED, PROPERTY_READ | PROPERTY_NOTIFY, descriptors));
     configuration = FindDescriptor(characteristic, CLIENT_CHARACTERISTIC_CONFIGURATION_UUID);
     TEST_ASSERT_NOT_NULL(configuration);

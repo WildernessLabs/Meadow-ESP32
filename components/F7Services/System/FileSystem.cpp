@@ -124,7 +124,7 @@ void FileSystem::ShowFiles()
         while ((ep = readdir(dp)) != NULL)
         {
             std::string s = PARTITION_PATH_NAME;
-            s += "/";
+            s += '/';
             s += ep->d_name;
             struct stat fileInfo;
             if (stat(s.c_str(), &fileInfo) == 0)
@@ -445,7 +445,7 @@ void FileSystem::ReadFile(Message * const message)
         else
         {
             std::string s = PARTITION_PATH_NAME;
-            s += "/";
+            s += '/';
             s += fileData->Name;
             //
             //  Open first and take the size from the open file.  A stat() on the path followed
@@ -533,7 +533,7 @@ void FileSystem::WriteFile(Message * const message)
             else
             {
                 std::string s = PARTITION_PATH_NAME;
-                s += "/";
+                s += '/';
                 s += fileData->Name;
                 TRACE_MESSAGE("Writing %" PRIu32 " bytes into file %s", fileData->ContentsLength, s.c_str());
                 TRACE_HEX_BUFFER(fileData->Contents, fileData->ContentsLength);
@@ -588,7 +588,7 @@ void FileSystem::DeleteFile(Message * const message)
         else
         {
             std::string s = PARTITION_PATH_NAME;
-            s += "/";
+            s += '/';
             s += details->Name;
 
             if (remove(s.c_str()) == 0)
@@ -655,7 +655,7 @@ void FileSystem::ListFiles(Message *message)
             //
             details.Name = ep->d_name;
             std::string s = PARTITION_PATH_NAME;
-            s += "/";
+            s += '/';
             s += ep->d_name;
             struct stat fileInfo;
             if (stat(s.c_str(), &fileInfo) == 0)

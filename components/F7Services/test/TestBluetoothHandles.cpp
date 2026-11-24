@@ -46,8 +46,8 @@
 /**
  * @brief Configuration of one service with one characteristic carrying one descriptor.
  */
-static const char *CONFIGURATION = "{\"deviceName\":\"MeadowTest\",\"services\":[{\"name\":\"S\",\"uuid\":254,\"characteristics\":[{\"uuid\":10755,\"permission\":17,\"props\":14,"
-                                   "\"len\":4,\"descriptors\":[{\"uuid\":10498,\"permission\":17,\"len\":2,\"value\":0}]}]}]}";
+static const char *CONFIGURATION = R"({"deviceName":"MeadowTest","services":[{"name":"S","uuid":254,"characteristics":[{"uuid":10755,"permission":17,"props":14,)"
+                                   R"("len":4,"descriptors":[{"uuid":10498,"permission":17,"len":2,"value":0}]}]}]})";
 
 /**
  * @brief Configuration the manager parses and then refuses: its characteristic needs MITM protection the security settings do not ask for.
@@ -55,7 +55,7 @@ static const char *CONFIGURATION = "{\"deviceName\":\"MeadowTest\",\"services\":
  *  A configuration with no services would not do: the manager adds to the graph it already
  *  has, so it is not refused when that graph holds a service.
  */
-static const char *REFUSED_CONFIGURATION = "{\"deviceName\":\"MeadowTest\",\"services\":[{\"name\":\"M\",\"uuid\":248,\"characteristics\":[{\"uuid\":10755,\"permission\":68,\"props\":10,\"len\":4}]}]}";
+static const char *REFUSED_CONFIGURATION = R"({"deviceName":"MeadowTest","services":[{"name":"M","uuid":248,"characteristics":[{"uuid":10755,"permission":68,"props":10,"len":4}]}]})";
 
 /**
  * @brief Gives the tests access to BluetoothRequestHandler's attribute table and GetHandles.

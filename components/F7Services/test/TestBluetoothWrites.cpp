@@ -146,8 +146,8 @@ public:
      */
     static void ConfigureCharacteristic()
     {
-        const char *configuration = "{\"deviceName\":\"MeadowTest\",\"services\":[{\"name\":\"S\",\"uuid\":254,\"characteristics\":[{\"uuid\":10755,\"permission\":17,\"props\":14,"
-                                    "\"len\":4,\"descriptors\":[{\"uuid\":10498,\"permission\":17,\"len\":2,\"value\":0}]}]}]}";
+        const char *configuration = R"({"deviceName":"MeadowTest","services":[{"name":"S","uuid":254,"characteristics":[{"uuid":10755,"permission":17,"props":14,)"
+                                    R"("len":4,"descriptors":[{"uuid":10498,"permission":17,"len":2,"value":0}]}]}]})";
         TEST_ASSERT_TRUE_MESSAGE(BluetoothRequestHandler::_manager.BuildGraphFromJson(configuration), "The configuration was not parsed.");
         const uint16_t handles[] = {WRITE_HANDLE - 2, WRITE_HANDLE - 1, WRITE_HANDLE, DESCRIPTOR_HANDLE};
         TEST_ASSERT_TRUE_MESSAGE(BluetoothRequestHandler::_manager.SetHandles(handles, sizeof(handles) / sizeof(handles[0])), "The handles were not set.");

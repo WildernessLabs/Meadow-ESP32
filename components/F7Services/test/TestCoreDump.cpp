@@ -10,6 +10,7 @@
 
 #include "sdkconfig.h"
 
+#include <algorithm>
 #include <cinttypes>
 #include <cstdio>
 #include "esp_system.h"
@@ -398,8 +399,8 @@ TEST_CASE("Retrieve the whole core dump", CLASS_OF_TESTS)
 
     AssertHeapRecovered(heapBeforeInformation, "getting the core dump information");
 
-    TEST_ASSERT_TRUE_MESSAGE(isValid != 0, "There is no valid core dump to retrieve, so run \"Generate a core dump\" first.");
-    TEST_ASSERT_GREATER_THAN_MESSAGE(0, coreDumpSize, "The core dump is empty, so run \"Generate a core dump\" first.");
+    TEST_ASSERT_TRUE_MESSAGE(isValid != 0, R"(There is no valid core dump to retrieve, so run "Generate a core dump" first.)");
+    TEST_ASSERT_GREATER_THAN_MESSAGE(0, coreDumpSize, R"(The core dump is empty, so run "Generate a core dump" first.)");
     TEST_ASSERT_EQUAL(CORE_DUMP_PARTITION_SIZE, partitionSize);
     TEST_ASSERT_LESS_OR_EQUAL(partitionSize, coreDumpSize);
 
@@ -443,10 +444,7 @@ TEST_CASE("Retrieve the whole core dump", CLASS_OF_TESTS)
         //  leak is reported against the request that caused it rather than at the end.
         //
         const uint32_t heapAfterFragment = esp_get_free_heap_size();
-        if (heapAfterFragment < lowestHeap)
-        {
-            lowestHeap = heapAfterFragment;
-        }
+        lowestHeap = std::min(heapAfterFragment, lowestHeap);
         AssertHeapRecovered(heapBeforeFragment, "retrieving a core dump fragment");
 
         if ((fragments % PROGRESS_INTERVAL) == 0)

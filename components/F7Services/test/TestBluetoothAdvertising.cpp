@@ -61,7 +61,7 @@ public:
      */
     static BluetoothRequestHandler *Generate()
     {
-        const std::string configuration = "{\"deviceName\":\"MeadowF7\",\"companyIdentifier\":741,\"services\":[{\"name\":\"Service A\",\"uuid\":" + std::to_string(ADVERTISING_TEST_SERVICE_UUID) + ",\"characteristics\":[{\"uuid\":10755,\"permission\":17,\"props\":10,\"len\":4}]}]}";
+        const std::string configuration = R"({"deviceName":"MeadowF7","companyIdentifier":741,"services":[{"name":"Service A","uuid":)" + std::to_string(ADVERTISING_TEST_SERVICE_UUID) + R"(,"characteristics":[{"uuid":10755,"permission":17,"props":10,"len":4}]}]})";
         TEST_ASSERT_TRUE_MESSAGE(BluetoothRequestHandler::_manager.BuildGraphFromJson(configuration.c_str()), "The configuration was not parsed.");
 
         //
