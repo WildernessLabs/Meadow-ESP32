@@ -1180,7 +1180,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetSockOpt(const Esp32Messaging::Se
         int32_t optionName = 0;
         if (Mapping::GetEspValue(level == SOL_SOCKET ? Mapping::SocketOptions : Mapping::TCPOptions, request->OptionName, &optionName) < 0)
         {
-            TRACE_MESSAGE("SetSockOpt: Unknown option name: 0x%x", (uint) request->OptionName);
+            TRACE_MESSAGE("SetSockOpt: Unknown option name: 0x%x", static_cast<uint>(request->OptionName));
             response.Result = -1;
             response.ResponseErrno = Mapping::NuttxErrno(ENOPROTOOPT);
         }
@@ -1195,12 +1195,12 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetSockOpt(const Esp32Messaging::Se
                     optionValue = GetTcpOptionValue(optionName, request->OptionValue, request->OptionValueLength, &optionLength);
                     break;
                 default:
-                    TRACE_MESSAGE("SetSockOpt: Cannot process option level: 0x%x", (uint) request->Level);
+                    TRACE_MESSAGE("SetSockOpt: Cannot process option level: 0x%x", static_cast<uint>(request->Level));
                     break;
             }
             if (optionValue != nullptr)
             {
-                TRACE_MESSAGE("SetSockOpt: Setting socket option level to 0x%x, option name 0x%x for socket %ld", (uint) level, (uint) optionName, request->SocketHandle);
+                TRACE_MESSAGE("SetSockOpt: Setting socket option level to 0x%x, option name 0x%x for socket %ld", static_cast<uint>(level), static_cast<uint>(optionName), request->SocketHandle);
                 int descriptor = -1;
                 if (FindSocket(request->SocketHandle, &descriptor))
                 {
@@ -3545,7 +3545,7 @@ void WiFiRequestHandler::DumpActivePollRequests()
         //
         // cppcheck-suppress unreadVariable symbolName=fds
         __attribute__((unused)) struct pollfd *fds = it->second->Descriptors;
-        TRACE_MESSAGE("DumpActiveRequests: Key %08x, socket %d, dummy socket %d", (uint) it->first, fds[POLL_FD_INDEX].fd, fds[POLL_DUMMY_FD_INDEX].fd);
+        TRACE_MESSAGE("DumpActiveRequests: Key %08x, socket %d, dummy socket %d", static_cast<uint>(it->first), fds[POLL_FD_INDEX].fd, fds[POLL_DUMMY_FD_INDEX].fd);
         it++;
     }
     UnlockPollRequests();
@@ -3606,7 +3606,7 @@ WiFiRequestHandler::ActivePoll *WiFiRequestHandler::CreateActivePoll(const int d
 
     if (!inserted)
     {
-        TRACE_MESSAGE("CreateActivePoll: Duplicate setup message ID 0x%08x, rejecting", (uint) requestId);
+        TRACE_MESSAGE("CreateActivePoll: Duplicate setup message ID 0x%08x, rejecting", static_cast<uint>(requestId));
         ReleaseActivePoll(activePoll);
     }
     return (activePoll);
@@ -3636,7 +3636,7 @@ int WiFiRequestHandler::PollSetup(void * const vpMessage)
 
     int32_t events;
     Mapping::GetEspFlagValue(Mapping::PollEvents, request->Events, &events);
-    TRACE_MESSAGE("Poll: Requested Nuttx events 0x%04x maps to ESP events 0x%04x", request->Events, (uint) events);
+    TRACE_MESSAGE("Poll: Requested Nuttx events 0x%04x maps to ESP events 0x%04x", request->Events, static_cast<uint>(events));
 
     ActivePoll *activePoll = CreateActivePoll(descriptor, events, request->SetupMessageId, request->Timeout);
     if (activePoll == nullptr)
@@ -3703,7 +3703,7 @@ int WiFiRequestHandler::PollTeardown(void * const vpMessage)
     auto it = _pollRequests.find(request->SetupMessageId);
     if (it != _pollRequests.end())
     {
-        TRACE_MESSAGE("PollTeardown: Found socket handle for request 0x%08x", (uint) request->SetupMessageId);
+        TRACE_MESSAGE("PollTeardown: Found socket handle for request 0x%08x", static_cast<uint>(request->SetupMessageId));
         activePoll = it->second;
         activePoll->Cancelled = true;
         _pollRequests.erase(it);
@@ -3716,7 +3716,7 @@ int WiFiRequestHandler::PollTeardown(void * const vpMessage)
         //  We do not treat this as an error as the request completed, and was removed by the worker,
         //  before the teardown arrived.
         //
-        TRACE_MESSAGE("PollTeardown: Cannot find request %08x", (uint) request->SetupMessageId);
+        TRACE_MESSAGE("PollTeardown: Cannot find request %08x", static_cast<uint>(request->SetupMessageId));
     }
     else
     {
@@ -3726,7 +3726,7 @@ int WiFiRequestHandler::PollTeardown(void * const vpMessage)
         //
         if (send(activePoll->Descriptors[POLL_DUMMY_FD_INDEX].fd, "E", 1, 0) < 0)
         {
-            ERROR_MESSAGE("PollTeardown: Cannot wake the poll for request 0x%08x, errno %d", (uint) request->SetupMessageId, errno);
+            ERROR_MESSAGE("PollTeardown: Cannot wake the poll for request 0x%08x, errno %d", static_cast<uint>(request->SetupMessageId), errno);
         }
 
         xSemaphoreTake(activePoll->Finished, _pollCancelTimeout / portTICK_PERIOD_MS);
@@ -3746,7 +3746,7 @@ int WiFiRequestHandler::PollTeardown(void * const vpMessage)
         }
         else
         {
-            ERROR_MESSAGE("PollTeardown: The poll for request 0x%08x did not stop within the timeout", (uint) request->SetupMessageId);
+            ERROR_MESSAGE("PollTeardown: The poll for request 0x%08x did not stop within the timeout", static_cast<uint>(request->SetupMessageId));
             errno = ETIMEDOUT;
             result = -1;
         }
@@ -3792,7 +3792,7 @@ void WiFiRequestHandler::PollSocket(void * const activePollPointer)
         response.Result = poll(activePoll->Descriptors, 2, activePoll->TimeoutMs);
         if (response.Result == 0)
         {
-            TRACE_MESSAGE("PollSocket: Poll for request 0x%08x timed out after %ld ms", (uint) activePoll->RequestId, (long) activePoll->TimeoutMs);
+            TRACE_MESSAGE("PollSocket: Poll for request 0x%08x timed out after %ld ms", static_cast<uint>(activePoll->RequestId), static_cast<long>(activePoll->TimeoutMs));
         }
         if (response.Result < 0)
         {

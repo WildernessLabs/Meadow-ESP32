@@ -136,7 +136,7 @@ TEST_CASE("NVS Manager operations", CLASS_OF_TESTS)
         const uint32_t expected = 0xDEADBEEFU;
 
         TEST_ASSERT_EQUAL(NvsManager::ErrorCodes::Ok, NvsManager::SetValue(TEST_NAMESPACE, key, expected));
-        TEST_ASSERT_EQUAL_UINT32(expected, NvsManager::GetValue(TEST_NAMESPACE, key, (uint32_t) 0));
+        TEST_ASSERT_EQUAL_UINT32(expected, NvsManager::GetValue(TEST_NAMESPACE, key, static_cast<uint32_t>(0)));
     }
 
     //
@@ -147,7 +147,7 @@ TEST_CASE("NVS Manager operations", CLASS_OF_TESTS)
         const uint32_t second = 99U;
 
         TEST_ASSERT_EQUAL(NvsManager::ErrorCodes::Ok, NvsManager::SetValue(TEST_NAMESPACE, key, second));
-        TEST_ASSERT_EQUAL_UINT32(second, NvsManager::GetValue(TEST_NAMESPACE, key, (uint32_t) 0));
+        TEST_ASSERT_EQUAL_UINT32(second, NvsManager::GetValue(TEST_NAMESPACE, key, static_cast<uint32_t>(0)));
     }
 
     //
@@ -166,7 +166,7 @@ TEST_CASE("NVS Manager operations", CLASS_OF_TESTS)
         const int32_t expected = -12345;
 
         TEST_ASSERT_EQUAL(NvsManager::ErrorCodes::Ok, NvsManager::SetValue(TEST_NAMESPACE, key, expected));
-        TEST_ASSERT_EQUAL_INT32(expected, NvsManager::GetValue(TEST_NAMESPACE, key, (int32_t) 0));
+        TEST_ASSERT_EQUAL_INT32(expected, NvsManager::GetValue(TEST_NAMESPACE, key, static_cast<int32_t>(0)));
     }
 
     //
@@ -177,7 +177,7 @@ TEST_CASE("NVS Manager operations", CLASS_OF_TESTS)
         const uint8_t expected = 0xABU;
 
         TEST_ASSERT_EQUAL(NvsManager::ErrorCodes::Ok, NvsManager::SetValue(TEST_NAMESPACE, key, expected));
-        TEST_ASSERT_EQUAL_UINT8(expected, NvsManager::GetValue(TEST_NAMESPACE, key, (uint8_t) 0));
+        TEST_ASSERT_EQUAL_UINT8(expected, NvsManager::GetValue(TEST_NAMESPACE, key, static_cast<uint8_t>(0)));
     }
 
     //
