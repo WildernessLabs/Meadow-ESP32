@@ -555,7 +555,7 @@ void WiFiRequestHandler::NodeAssociatedEvent(wifi_event_ap_staconnected_t *event
     //
     //  A node that already has an address keeps it.
     //
-    if (_connectedNodes.find(key) == _connectedNodes.end())
+    if (!_connectedNodes.contains(key))
     {
         _connectedNodes[key] = 0;
     }
