@@ -133,7 +133,7 @@ TEST_CASE("NVS Manager operations", CLASS_OF_TESTS)
     //
     {
         const char *key = "u32_key";
-        const uint32_t expected = 0xDEADBEEFu;
+        const uint32_t expected = 0xDEADBEEFU;
 
         TEST_ASSERT_EQUAL(NvsManager::ErrorCodes::Ok, NvsManager::SetValue(TEST_NAMESPACE, key, expected));
         TEST_ASSERT_EQUAL_UINT32(expected, NvsManager::GetValue(TEST_NAMESPACE, key, (uint32_t) 0));
@@ -144,7 +144,7 @@ TEST_CASE("NVS Manager operations", CLASS_OF_TESTS)
     //
     {
         const char *key = "u32_key";
-        const uint32_t second = 99u;
+        const uint32_t second = 99U;
 
         TEST_ASSERT_EQUAL(NvsManager::ErrorCodes::Ok, NvsManager::SetValue(TEST_NAMESPACE, key, second));
         TEST_ASSERT_EQUAL_UINT32(second, NvsManager::GetValue(TEST_NAMESPACE, key, (uint32_t) 0));
@@ -154,7 +154,7 @@ TEST_CASE("NVS Manager operations", CLASS_OF_TESTS)
     //  ---- uint32_t default value (key never written) ----
     //
     {
-        const uint32_t defaultValue = 42u;
+        const uint32_t defaultValue = 42U;
         TEST_ASSERT_EQUAL_UINT32(defaultValue, NvsManager::GetValue(TEST_NAMESPACE, "u32_missing", defaultValue));
     }
 
@@ -174,7 +174,7 @@ TEST_CASE("NVS Manager operations", CLASS_OF_TESTS)
     //
     {
         const char *key = "u8_key";
-        const uint8_t expected = 0xABu;
+        const uint8_t expected = 0xABU;
 
         TEST_ASSERT_EQUAL(NvsManager::ErrorCodes::Ok, NvsManager::SetValue(TEST_NAMESPACE, key, expected));
         TEST_ASSERT_EQUAL_UINT8(expected, NvsManager::GetValue(TEST_NAMESPACE, key, (uint8_t) 0));
@@ -184,7 +184,7 @@ TEST_CASE("NVS Manager operations", CLASS_OF_TESTS)
     //  ---- uint8_t default value (key never written) ----
     //
     {
-        const uint8_t defaultValue = 0xFFu;
+        const uint8_t defaultValue = 0xFFU;
         TEST_ASSERT_EQUAL_UINT8(defaultValue, NvsManager::GetValue(TEST_NAMESPACE, "u8_missing", defaultValue));
     }
 
