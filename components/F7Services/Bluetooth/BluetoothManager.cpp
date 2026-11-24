@@ -537,7 +537,7 @@ bool BluetoothManager::GetDeviceInformation(const cJSON * const json)
     const cJSON * const deviceName = cJSON_GetObjectItem(json, DEVICE_NAME_KEY);
     memset(_deviceName, 0, sizeof(_deviceName));
     strncpy(_deviceName, DEFAULT_DEVICE_NAME, sizeof(_deviceName) - 1);
-    if ((deviceName != nullptr) && cJSON_IsString(deviceName))
+    if ((deviceName != nullptr) && (cJSON_IsString(deviceName) != 0))
     {
         const size_t length = strlen(deviceName->valuestring);
         if (length > MAXIMUM_ADVERTISED_NAME_LENGTH)
@@ -554,7 +554,7 @@ bool BluetoothManager::GetDeviceInformation(const cJSON * const json)
     TRACE_MESSAGE("Device Name: %s\n", _deviceName);
 
     const cJSON * const identifier = cJSON_GetObjectItem(json, COMPANY_IDENTIFIER_KEY);
-    if ((identifier == nullptr) || !cJSON_IsNumber(identifier))
+    if ((identifier == nullptr) || (cJSON_IsNumber(identifier) == 0))
     {
         _companyIdentifier = DEBUG_COMPANY_IDENTIFIER;
     }
@@ -584,7 +584,7 @@ uint32_t BluetoothManager::AddServices(const cJSON * const json)
 
     uint32_t rejected = 0;
     const cJSON * const services = cJSON_GetObjectItem(json, SERVICES_KEY);
-    if ((services == nullptr) || !cJSON_IsArray(services))
+    if ((services == nullptr) || (cJSON_IsArray(services) == 0))
     {
         TRACE_MESSAGE(SERVICES_KEY " is not an array or is missing");
         return (rejected);
@@ -595,14 +595,14 @@ uint32_t BluetoothManager::AddServices(const cJSON * const json)
     {
         const cJSON * const serviceName = cJSON_GetObjectItem(service_configuration, NAME_KEY);
         const cJSON * const serviceUUID = cJSON_GetObjectItem(service_configuration, UUID_KEY);
-        if ((serviceName == nullptr) || !cJSON_IsString(serviceName))
+        if ((serviceName == nullptr) || (cJSON_IsString(serviceName) == 0))
         {
             ERROR_MESSAGE("Service " NAME_KEY " is missing or not a string, rejecting the service.");
             rejected++;
         }
         else
         {
-            if ((serviceUUID == nullptr) || !cJSON_IsNumber(serviceUUID))
+            if ((serviceUUID == nullptr) || (cJSON_IsNumber(serviceUUID) == 0))
             {
                 ERROR_MESSAGE("Service " UUID_KEY " is missing or not a number, rejecting the service.");
                 rejected++;
@@ -642,7 +642,7 @@ uint32_t BluetoothManager::AddCharacteristics(const cJSON * const json, Bluetoot
         TRACE_MESSAGE(CHARACTERISTICS_KEY " is missing");
         return (rejected);
     }
-    if (!cJSON_IsArray(characteristics))
+    if (cJSON_IsArray(characteristics) == 0)
     {
         ERROR_MESSAGE(CHARACTERISTICS_KEY " is not an array, rejecting it.");
         rejected++;
@@ -654,19 +654,19 @@ uint32_t BluetoothManager::AddCharacteristics(const cJSON * const json, Bluetoot
     {
         bool add = true;
         const cJSON * const permission = cJSON_GetObjectItem(characteristic, PERMISSION_KEY);
-        if ((permission == nullptr) || !cJSON_IsNumber(permission))
+        if ((permission == nullptr) || (cJSON_IsNumber(permission) == 0))
         {
             TRACE_MESSAGE("Characteristic " PERMISSION_KEY " is missing or not a number");
             add = false;
         }
         const cJSON * const props = cJSON_GetObjectItem(characteristic, PROPERTIES_KEY);
-        if ((props == nullptr) || !cJSON_IsNumber(props))
+        if ((props == nullptr) || (cJSON_IsNumber(props) == 0))
         {
             TRACE_MESSAGE("Characteristic " PROPERTIES_KEY " is missing or not a number");
             add = false;
         }
         const cJSON * const len = cJSON_GetObjectItem(characteristic, LENGTH_KEY);
-        if ((len == nullptr) || !cJSON_IsNumber(len))
+        if ((len == nullptr) || (cJSON_IsNumber(len) == 0))
         {
             TRACE_MESSAGE("Characteristic " LENGTH_KEY " is missing or not a number");
             add = false;
@@ -684,7 +684,7 @@ uint32_t BluetoothManager::AddCharacteristics(const cJSON * const json, Bluetoot
             }
         }
         const cJSON * const uuid = cJSON_GetObjectItem(characteristic, UUID_KEY);
-        if ((uuid == nullptr) || !(cJSON_IsNumber(uuid) || cJSON_IsString(uuid)))
+        if ((uuid == nullptr) || !((cJSON_IsNumber(uuid) != 0) || (cJSON_IsString(uuid) != 0)))
         {
             TRACE_MESSAGE("Characteristic " UUID_KEY " is missing or not a number or string");
             add = false;
@@ -759,7 +759,7 @@ uint32_t BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCha
         TRACE_MESSAGE(DESCRIPTORS_KEY " is missing");
         return (rejected);
     }
-    if (!cJSON_IsArray(descriptors))
+    if (cJSON_IsArray(descriptors) == 0)
     {
         ERROR_MESSAGE(DESCRIPTORS_KEY " is not an array, rejecting it.");
         rejected++;
@@ -771,19 +771,19 @@ uint32_t BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCha
     {
         bool add = true;
         const cJSON * const permission = cJSON_GetObjectItem(descriptor, PERMISSION_KEY);
-        if ((permission == nullptr) || !cJSON_IsNumber(permission))
+        if ((permission == nullptr) || (cJSON_IsNumber(permission) == 0))
         {
             TRACE_MESSAGE("Descriptor " PERMISSION_KEY " is missing or not a number");
             add = false;
         }
         const cJSON * const uuid = cJSON_GetObjectItem(descriptor, UUID_KEY);
-        if ((uuid == nullptr) || !(cJSON_IsNumber(uuid) || cJSON_IsString(uuid)))
+        if ((uuid == nullptr) || !((cJSON_IsNumber(uuid) != 0) || (cJSON_IsString(uuid) != 0)))
         {
             TRACE_MESSAGE("Descriptor " UUID_KEY " is missing or not a number or string");
             add = false;
         }
         const cJSON * const len = cJSON_GetObjectItem(descriptor, LENGTH_KEY);
-        if ((len == nullptr) || !cJSON_IsNumber(len))
+        if ((len == nullptr) || (cJSON_IsNumber(len) == 0))
         {
             TRACE_MESSAGE("Descriptor " LENGTH_KEY " is missing or not a number");
             add = false;
@@ -801,7 +801,7 @@ uint32_t BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCha
             }
         }
         const cJSON * const value = cJSON_GetObjectItem(descriptor, VALUE_KEY);
-        if ((value == nullptr) || !(cJSON_IsNumber(value) || cJSON_IsString(value)))
+        if ((value == nullptr) || !((cJSON_IsNumber(value) != 0) || (cJSON_IsString(value) != 0)))
         {
             TRACE_MESSAGE("Descriptor " VALUE_KEY " is missing or not a number or string");
             add = false;
@@ -838,7 +838,7 @@ uint32_t BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCha
              */
             auto * const valueBuffer = new uint8_t[length];
             memset(valueBuffer, 0, length);
-            if (cJSON_IsString(value))
+            if (cJSON_IsString(value) != 0)
             {
                 size_t contentLength = strlen(value->valuestring);
                 if (contentLength > length)
@@ -1003,7 +1003,7 @@ void BluetoothManager::ParseUuid(const cJSON * const json, Uuid16 &uuid16, Uuid1
 {
     TRACE_MESSAGE("ParseUuid: Enter");
 
-    if (cJSON_IsNumber(json))
+    if (cJSON_IsNumber(json) != 0)
     {
         auto uuid16bits = Uuid16(static_cast<uint16_t>(json->valueint));
         memcpy(uuid16.data, uuid16bits.data, sizeof(uuid16.data));
