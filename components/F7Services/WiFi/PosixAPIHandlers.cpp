@@ -2325,7 +2325,7 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
                             struct msghdr mhdr = {};
                             if (request->GetSourceAddress != 0)
                             {
-                                bzero(&sa, sizeof(sa));
+                                memset(&sa, 0, sizeof(sa));
                                 mhdr.msg_name = &sa;
                                 mhdr.msg_namelen = sizeof(sa);
                             }

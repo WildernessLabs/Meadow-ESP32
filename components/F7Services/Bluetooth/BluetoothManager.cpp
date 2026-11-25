@@ -778,7 +778,7 @@ uint32_t BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCha
             add = false;
         }
         const cJSON * const uuid = cJSON_GetObjectItem(descriptor, UUID_KEY);
-        if ((uuid == nullptr) || !((cJSON_IsNumber(uuid) != 0) || (cJSON_IsString(uuid) != 0)))
+        if ((uuid == nullptr) || ((cJSON_IsNumber(uuid) == 0) && (cJSON_IsString(uuid) == 0)))
         {
             TRACE_MESSAGE("Descriptor " UUID_KEY " is missing or not a number or string");
             add = false;
@@ -802,7 +802,7 @@ uint32_t BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCha
             }
         }
         const cJSON * const value = cJSON_GetObjectItem(descriptor, VALUE_KEY);
-        if ((value == nullptr) || !((cJSON_IsNumber(value) != 0) || (cJSON_IsString(value) != 0)))
+        if ((value == nullptr) || ((cJSON_IsNumber(value) == 0) && (cJSON_IsString(value) == 0)))
         {
             TRACE_MESSAGE("Descriptor " VALUE_KEY " is missing or not a number or string");
             add = false;

@@ -484,7 +484,7 @@ uint32_t UnitTestConfiguration::SoakProgressInterval()
 /**
  *  @brief Read the configuration file.
  */
-extern "C" void UnitTestConfigurationLoad(void)
+extern "C" void UnitTestConfigurationLoad()
 {
     UnitTestConfiguration::Load();
 }

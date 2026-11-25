@@ -466,12 +466,12 @@ TEST_CASE("Messages logged by two tasks at once are not overwritten", CLASS_OF_T
 
     uint32_t missing = 0;
     uint32_t repeated = 0;
-    for (uint32_t task = 0; task < 2; task++)
+    for (const auto &arrivals: _capture.Arrivals)
     {
-        for (uint32_t number = 0; number < MESSAGES_PER_TASK; number++)
+        for (const uint8_t count: arrivals)
         {
-            missing += (_capture.Arrivals[task][number] == 0) ? 1 : 0;
-            repeated += (_capture.Arrivals[task][number] > 1) ? 1 : 0;
+            missing += (count == 0) ? 1 : 0;
+            repeated += (count > 1) ? 1 : 0;
         }
     }
     char summary[96];
