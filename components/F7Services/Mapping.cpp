@@ -10,6 +10,7 @@
 #include "sdkconfig.h"
 
 #include <sys/socket.h>
+#include <utility>
 #include "errno.h"
 
 #include <esp_wifi.h>
@@ -1019,7 +1020,7 @@ const char *Mapping::GetStringValue(const Mapping::StringMappingTable mapping, c
 
     if (table != nullptr)
     {
-        for (int index = 0; index < size; index++)
+        for (size_t index = 0; index < size; index++)
         {
             if (key == table[index].key)
             {

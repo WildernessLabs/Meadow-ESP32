@@ -612,7 +612,7 @@ TEST_CASE("Get list of files", CLASS_OF_TESTS)
 
     uint8_t *buffer = files->FileDetails;
     uint32_t remaining = files->FileDetailsLength;
-    for (int index = 0; index < files->NumberOfFiles; index++)
+    for (uint16_t index = 0; index < files->NumberOfFiles; index++)
     {
         Esp32Messaging::FileDetails *file = Encoders::ExtractFileDetails(buffer, remaining);
         TEST_ASSERT_NOT_NULL(file);

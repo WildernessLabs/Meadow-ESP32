@@ -11,6 +11,7 @@
 
 #include <string>
 #include <cstring>
+#include <utility>
 #include <dirent.h>
 #include <sys/stat.h>
 
@@ -476,7 +477,7 @@ void FileSystem::ReadFile(Message * const message)
                     //  is allocated for it (issue #310).
                     //
                     const uint32_t responseOverhead = Encoders::EncodedFileNameAndContentsBufferSize(fileData);
-                    if ((fileInfo.st_size < 0) || (static_cast<uint64_t>(fileInfo.st_size) > (Message::MAXIMUM_PAYLOAD_LENGTH - responseOverhead)))
+                    if ((fileInfo.st_size < 0) || std::cmp_greater(fileInfo.st_size, Message::MAXIMUM_PAYLOAD_LENGTH - responseOverhead))
                     {
                         ERROR_MESSAGE("ReadFile: %s is %" PRIi32 " bytes, more than one response can hold.", fileData->Name, static_cast<int32_t>(fileInfo.st_size));
                         result = StatusCodes::Failure;

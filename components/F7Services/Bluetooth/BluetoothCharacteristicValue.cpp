@@ -166,7 +166,7 @@ bool BluetoothCharacteristicValue::ReadValue(uint8_t * const dest, const int len
 
     bool result = false;
 
-    if ((length >= 0) && (length <= CurrentLength))
+    if ((length >= 0) && std::cmp_less_equal(length, CurrentLength))
     {
         if (length > 0)
         {

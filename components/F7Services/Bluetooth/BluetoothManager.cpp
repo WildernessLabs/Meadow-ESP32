@@ -274,7 +274,7 @@ bool BluetoothManager::SetHandles(const uint16_t * const handles, const uint16_t
     TRACE_MESSAGE("SetHandles: Enter");
 
     TRACE_MESSAGE("Handles: ");
-    for (int i = 0; i < count; i++)
+    for (uint16_t i = 0; i < count; i++)
     {
         TRACE_MESSAGE("   0x%04x ", handles[i]);
     }
@@ -685,7 +685,7 @@ uint32_t BluetoothManager::AddCharacteristics(const cJSON * const json, Bluetoot
             }
         }
         const cJSON * const uuid = cJSON_GetObjectItem(characteristic, UUID_KEY);
-        if ((uuid == nullptr) || !((cJSON_IsNumber(uuid) != 0) || (cJSON_IsString(uuid) != 0)))
+        if ((uuid == nullptr) || ((cJSON_IsNumber(uuid) == 0) && (cJSON_IsString(uuid) == 0)))
         {
             TRACE_MESSAGE("Characteristic " UUID_KEY " is missing or not a number or string");
             add = false;
