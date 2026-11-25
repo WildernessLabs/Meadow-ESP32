@@ -296,7 +296,7 @@ std::string SystemRequestHandler::GetDeviceName()
  *      StatusCodes::Completed on success, StatusCodes::EspOutOfMemory if the name cannot be
  *      copied, StatusCodes::Failure if there is another problem.
  */
-StatusCodes::StatusCodes SystemRequestHandler::SetDeviceName(char *value)
+StatusCodes::StatusCodes SystemRequestHandler::SetDeviceName(const char *value)
 {
     //
     //  Held for the comparison, the NVS write and the swap, so no reader copies the old
@@ -887,7 +887,7 @@ void SystemRequestHandler::SetConfigurationItem(Message * const request)
  *  @param request
  *      Message requesting the ESP32 got to sleep.
  */
-void SystemRequestHandler::DeepSleep(Message * const request)
+void SystemRequestHandler::DeepSleep(const Message * const request)
 {
     TRACE_MESSAGE("DeepSleep: Enter");
 

@@ -145,22 +145,22 @@ private:
     /**
      * @brief Process the addition of a new service.
      */
-    static void HandleServiceAdded(BluetoothService *);
+    static void HandleServiceAdded(const BluetoothService *);
 
     /**
      * @brief Process the addition of a new characteristic.
      */
-    static void HandleCharacteristicAdded(BluetoothCharacteristic *);
+    static void HandleCharacteristicAdded(const BluetoothCharacteristic *);
 
     /**
      * @brief Process the characteristic value changed event.
      */
-    static void HandleValueChanged(BluetoothCharacteristic *);
+    static void HandleValueChanged(const BluetoothCharacteristic *);
 
     /**
      * @brief Handle the addition of a new descriptor.
      */
-    static void HandleDescriptorAdded(BluetoothDescriptor *);
+    static void HandleDescriptorAdded(const BluetoothDescriptor *);
 
     /**
      * @brief Get the device information from the JSON configuration.

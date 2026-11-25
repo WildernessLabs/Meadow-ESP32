@@ -58,7 +58,7 @@ public:
     /**
      * @brief Read the private _incomingMessage field.
      */
-    static Message *GetIncomingMessage(SpiTransportProvider *provider)
+    static Message *GetIncomingMessage(const SpiTransportProvider *provider)
     {
         return (provider->_incomingMessage);
     }
@@ -82,7 +82,7 @@ public:
     /**
      * @brief Call the private DeleteTransaction method.
      */
-    static void CallDeleteTransaction(SpiTransportProvider *provider, spi_slave_transaction_t *&transaction)
+    static void CallDeleteTransaction(const SpiTransportProvider *provider, spi_slave_transaction_t *&transaction)
     {
         SpiTransportProvider::DeleteTransaction(transaction);
     }
@@ -90,7 +90,7 @@ public:
     /**
      * @brief Call the private CreateAcknowledgementTransaction method.
      */
-    static spi_slave_transaction_t *CallCreateAcknowledgementTransaction(SpiTransportProvider *provider, Message *message, const StatusCodes::StatusCodes code, const uint8_t messageType)
+    static spi_slave_transaction_t *CallCreateAcknowledgementTransaction(const SpiTransportProvider *provider, const Message *message, const StatusCodes::StatusCodes code, const uint8_t messageType)
     {
         return (SpiTransportProvider::CreateAcknowledgementTransaction(message, code, messageType));
     }
@@ -114,7 +114,7 @@ public:
     /**
      * @brief Call the private CreateSpiTransaction method.
      */
-    static spi_slave_transaction_t *CallCreateSpiTransaction(SpiTransportProvider *provider, Message *message)
+    static spi_slave_transaction_t *CallCreateSpiTransaction(const SpiTransportProvider *provider, const Message *message)
     {
         return (SpiTransportProvider::CreateSpiTransaction(message));
     }
@@ -138,7 +138,7 @@ public:
     /**
      * @brief Read the private _outboundMessage field.
      */
-    static Message *GetOutboundMessage(SpiTransportProvider *provider)
+    static Message *GetOutboundMessage(const SpiTransportProvider *provider)
     {
         return (provider->_outboundMessage);
     }
@@ -229,7 +229,7 @@ public:
     /**
      * @brief Call the private UpdatePacketInformation method.
      */
-    static void CallUpdatePacketInformation(SpiTransportProvider *provider, Message *message)
+    static void CallUpdatePacketInformation(const SpiTransportProvider *provider, Message *message)
     {
         SpiTransportProvider::UpdatePacketInformation(message);
     }
@@ -318,7 +318,7 @@ public:
     /**
      * @brief Call the private ProcessTransportMessage method.
      */
-    static spi_slave_transaction_t *CallProcessTransportMessage(SpiTransportProvider *provider, Message *request)
+    static spi_slave_transaction_t *CallProcessTransportMessage(SpiTransportProvider *provider, const Message *request)
     {
         return (provider->ProcessTransportMessage(request));
     }
@@ -586,7 +586,7 @@ TEST_CASE("An acknowledgement transaction holds nothing from the message it was 
  * @param offset Packet offset expected.
  * @param length Packet length expected.
  */
-static void CheckPacketTransaction(spi_slave_transaction_t *transaction, Message *message, const uint16_t offset, const uint16_t length)
+static void CheckPacketTransaction(const spi_slave_transaction_t *transaction, const Message *message, const uint16_t offset, const uint16_t length)
 {
     TEST_ASSERT_NOT_NULL_MESSAGE(transaction, "No transaction was returned for the packet.");
     TEST_ASSERT_EQUAL_UINT16_MESSAGE(offset, message->PacketOffset, "The packet offset is wrong.");

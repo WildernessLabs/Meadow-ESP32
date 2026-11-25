@@ -179,7 +179,7 @@ uint32_t Diagnostics::TakeSnapshot()
     esp_log_level_set(COMPONENT_NAME, ESP_LOG_INFO);
     const int64_t start = esp_timer_get_time();
     const uint32_t sequence = ++_sequence;
-    WriteRecord("snapshot,%" PRIu32 ",%" PRIu32 ",%" PRIu32 ",%" PRIu32, sequence, static_cast<uint32_t>(start / 1000), static_cast<uint32_t>(esp_reset_reason()), static_cast<uint32_t>(esp_get_free_heap_size()));
+    WriteRecord("snapshot,%" PRIu32 ",%" PRIu32 ",%" PRIu32 ",%" PRIu32, sequence, static_cast<uint32_t>(start / 1000), static_cast<uint32_t>(esp_reset_reason()), esp_get_free_heap_size());
     WriteTasks(sequence);
     WriteHeap(sequence);
     WriteTaskHeap(sequence);
@@ -286,7 +286,7 @@ void Diagnostics::WriteTasks(const uint32_t sequence)
         const int32_t core = (tasks[index].xCoreID == tskNO_AFFINITY) ? -1 : static_cast<int32_t>(tasks[index].xCoreID);
         WriteRecord(
             "task,%" PRIu32 ",%" PRIu32 ",%s,%" PRId32 ",%s,%" PRIu32 ",%" PRIu32 ",%" PRIu32 ",%" PRIu32 ",%" PRIu32, sequence, static_cast<uint32_t>(tasks[index].xTaskNumber), tasks[index].pcTaskName, core, TaskStateName(tasks[index].eCurrentState),
-            static_cast<uint32_t>(tasks[index].uxCurrentPriority), static_cast<uint32_t>(tasks[index].uxBasePriority), static_cast<uint32_t>(tasks[index].usStackHighWaterMark), static_cast<uint32_t>(runTime), runTimePercentage);
+            static_cast<uint32_t>(tasks[index].uxCurrentPriority), static_cast<uint32_t>(tasks[index].uxBasePriority), tasks[index].usStackHighWaterMark, static_cast<uint32_t>(runTime), runTimePercentage);
     }
     RememberRunTimes(tasks, numberOfTasks, totalRunTime);
     Utils::DeleteAndNullifyPointer(tasks);

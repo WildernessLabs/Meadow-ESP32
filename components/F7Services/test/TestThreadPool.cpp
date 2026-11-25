@@ -358,7 +358,7 @@ public:
      *
      * @param pool Pool whose threads are claimed.
      */
-    static void OccupyEveryThread(ThreadPool *pool)
+    static void OccupyEveryThread(const ThreadPool *pool)
     {
         for (int index = 0; index < EXPECTED_THREAD_POOL_SIZE; index++)
         {

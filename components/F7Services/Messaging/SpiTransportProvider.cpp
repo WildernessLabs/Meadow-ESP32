@@ -324,7 +324,7 @@ void SpiTransportProvider::ClearTransmitAndReceiveBuffers()
  *  @return pointer to spi_slave_transaction_t object
  *      This is the transaction that is returned by the ESP-IDF.
  */
-spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(Message *message, StatusCodes::StatusCodes code, uint8_t messageType)
+spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(const Message *message, StatusCodes::StatusCodes code, uint8_t messageType)
 {
     TRACE_MESSAGE("CreateAcknowledgementTransaction: Enter");
 
@@ -388,7 +388,7 @@ spi_slave_transaction_t *SpiTransportProvider::CreateTransportAcknowledgement(St
  *  @return pointer to spi_slave_transaction_t object
  *      This is the transaction that is returned by the ESP-IDF.
  */
-spi_slave_transaction_t *SpiTransportProvider::CreateSpiTransaction(Message *message)
+spi_slave_transaction_t *SpiTransportProvider::CreateSpiTransaction(const Message *message)
 {
     TRACE_MESSAGE("CreateSpiTransaction: Enter");
     auto *transaction = static_cast<spi_slave_transaction_t *>(pvPortMalloc(sizeof(spi_slave_transaction_t)));
@@ -553,7 +553,7 @@ void SpiTransportProvider::Setup(MessageDispatcher *messageDispatcher)
  *  @returns
  *      Pointer to a new transaction.
  */
-spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *request)
+spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(const Message *request)
 {
     TRACE_MESSAGE("ProcessTransportMessage: Enter");
     spi_slave_transaction_t *newTransaction = nullptr;

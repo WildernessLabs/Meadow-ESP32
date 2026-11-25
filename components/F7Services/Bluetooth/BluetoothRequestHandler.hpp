@@ -261,7 +261,7 @@ private:
     /**
      * @brief Start the Bluetooth stack.
      */
-    bool StartBluetoothService();
+    bool StartBluetoothService() const;
 
     /**
      * @brief Tell Start() whether the asynchronous part of starting the service succeeded.

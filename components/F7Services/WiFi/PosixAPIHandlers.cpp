@@ -1780,7 +1780,7 @@ void WiFiRequestHandler::SendTo(void * const vpMessage)
  *          StatusCodes::InvalidRequest if the requested length is out of range,
  *          StatusCodes::EspOutOfMemory if memory allocation fails.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRequest *request, Esp32Messaging::RecvFromResponse &response)
+StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(const Esp32Messaging::RecvFromRequest *request, Esp32Messaging::RecvFromResponse &response)
 {
     if ((request->Length < 0) || std::cmp_greater(request->Length, Message::MAXIMUM_PAYLOAD_LENGTH))
     {
@@ -2829,7 +2829,7 @@ void WiFiRequestHandler::Shutdown(void * const vpMessage)
  * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
  *         StatusCodes::EspOutOfMemory if memory allocation fails.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::Accept(Esp32Messaging::AcceptRequest *request, Esp32Messaging::AcceptResponse &response)
+StatusCodes::StatusCodes WiFiRequestHandler::Accept(const Esp32Messaging::AcceptRequest *request, Esp32Messaging::AcceptResponse &response)
 {
     struct sockaddr sa = {};
     socklen_t saLen = sizeof(sa);

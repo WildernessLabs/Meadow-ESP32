@@ -84,7 +84,7 @@ BluetoothManager::BluetoothManager() : Services(&this->_handleManager)
  *
  * @param service Service being added.
  */
-void BluetoothManager::HandleServiceAdded(BluetoothService *service)
+void BluetoothManager::HandleServiceAdded(const BluetoothService *service)
 {
     TRACE_MESSAGE("HandleServiceAdded: Enter");
 
@@ -98,7 +98,7 @@ void BluetoothManager::HandleServiceAdded(BluetoothService *service)
  *
  * @param characteristic Characteristic being added.
  */
-void BluetoothManager::HandleCharacteristicAdded(BluetoothCharacteristic *characteristic)
+void BluetoothManager::HandleCharacteristicAdded(const BluetoothCharacteristic *characteristic)
 {
     TRACE_MESSAGE("HandleCharacteristicAdded: Enter");
 
@@ -112,7 +112,7 @@ void BluetoothManager::HandleCharacteristicAdded(BluetoothCharacteristic *charac
  *
  * @param characteristic Characteristic whose value is being changed.
  */
-void BluetoothManager::HandleValueChanged(BluetoothCharacteristic *characteristic)
+void BluetoothManager::HandleValueChanged(const BluetoothCharacteristic *characteristic)
 {
     TRACE_MESSAGE("HandleValueChanged: Enter");
 
@@ -126,7 +126,7 @@ void BluetoothManager::HandleValueChanged(BluetoothCharacteristic *characteristi
  *
  * @param descriptor Descriptor being added.
  */
-void BluetoothManager::HandleDescriptorAdded(BluetoothDescriptor *descriptor)
+void BluetoothManager::HandleDescriptorAdded(const BluetoothDescriptor *descriptor)
 {
     TRACE_MESSAGE("HandleDescriptorAdded: Enter");
 

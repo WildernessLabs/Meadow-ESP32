@@ -1121,7 +1121,7 @@ void WiFiRequestHandler::ClearIpAndDisconnectData()
  *  @param tv
  *      New time information from the time server.
  */
-void WiFiRequestHandler::NtpServerCallback(struct timeval *tv)
+void WiFiRequestHandler::NtpServerCallback(const struct timeval *tv)
 {
     TRACE_MESSAGE("NtpServerCallback: Enter");
 
