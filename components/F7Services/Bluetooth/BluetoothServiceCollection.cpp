@@ -59,7 +59,7 @@ BluetoothService &BluetoothServiceCollection::Add(BluetoothService * const servi
         _handleManager->Assign(service);
 
         // Instance method callback binding.  Yay, c++!
-        service->OnCharacteristicAdded = [this](auto && PH1) { HandleServiceCharacteristicAdded(std::forward<decltype(PH1)>(PH1)); };
+        service->OnCharacteristicAdded = [this](auto &&PH1) { HandleServiceCharacteristicAdded(std::forward<decltype(PH1)>(PH1)); };
 
         if (OnServiceAdded != nullptr)
         {
@@ -117,7 +117,7 @@ void BluetoothServiceCollection::HandleServiceCharacteristicAdded(BluetoothChara
     TRACE_MESSAGE("HandleServiceCharacteristicAdded: Enter");
 
     // Pass the event upstream
-    characteristic->OnValueChanged = [this](auto && PH1) { HandleServiceValueChanged(std::forward<decltype(PH1)>(PH1)); };
+    characteristic->OnValueChanged = [this](auto &&PH1) { HandleServiceValueChanged(std::forward<decltype(PH1)>(PH1)); };
 
     if (OnCharacteristicAdded)
     {
