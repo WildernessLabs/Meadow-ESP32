@@ -64,12 +64,12 @@ public:
     /**
      * @brief Construct a new Bluetooth Characteristic object with a 16-bit UUID.
      */
-    BluetoothCharacteristic(Uuid16 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength);
+    BluetoothCharacteristic(const Uuid16 &uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength);
 
     /**
      * @brief Construct a new Bluetooth Characteristic objectwith a 128-bit UUID.
      */
-    BluetoothCharacteristic(Uuid128 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength);
+    BluetoothCharacteristic(const Uuid128 &uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength);
 
     /**
      * @brief Destroy the BluetoothCharacteristic object

@@ -65,7 +65,7 @@ BluetoothService::~BluetoothService()
  *
  * @param uuid UUID of the service.
  */
-BluetoothService::BluetoothService(const char *name, const Uuid16 uuid)
+BluetoothService::BluetoothService(const char *name, const Uuid16 &uuid)
 {
     TRACE_MESSAGE("BluetoothService: Enter");
 

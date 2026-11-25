@@ -8,6 +8,8 @@
  */
 
 #include "BluetoothCharacteristicValue.hpp"
+
+#include <utility>
 #include "BluetoothCharacteristic.hpp"
 #include "BluetoothComponentName.hpp"
 
@@ -42,7 +44,7 @@ const char *BluetoothCharacteristicValue::COMPONENT_NAME = BLUETOOTH_COMPONENT_N
  *
  *  @param maxValueLength Maximum length of the value that can be stored in the characteristic value.
  */
-BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacteristic * const parent, const Uuid16 uuid, const CharacteristicPermission permission, const int maxValueLength)
+BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacteristic * const parent, const Uuid16 &uuid, const CharacteristicPermission permission, const int maxValueLength)
 {
     TRACE_MESSAGE("BluetoothCharacteristicValue(UUID16): Enter");
 
@@ -66,7 +68,7 @@ BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacterist
  *
  *  @param maxValueLength Maximum length of the value that can be stored in the characteristic value.
  */
-BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacteristic * const parent, const Uuid128 uuid, const CharacteristicPermission permission, const int maxValueLength)
+BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacteristic * const parent, const Uuid128 &uuid, const CharacteristicPermission permission, const int maxValueLength)
 {
     TRACE_MESSAGE("BluetoothCharacteristicValue(UUID128): Enter");
 
@@ -131,7 +133,7 @@ bool BluetoothCharacteristicValue::WriteValue(const uint8_t * const source, cons
 
     bool result = false;
 
-    if ((length >= 0) && (length <= MaxLength))
+    if ((length >= 0) && (std::cmp_less_equal(length , MaxLength)))
     {
         if (length > 0)
         {
