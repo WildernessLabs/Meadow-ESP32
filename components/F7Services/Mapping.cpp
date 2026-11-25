@@ -10,8 +10,8 @@
 #include "sdkconfig.h"
 
 #include <sys/socket.h>
+#include <cerrno>
 #include <utility>
-#include "errno.h"
 
 #include <esp_wifi.h>
 

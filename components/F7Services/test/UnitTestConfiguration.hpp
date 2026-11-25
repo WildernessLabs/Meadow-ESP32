@@ -203,4 +203,4 @@ public:
  *
  * @note app_main is C, so it reaches UnitTestConfiguration::Load() through this.
  */
-extern "C" void UnitTestConfigurationLoad(void);
+extern "C" void UnitTestConfigurationLoad();

@@ -661,25 +661,21 @@ void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message * const 
                 //  Read once: a disconnect on the Bluedroid task can change it between a check
                 //  and a later read, sending the notification to INVALID_CONNECTION_HANDLE.
                 //
+                //  The value is stored above whatever the client has asked for, so it can still
+                //  read it.  A notification goes only to a client that has enabled them in the
+                //  characteristic's client configuration (issue #572).
+                //
                 const uint16_t connectionHandle = _connectionHandle.load();
-                if (connectionHandle != INVALID_CONNECTION_HANDLE)
+                if ((connectionHandle != INVALID_CONNECTION_HANDLE) && ((_manager.GetCharacteristicProperties(ds->Handle) & CharacteristicProperty::Notify) == CharacteristicProperty::Notify) && NotificationsEnabled(ds->Handle))
                 {
-                    //
-                    //  The value is stored above whatever the client has asked for, so it can
-                    //  still read it.  A notification goes only to a client that has enabled
-                    //  them in the characteristic's client configuration (issue #572).
-                    //
-                    if (((_manager.GetCharacteristicProperties(ds->Handle) & CharacteristicProperty::Notify) == CharacteristicProperty::Notify) && NotificationsEnabled(ds->Handle))
+                    if (esp_ble_gatts_send_indicate(_gattsInterfaceHandle, connectionHandle, ds->Handle, static_cast<uint16_t>(ds->SetDataLength), ds->SetData, false) != ESP_OK)
                     {
-                        if (esp_ble_gatts_send_indicate(_gattsInterfaceHandle, connectionHandle, ds->Handle, static_cast<uint16_t>(ds->SetDataLength), ds->SetData, false) != ESP_OK)
-                        {
-                            TRACE_MESSAGE("Failed to send indication to connection ID 0x%04" PRIx16, connectionHandle);
-                            result = StatusCodes::Failure;
-                        }
-                        else
-                        {
-                            _notificationsSent++;
-                        }
+                        TRACE_MESSAGE("Failed to send indication to connection ID 0x%04" PRIx16, connectionHandle);
+                        result = StatusCodes::Failure;
+                    }
+                    else
+                    {
+                        _notificationsSent++;
                     }
                 }
             }
@@ -756,12 +752,9 @@ StatusCodes::StatusCodes BluetoothRequestHandler::PrepareForDeepSleep()
 
     BluetoothRequestHandler *bluetoothHandler = BluetoothRequestHandler::GetInstance();
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (bluetoothHandler != nullptr)
+    if ((bluetoothHandler != nullptr) && !BluetoothRequestHandler::StopBluetoothService())
     {
-        if (!BluetoothRequestHandler::StopBluetoothService())
-        {
-            result = StatusCodes::Failure;
-        }
+        result = StatusCodes::Failure;
     }
 
     TRACE_MESSAGE("PrepareForDeepSleep(): Exit");

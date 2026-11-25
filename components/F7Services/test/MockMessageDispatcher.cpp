@@ -68,10 +68,7 @@ MockMessageDispatcher::~MockMessageDispatcher()
     // {
     //     delete _systemRequestHandler;
     // }
-    if (_bluetoothRequestHandler)
-    {
-        delete _bluetoothRequestHandler;
-    }
+    delete _bluetoothRequestHandler;
 }
 
 /* ---------------------------------------------------------------------------

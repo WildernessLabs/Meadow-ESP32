@@ -82,7 +82,7 @@ uint32_t SpiTransportProvider::_headerFrameSize = 0;
 /**
  *  @brief Default constructor for the SPI transport provider.
  */
-SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
+SpiTransportProvider::SpiTransportProvider()
 {
     if (_spiInstance)
     {
@@ -400,12 +400,9 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiTransaction(const Messag
 
     memset(transaction, 0, sizeof(spi_slave_transaction_t));
     ClearTransmitAndReceiveBuffers();
-    if (message)
+    if ((message != nullptr) && !Encoders::EncodeMessage(message, _txBuffer, Message::MAXIMUM_SPI_FRAME_SIZE, false))
     {
-        if (!Encoders::EncodeMessage(message, _txBuffer, Message::MAXIMUM_SPI_FRAME_SIZE, false))
-        {
-            ERROR_MESSAGE("CreateSpiTransaction: the message could not be encoded; sending an empty frame.");
-        }
+        ERROR_MESSAGE("CreateSpiTransaction: the message could not be encoded; sending an empty frame.");
     }
     transaction->rx_buffer = _rxBuffer;
     transaction->tx_buffer = _txBuffer;
@@ -467,7 +464,7 @@ void SpiTransportProvider::DeleteTransaction(spi_slave_transaction_t *&transacti
     {
         if (transaction->rx_buffer && (transaction->rx_buffer != _rxBuffer))
         {
-            heap_caps_free(static_cast<void *>(transaction->rx_buffer));
+            heap_caps_free(transaction->rx_buffer);
         }
         if (transaction->tx_buffer && (transaction->tx_buffer != _txBuffer))
         {

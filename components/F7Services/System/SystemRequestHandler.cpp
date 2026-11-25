@@ -100,10 +100,7 @@ SystemRequestHandler::SystemRequestHandler()
     {
         throw MultipleInstancesException();
     }
-    else
-    {
-        _instantiated = true;
-    }
+    _instantiated = true;
 }
 
 /**
@@ -736,10 +733,10 @@ void SystemRequestHandler::SetConfigurationItem(Message * const request)
                 result = WiFiRequestHandler::SetAntenna(*value->Value);
                 break;
             case ConfigurationItems::AutomaticallyReconnect:
-                result = WiFiRequestHandler::SetAutomaticReconnect(static_cast<uint8_t>((*value->Value)) == 1);
+                result = WiFiRequestHandler::SetAutomaticReconnect((*value->Value) == 1);
                 break;
             case ConfigurationItems::AutomaticallyStartNetwork:
-                result = WiFiRequestHandler::SetAutomaticallyStartNetwork(static_cast<uint8_t>((*value->Value)) == 1);
+                result = WiFiRequestHandler::SetAutomaticallyStartNetwork((*value->Value) == 1);
                 break;
             case ConfigurationItems::BoardMacAddress:
                 result = WiFiRequestHandler::SetMacAddress(value->Value, WIFI_IF_STA);
@@ -847,7 +844,7 @@ void SystemRequestHandler::SetConfigurationItem(Message * const request)
                 }
                 break;
             case ConfigurationItems::UseDhcp:
-                result = WiFiRequestHandler::SetUseDhcp(static_cast<uint8_t>((*value->Value)) == 1);
+                result = WiFiRequestHandler::SetUseDhcp((*value->Value) == 1);
                 break;
             case ConfigurationItems::CountryCode:
                 if (!ContainsNulTerminator(value->Value, value->ValueLength))
