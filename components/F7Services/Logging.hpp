@@ -51,21 +51,33 @@
 
 #else
 
-    #define TRACE_MESSAGE(format, ...)
-    #define DEBUG_MESSAGE(format, ...)
-    #define ERROR_MESSAGE(format, ...)
+    //
+    //  Without TRACE_MESSAGES the call is kept in a discarded if constexpr, so no code or
+    //  strings are generated but the arguments are still compiled.  Expanding to nothing
+    //  instead leaves branches that differ only in their trace message identical, which
+    //  clang-tidy reports as bugprone-branch-clone, and lets a trace call that names a
+    //  variable since renamed or removed go unnoticed until a --tracemessages build.
+    //
+    //  clang-format is off for the definitions: it would put each brace on its own line,
+    //  with the continuation backslashes out at the column limit.
+    //
+    // clang-format off
+    #define TRACE_MESSAGE(format, ...) do { if constexpr (false) { Logging::Information(COMPONENT_NAME, format, ##__VA_ARGS__); } } while (false)
+    #define DEBUG_MESSAGE(format, ...) do { if constexpr (false) { Logging::Debug(COMPONENT_NAME, format, ##__VA_ARGS__); } } while (false)
+    #define ERROR_MESSAGE(format, ...) do { if constexpr (false) { Logging::Error(COMPONENT_NAME, format, ##__VA_ARGS__); } } while (false)
 
-    #define TRACE_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...)
-    #define DEBUG_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...)
-    #define ERROR_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...)
+    #define TRACE_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...) do { if constexpr (false) { Logging::Information(component_name, format, ##__VA_ARGS__); } } while (false)
+    #define DEBUG_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...) do { if constexpr (false) { Logging::Debug(component_name, format, ##__VA_ARGS__); } } while (false)
+    #define ERROR_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...) do { if constexpr (false) { Logging::Error(component_name, format, ##__VA_ARGS__); } } while (false)
 
-    #define TRACE_HEX_BUFFER(buffer, length)
-    #define DEBUG_HEX_BUFFER(buffer, length)
-    #define ERROR_HEX_BUFFER(buffer, length)
+    #define TRACE_HEX_BUFFER(buffer, length) do { if constexpr (false) { Logging::HexBuffer(COMPONENT_NAME, buffer, length, ESP_LOG_INFO); } } while (false)
+    #define DEBUG_HEX_BUFFER(buffer, length) do { if constexpr (false) { Logging::HexBuffer(COMPONENT_NAME, buffer, length, ESP_LOG_DEBUG); } } while (false)
+    #define ERROR_HEX_BUFFER(buffer, length) do { if constexpr (false) { Logging::HexBuffer(COMPONENT_NAME, buffer, length, ESP_LOG_ERROR); } } while (false)
 
-    #define TRACE_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length)
-    #define DEBUG_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length)
-    #define ERROR_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length)
+    #define TRACE_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length) do { if constexpr (false) { Logging::HexBuffer(component_name, buffer, length, ESP_LOG_INFO); } } while (false)
+    #define DEBUG_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length) do { if constexpr (false) { Logging::HexBuffer(component_name, buffer, length, ESP_LOG_DEBUG); } } while (false)
+    #define ERROR_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length) do { if constexpr (false) { Logging::HexBuffer(component_name, buffer, length, ESP_LOG_ERROR); } } while (false)
+// clang-format on
 
 #endif
 
