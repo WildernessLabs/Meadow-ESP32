@@ -486,7 +486,7 @@ TEST_CASE("Reading a file", CLASS_OF_TESTS)
  * @param requestContents Contents to send with the read request.
  * @param requestContentsLength Number of bytes in requestContents.
  */
-static void ReadFileWithRequestContents(FileSystemTestContext *context, const uint8_t *requestContents, const uint32_t requestContentsLength)
+static void ReadFileWithRequestContents(const FileSystemTestContext *context, const uint8_t *requestContents, const uint32_t requestContentsLength)
 {
     Message *readMessage = CreateFileNameAndContentsMessage(SystemFunction::FileSystemReadFile, TEST_FILE_NAME, requestContents, requestContentsLength);
     context->Fs->ReadFile(readMessage);
@@ -833,7 +833,7 @@ static void WritePatternFile(const char *filename, const uint32_t length)
  *
  * @return The response, which the caller releases.
  */
-static Message *ReadThroughFileSystem(FileSystemTestContext *context, const char *filename)
+static Message *ReadThroughFileSystem(const FileSystemTestContext *context, const char *filename)
 {
     Message *readMessage = CreateFileNameAndContentsMessage(SystemFunction::FileSystemReadFile, filename, nullptr, 0);
     context->Fs->ReadFile(readMessage);

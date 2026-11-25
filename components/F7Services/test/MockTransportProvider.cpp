@@ -14,9 +14,7 @@ const char *MockTransportProvider::COMPONENT_NAME = "MockTransportProvider";
 /**
  *  @brief Default constructor for the Mock transport provider.
  */
-MockTransportProvider::MockTransportProvider() : TransportProviderBase()
-{
-}
+MockTransportProvider::MockTransportProvider() = default;
 
 /**
  *  @brief Default destructor for the Mock transport provider.

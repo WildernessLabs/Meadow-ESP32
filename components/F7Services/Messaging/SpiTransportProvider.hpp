@@ -129,7 +129,7 @@ private:
      *  The transaction is self-contained: it refers only to _txBuffer and _rxBuffer, so
      *  message can be released once this returns (issue #235).
      */
-    static spi_slave_transaction_t *CreateAcknowledgementTransaction(Message *message, StatusCodes::StatusCodes code, uint8_t messageType);
+    static spi_slave_transaction_t *CreateAcknowledgementTransaction(const Message *message, StatusCodes::StatusCodes code, uint8_t messageType);
 
     /**
      *  @brief FreeRTOS task handler for this class.
@@ -166,7 +166,7 @@ private:
     /**
      *  @brief Process an inbound transport request.
      */
-    spi_slave_transaction_t *ProcessTransportMessage(Message *request);
+    spi_slave_transaction_t *ProcessTransportMessage(const Message *request);
 
     /**
      *  @brief Work out what a finished transaction means in the current state and prepare the next one.
@@ -212,7 +212,7 @@ private:
     /**
      *  @brief Setup a new transaction using the information in the message.
      */
-    static spi_slave_transaction_t *CreateSpiTransaction(Message *message);
+    static spi_slave_transaction_t *CreateSpiTransaction(const Message *message);
 
     /**
      *  @brief Create a transaction that sends an acknowledgement that is not for a particular message.

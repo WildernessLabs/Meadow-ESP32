@@ -778,7 +778,7 @@ StatusCodes::StatusCodes BluetoothRequestHandler::PrepareForDeepSleep()
  *
  * @return true if the system was started, false otherwise.
  */
-bool BluetoothRequestHandler::StartBluetoothService()
+bool BluetoothRequestHandler::StartBluetoothService() const
 {
     TRACE_MESSAGE("StartBluetoothService: Enter");
 
@@ -1444,7 +1444,7 @@ std::vector<BluetoothPairing::ClientConfiguration> BluetoothRequestHandler::Read
         const uint8_t *value = nullptr;
         if ((esp_ble_gatts_get_attr_value(handle, &length, &value) == ESP_GATT_OK) && (value != nullptr) && (length >= CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH))
         {
-            configurations.push_back({handle, static_cast<uint16_t>(value[0] | (static_cast<uint32_t>(value[1]) << 8U))});
+            configurations.push_back({.Handle = handle, .Value = static_cast<uint16_t>(value[0] | (static_cast<uint32_t>(value[1]) << 8U))});
         }
     }
     return (configurations);

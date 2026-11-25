@@ -85,7 +85,7 @@ public:
      * @param handler Handler to read from.
      * @param data Filled in with the connection details.
      */
-    static void Populate(WiFiRequestHandler *handler, Esp32Messaging::ConnectEventData *data)
+    static void Populate(const WiFiRequestHandler *handler, Esp32Messaging::ConnectEventData *data)
     {
         handler->PopulateConnectionEventDataStructure(data);
     }
@@ -109,7 +109,7 @@ public:
     /**
      * @brief Call the private DestroyNetworkInterfaces method.
      */
-    static void DestroyNetworkInterfaces(WiFiRequestHandler *handler)
+    static void DestroyNetworkInterfaces(const WiFiRequestHandler *handler)
     {
         WiFiRequestHandler::DestroyNetworkInterfaces();
     }
@@ -117,7 +117,7 @@ public:
     /**
      * @brief Call the private StationStoppedEvent method, with an event group for it to clear bits in.
      */
-    static void StationStopped(WiFiRequestHandler *handler)
+    static void StationStopped(const WiFiRequestHandler *handler)
     {
         const bool madeEventGroup = (WiFiRequestHandler::_xWiFiEventGroup == nullptr);
         if (madeEventGroup)
@@ -214,7 +214,7 @@ public:
      *
      * @param handler Handler whose information is read.
      */
-    static bool StationInformationIsEmpty(WiFiRequestHandler *handler)
+    static bool StationInformationIsEmpty(const WiFiRequestHandler *handler)
     {
         const wifi_event_sta_connected_t emptyAccessPoint = {};
         const esp_netif_ip_info_t emptyIp = {};
@@ -250,7 +250,7 @@ public:
      *
      * @return The dispatcher.
      */
-    static MockMessageDispatcher *Dispatcher(WiFiRequestHandler *handler)
+    static MockMessageDispatcher *Dispatcher(const WiFiRequestHandler *handler)
     {
         auto *dispatcher = static_cast<MockMessageDispatcher *>(WiFiRequestHandler::_messageDispatcher);
         TEST_ASSERT_NOT_NULL(dispatcher);
@@ -287,7 +287,7 @@ public:
     /**
      * @brief Call the private AccessPointStartedEvent method.
      */
-    static void AccessPointStarted(WiFiRequestHandler *handler)
+    static void AccessPointStarted(const WiFiRequestHandler *handler)
     {
         WiFiRequestHandler::AccessPointStartedEvent();
     }
@@ -348,7 +348,7 @@ public:
      *
      * @param handler Handler whose list is checked.
      */
-    static bool ConnectedNodesLocked(WiFiRequestHandler *handler)
+    static bool ConnectedNodesLocked(const WiFiRequestHandler *handler)
     {
         return (xSemaphoreGetMutexHolder(handler->_connectedNodesListMutex) != nullptr);
     }
@@ -979,7 +979,7 @@ static bool _lockedWhileQueuing = false;
  */
 static void NoteWhetherLocked(void *context)
 {
-    _lockedWhileQueuing |= TestWiFiEventState::ConnectedNodesLocked(static_cast<WiFiRequestHandler *>(context));
+    _lockedWhileQueuing |= TestWiFiEventState::ConnectedNodesLocked(static_cast<const WiFiRequestHandler *>(context));
 }
 
 /**

@@ -101,7 +101,7 @@ public:
      *
      * @return The advertising packet's description.
      */
-    static const esp_ble_adv_data_t &AdvertisingData(BluetoothRequestHandler *handler)
+    static const esp_ble_adv_data_t &AdvertisingData(const BluetoothRequestHandler *handler)
     {
         return (handler->_advertisingData);
     }
@@ -113,7 +113,7 @@ public:
      *
      * @return The scan response's description.
      */
-    static const esp_ble_adv_data_t &ScanResponseData(BluetoothRequestHandler *handler)
+    static const esp_ble_adv_data_t &ScanResponseData(const BluetoothRequestHandler *handler)
     {
         return (handler->_scanResponseData);
     }

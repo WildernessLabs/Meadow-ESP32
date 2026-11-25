@@ -135,7 +135,7 @@ private:
     /**
      *  @brief Put the ESP32 into deep sleep.
      */
-    void DeepSleep(Message *request);
+    static void DeepSleep(const Message *request);
 
     /**
      *  @brief Get the battery level.
@@ -249,7 +249,7 @@ public:
      *  task at any time.  It is empty if no name is held.
      */
     static std::string GetDeviceName();
-    static StatusCodes::StatusCodes SetDeviceName(char *);
+    static StatusCodes::StatusCodes SetDeviceName(const char *);
 
     /**
      *  @brief Send the configuration data as an interrupt message.

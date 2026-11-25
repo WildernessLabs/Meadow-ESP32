@@ -840,7 +840,7 @@ private:
      *
      * @return Esp32Messaging::AccessPointInformation*
      */
-    Esp32Messaging::AccessPointInformation *ExtractAndValidateAccessPointInformation(uint8_t *, uint32_t, StatusCodes::StatusCodes &status) const;
+    Esp32Messaging::AccessPointInformation *ExtractAndValidateAccessPointInformation(const uint8_t *, uint32_t, StatusCodes::StatusCodes &status) const;
 
     /**
      * @brief Is this a passphrase the soft-AP can be started with, for a mode that has one?
@@ -885,7 +885,7 @@ private:
     /**
      * @brief Raise a node connect / disconnect event for the C# code.
      */
-    static void RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFunction eventType, Esp32Messaging::NodeConnectionChangeEventData *data);
+    static void RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFunction eventType, const Esp32Messaging::NodeConnectionChangeEventData *data);
 
     /**
      *  @brief Get a list of available access points.
@@ -1013,7 +1013,7 @@ private:
      * @param eventData
      *      Information about the node that has associated, including its MAC address.
      */
-    void NodeAssociatedEvent(wifi_event_ap_staconnected_t *eventData);
+    void NodeAssociatedEvent(const wifi_event_ap_staconnected_t *eventData);
 
     /**
      * @brief Process the node connecting to access point event.
@@ -1022,12 +1022,12 @@ private:
      *      Information about the node that has connected to the access point,
      *      including its MAC address and the DHCP-assigned IP address.
      */
-    void NodeConnectedEvent(ip_event_assigned_ip_to_client_t *eventData);
+    void NodeConnectedEvent(const ip_event_assigned_ip_to_client_t *eventData);
 
     /**
      * @brief Processes the node disconnecting from the access point event.
      */
-    void NodeDisconnectedEvent(wifi_event_ap_stadisconnected_t *);
+    void NodeDisconnectedEvent(const wifi_event_ap_stadisconnected_t *);
 
     /**
      * @brief Processes when the IP address is obtained from the access point event.
@@ -1220,7 +1220,7 @@ private:
      * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
      *         StatusCodes::EspOutOfMemory if memory allocation fails.
      */
-    static StatusCodes::StatusCodes RecvFrom(Esp32Messaging::RecvFromRequest *request, Esp32Messaging::RecvFromResponse &response);
+    static StatusCodes::StatusCodes RecvFrom(const Esp32Messaging::RecvFromRequest *request, Esp32Messaging::RecvFromResponse &response);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the sendmsg method.
@@ -1326,7 +1326,7 @@ private:
      * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
      *         StatusCodes::EspOutOfMemory if memory allocation fails.
      */
-    static StatusCodes::StatusCodes Accept(Esp32Messaging::AcceptRequest *request, Esp32Messaging::AcceptResponse &response);
+    static StatusCodes::StatusCodes Accept(const Esp32Messaging::AcceptRequest *request, Esp32Messaging::AcceptResponse &response);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the accept method.
@@ -1368,7 +1368,7 @@ private:
     /**
      *  @brief Method called when the time server has supplied updated time information.
      */
-    static void NtpServerCallback(struct timeval *tv);
+    static void NtpServerCallback(const struct timeval *tv);
 
     /**
      *  @brief Indicate if we have a valid WiFi connection.

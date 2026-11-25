@@ -58,7 +58,7 @@ void WiFiRequestHandler::UnlockConnectedNodesMap()
  * @return Esp32Messaging::AccessPointInformation*
  *      Pointer to validated access point information, nullptr if there is a problem.
  */
-Esp32Messaging::AccessPointInformation *WiFiRequestHandler::ExtractAndValidateAccessPointInformation(uint8_t *data, const uint32_t dataLength, StatusCodes::StatusCodes &status) const
+Esp32Messaging::AccessPointInformation *WiFiRequestHandler::ExtractAndValidateAccessPointInformation(const uint8_t *data, const uint32_t dataLength, StatusCodes::StatusCodes &status) const
 {
     Esp32Messaging::AccessPointInformation *result = nullptr;
     status = StatusCodes::CannotStartAccessPoint;
@@ -514,7 +514,7 @@ void WiFiRequestHandler::AccessPointStoppedEvent()
  * @param data
  *      Information about the node (MAC and possibly IP address).
  */
-void WiFiRequestHandler::RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFunction eventType, Esp32Messaging::NodeConnectionChangeEventData *data)
+void WiFiRequestHandler::RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFunction eventType, const Esp32Messaging::NodeConnectionChangeEventData *data)
 {
     uint32_t payloadLength = Encoders::EncodedNodeConnectionChangeEventDataBufferSize(data);
     auto *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
@@ -540,7 +540,7 @@ void WiFiRequestHandler::RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFuncti
  * @param eventData
  *      Association event data, which carries the station MAC address.
  */
-void WiFiRequestHandler::NodeAssociatedEvent(wifi_event_ap_staconnected_t *eventData)
+void WiFiRequestHandler::NodeAssociatedEvent(const wifi_event_ap_staconnected_t *eventData)
 {
     TRACE_MESSAGE("NodeAssociatedEvent: Enter");
 
@@ -577,7 +577,7 @@ void WiFiRequestHandler::NodeAssociatedEvent(wifi_event_ap_staconnected_t *event
  * @param eventData
  *      DHCP-assignment event data — carries the station MAC and IP address.
  */
-void WiFiRequestHandler::NodeConnectedEvent(ip_event_assigned_ip_to_client_t *eventData)
+void WiFiRequestHandler::NodeConnectedEvent(const ip_event_assigned_ip_to_client_t *eventData)
 {
     TRACE_MESSAGE("NodeConnectedEvent: Enter");
 
@@ -617,7 +617,7 @@ void WiFiRequestHandler::NodeConnectedEvent(ip_event_assigned_ip_to_client_t *ev
  * @param eventData
  *      Information about the node that has disconnected from the access point.
  */
-void WiFiRequestHandler::NodeDisconnectedEvent(wifi_event_ap_stadisconnected_t *eventData)
+void WiFiRequestHandler::NodeDisconnectedEvent(const wifi_event_ap_stadisconnected_t *eventData)
 {
     TRACE_MESSAGE("NodeDisconnectedEvent: Enter");
 

@@ -197,7 +197,7 @@ public:
     /**
      * @brief Whether the worker has said it has finished with a claimed request.
      */
-    static bool WorkerDone(WiFiRequestHandler::ActivePoll *activePoll)
+    static bool WorkerDone(const WiFiRequestHandler::ActivePoll *activePoll)
     {
         Lock();
         const bool done = activePoll->WorkerDone;
@@ -208,7 +208,7 @@ public:
     /**
      * @brief The wake socket of a request.
      */
-    static int WakeSocket(WiFiRequestHandler::ActivePoll *activePoll)
+    static int WakeSocket(const WiFiRequestHandler::ActivePoll *activePoll)
     {
         return (activePoll->Descriptors[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd);
     }
@@ -216,7 +216,7 @@ public:
     /**
      * @brief The semaphore the worker gives for a claimed request.
      */
-    static SemaphoreHandle_t Finished(WiFiRequestHandler::ActivePoll *activePoll)
+    static SemaphoreHandle_t Finished(const WiFiRequestHandler::ActivePoll *activePoll)
     {
         return (activePoll->Finished);
     }
