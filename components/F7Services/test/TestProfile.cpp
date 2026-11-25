@@ -40,5 +40,4 @@ TEST_CASE("Meadow events can be recorded whether or not a SystemView capture is 
             ProfileSpan span(ProfileEvent::SpiProcess, ProfileEvent::SpiProcessDone, 1);
         }
     }
-    TEST_PASS();
 }

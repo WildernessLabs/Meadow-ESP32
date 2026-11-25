@@ -22,7 +22,6 @@
 TEST_CASE("Turn on Heap Tracing Data", CLASS_OF_TESTS)
 {
     _generateHeapTraceData = true;
-    TEST_PASS();
 }
 
 /**
@@ -31,5 +30,4 @@ TEST_CASE("Turn on Heap Tracing Data", CLASS_OF_TESTS)
 TEST_CASE("Restart the ESP32", CLASS_OF_TESTS)
 {
     esp_restart();
-    TEST_PASS();
 }
