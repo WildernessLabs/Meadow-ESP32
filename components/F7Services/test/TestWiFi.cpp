@@ -197,7 +197,7 @@ TEST_CASE("The WiFi interface starts again after a full stop, repeatedly in one 
         {
             heapAfterFirstCycle = esp_get_free_heap_size();
         }
-        printf("Cycle %u: free heap %" PRIu32 " bytes.\n", cycle + 1, static_cast<uint32_t>(esp_get_free_heap_size()));
+        printf("Cycle %u: free heap %" PRIu32 " bytes.\n", cycle + 1, esp_get_free_heap_size());
     }
 
     const uint32_t heapAfterLastCycle = esp_get_free_heap_size();

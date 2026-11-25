@@ -161,7 +161,7 @@ TEST_CASE("Run-time statistics count the CPU time a busy task uses", CLASS_OF_TE
     _busyTaskFinished = nullptr;
 
     char message[80];
-    snprintf(message, sizeof(message), "The busy task was credited with %" PRIu32 " us of run time.", static_cast<uint32_t>(status.ulRunTimeCounter));
+    snprintf(message, sizeof(message), "The busy task was credited with %" PRIu32 " us of run time.", status.ulRunTimeCounter);
     TEST_ASSERT_GREATER_OR_EQUAL_UINT32_MESSAGE(MINIMUM_BUSY_RUN_TIME_US, static_cast<uint32_t>(status.ulRunTimeCounter), message);
 }
 
