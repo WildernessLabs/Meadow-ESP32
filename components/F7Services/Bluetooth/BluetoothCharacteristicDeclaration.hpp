@@ -25,7 +25,7 @@ public:
      * @param permission Permissions for the characteristic.
      * @param properties Properties of the characteristic.
      */
-    BluetoothCharacteristicDeclaration(Uuid16 value_uuid, CharacteristicPermission permission, CharacteristicProperty properties);
+    BluetoothCharacteristicDeclaration(const Uuid16 &value_uuid, CharacteristicPermission permission, CharacteristicProperty properties);
 
     /**
      * @brief Construct a new Bluetooth Characteristic Declaration object
@@ -34,7 +34,7 @@ public:
      * @param permission Permissions for the characteristic.
      * @param properties Properties of the characteristic.
      */
-    BluetoothCharacteristicDeclaration(Uuid128 value_uuid, CharacteristicPermission permission, CharacteristicProperty properties);
+    BluetoothCharacteristicDeclaration(const Uuid128 &value_uuid, CharacteristicPermission permission, CharacteristicProperty properties);
 
     /**
      * @brief Destroy the BluetoothCharacteristicDeclaration object and release any allocated resources.

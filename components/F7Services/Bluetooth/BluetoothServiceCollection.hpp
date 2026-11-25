@@ -86,7 +86,7 @@ public:
     /**
      * @brief Find a service in the collection by UUID.
      */
-    BluetoothService *Find(Uuid16 uuid);
+    BluetoothService *Find(const Uuid16 &uuid);
 
     /**
      * @brief Get the number of services in the collection.

@@ -161,7 +161,7 @@ BluetoothService *BluetoothServiceCollection::Find(const uint8_t * const uuid)
  * @param uuid Uuid16 object containing the UUID of the service to be found.
  * @return BluetoothService* Pointer to the service if found, nullptr otherwise.
  */
-BluetoothService *BluetoothServiceCollection::Find(const Uuid16 uuid)
+BluetoothService *BluetoothServiceCollection::Find(const Uuid16 &uuid)
 {
     TRACE_MESSAGE("Find: Enter");
 

@@ -16,7 +16,7 @@
  * @param permission Permissions for the characteristic.
  * @param properties Properties of the characteristic.
  */
-BluetoothCharacteristicDeclaration::BluetoothCharacteristicDeclaration(const Uuid16 value_uuid, const CharacteristicPermission permission, const CharacteristicProperty properties)
+BluetoothCharacteristicDeclaration::BluetoothCharacteristicDeclaration(const Uuid16 &value_uuid, const CharacteristicPermission permission, const CharacteristicProperty properties)
 {
     Uuid = Uuid16::CharacteristicDeclaration;
     Permission = permission;
@@ -31,7 +31,7 @@ BluetoothCharacteristicDeclaration::BluetoothCharacteristicDeclaration(const Uui
  * @param permission Permissions for the characteristic.
  * @param properties Properties of the characteristic.
  */
-BluetoothCharacteristicDeclaration::BluetoothCharacteristicDeclaration(const Uuid128 value_uuid, const CharacteristicPermission permission, const CharacteristicProperty properties)
+BluetoothCharacteristicDeclaration::BluetoothCharacteristicDeclaration(const Uuid128 &value_uuid, const CharacteristicPermission permission, const CharacteristicProperty properties)
 {
     Uuid = Uuid16::CharacteristicDeclaration;
     Permission = permission;
