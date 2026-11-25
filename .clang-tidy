@@ -35,6 +35,13 @@
 #   readability-trailing-comma             Turned off by choice; initialiser lists are not
 #                                          required to end in a comma.  Newer clang-tidy only
 #                                          (CLion's); esp-clang 21 does not have it.
+#   bugprone-signed-bitwise                Every finding is a flag or mask macro from ESP-IDF,
+#                                          lwIP or POSIX (MALLOC_CAP_INTERNAL, O_NONBLOCK,
+#                                          ESP_LE_AUTH_REQ_MITM, ...) defined with signed
+#                                          literals, which is not ours to change; CLion's only
+#                                          fix replaces the macro with its expansion.  Newer
+#                                          clang-tidy only (CLion's); esp-clang 21 does not
+#                                          have it.
 #
 #   readability-implicit-bool-conversion stays on, but allows if (pointer), which the code
 #   uses throughout.
@@ -58,7 +65,8 @@ Checks: >
   -bugprone-reserved-identifier,
   -readability-identifier-length,
   -readability-function-cognitive-complexity,
-  -readability-trailing-comma
+  -readability-trailing-comma,
+  -bugprone-signed-bitwise
 
 WarningsAsErrors: ''
 
