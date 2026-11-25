@@ -32,7 +32,7 @@
  * @param value Initial value for the descriptor, or nullptr for an empty value.
  * @param valueLength Number of bytes available at value; at most maxValueLength of them are copied.
  */
-BluetoothDescriptor::BluetoothDescriptor(const BluetoothCharacteristic * const parent, const Uuid128 uuid, const CharacteristicPermission permission, const uint16_t maxValueLength, const uint8_t * const value, const uint16_t valueLength)
+BluetoothDescriptor::BluetoothDescriptor(const BluetoothCharacteristic * const parent, const Uuid128 &uuid, const CharacteristicPermission permission, const uint16_t maxValueLength, const uint8_t * const value, const uint16_t valueLength)
 {
     _parent = parent;
     uuid128 = uuid;
@@ -59,7 +59,7 @@ BluetoothDescriptor::BluetoothDescriptor(const BluetoothCharacteristic * const p
  * @param value Initial value for the descriptor, or nullptr for an empty value.
  * @param valueLength Number of bytes available at value; at most maxValueLength of them are copied.
  */
-BluetoothDescriptor::BluetoothDescriptor(const BluetoothCharacteristic * const parent, const Uuid16 uuid, const CharacteristicPermission permission, const uint16_t maxValueLength, const uint8_t * const value, const uint16_t valueLength)
+BluetoothDescriptor::BluetoothDescriptor(const BluetoothCharacteristic * const parent, const Uuid16 &uuid, const CharacteristicPermission permission, const uint16_t maxValueLength, const uint8_t * const value, const uint16_t valueLength)
 {
     _parent = parent;
     uuid16 = uuid;

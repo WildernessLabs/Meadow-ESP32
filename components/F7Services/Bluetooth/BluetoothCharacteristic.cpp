@@ -38,7 +38,7 @@ const char *BluetoothCharacteristic::COMPONENT_NAME = BLUETOOTH_COMPONENT_NAME;
  * @param property Characteristic properties.
  * @param maxValueLength Maximum length of he value data.
  */
-BluetoothCharacteristic::BluetoothCharacteristic(const Uuid16 uuid, const CharacteristicPermission permission, const CharacteristicProperty property, const int maxValueLength) : _declaration(uuid, permission, property), _value(this, uuid, permission, maxValueLength)
+BluetoothCharacteristic::BluetoothCharacteristic(const Uuid16 &uuid, const CharacteristicPermission permission, const CharacteristicProperty property, const int maxValueLength) : _declaration(uuid, permission, property), _value(this, uuid, permission, maxValueLength)
 {
     TRACE_MESSAGE("BluetoothCharacteristic(UUID16): Enter");
 
@@ -63,7 +63,7 @@ BluetoothCharacteristic::BluetoothCharacteristic(const Uuid16 uuid, const Charac
  * @param property Characteristic properties.
  * @param maxValueLength Maximum length of he value data.
  */
-BluetoothCharacteristic::BluetoothCharacteristic(const Uuid128 uuid, const CharacteristicPermission permission, const CharacteristicProperty property, const int maxValueLength) : _declaration(uuid, permission, property), _value(this, uuid, permission, maxValueLength)
+BluetoothCharacteristic::BluetoothCharacteristic(const Uuid128 &uuid, const CharacteristicPermission permission, const CharacteristicProperty property, const int maxValueLength) : _declaration(uuid, permission, property), _value(this, uuid, permission, maxValueLength)
 {
     TRACE_MESSAGE("BluetoothCharacteristic(UUID128): Enter");
 

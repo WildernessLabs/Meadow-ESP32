@@ -37,7 +37,7 @@ public:
     /**
      * @brief Construct a new Bluetooth Service object
      */
-    BluetoothService(const char *name, Uuid16 uuid);
+    BluetoothService(const char *name, const Uuid16 &uuid);
 
     /**
      * @brief Destroy the BluetoothService object and release any allocated resources.
