@@ -133,7 +133,7 @@ bool BluetoothCharacteristicValue::WriteValue(const uint8_t * const source, cons
 
     bool result = false;
 
-    if ((length >= 0) && (std::cmp_less_equal(length , MaxLength)))
+    if ((length >= 0) && (std::cmp_less_equal(length, MaxLength)))
     {
         if (length > 0)
         {
