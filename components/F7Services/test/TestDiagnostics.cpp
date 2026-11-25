@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <utility>
 #include "esp_heap_caps.h"
 #include "esp_log.h"
 #include "esp_timer.h"
@@ -280,7 +281,7 @@ static int CaptureLogOutput(const char *format, va_list arguments)
     const int length = vsnprintf(_captured + _capturedLength, space, format, arguments);
     if (length > 0)
     {
-        _capturedLength += (static_cast<size_t>(length) < space) ? static_cast<size_t>(length) : (space - 1);
+        _capturedLength += std::cmp_less(length, space) ? static_cast<size_t>(length) : (space - 1);
     }
     return (length);
 }

@@ -82,7 +82,7 @@ bool BluetoothSecurityConfiguration::Parse(const cJSON * const security)
         //  A number such as 1.5 is refused rather than truncated, as is anything outside the five
         //  capabilities the Bluetooth Core Specification defines.
         //
-        if ((cJSON_IsNumber(capability) == 0) || (capability->valuedouble != static_cast<double>(capability->valueint)) || (capability->valueint < std::to_underlying(IoCapability::DisplayOnly)) || (capability->valueint > std::to_underlying(IoCapability::KeyboardDisplay)))
+        if ((cJSON_IsNumber(capability) == 0) || (capability->valuedouble != static_cast<double>(capability->valueint)) || std::cmp_less(capability->valueint, std::to_underlying(IoCapability::DisplayOnly)) || std::cmp_greater(capability->valueint, std::to_underlying(IoCapability::KeyboardDisplay)))
         {
             ERROR_MESSAGE("Security setting " IO_CAPABILITY_KEY " is not a number from 0 to 4.");
             valid = false;

@@ -9,6 +9,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <utility>
 
 #include "WiFiRequestHandler.hpp"
 #include "Mapping.hpp"
@@ -1477,7 +1478,7 @@ void WiFiRequestHandler::Send(void * const vpMessage)
                 //  declared Length past the end of the allocation is rejected here rather
                 //  than read past the end of the heap block and transmitted (issue #238).
                 //
-                if ((request->Length < 0) || (static_cast<uint32_t>(request->Length) > request->BufferLength))
+                if ((request->Length < 0) || std::cmp_greater(request->Length, request->BufferLength))
                 {
                     ERROR_MESSAGE("Send: declared length %" PRIi32 " is either negative or exceeds the allocated buffer of %" PRIu32 " bytes.", request->Length, request->BufferLength);
                     result = StatusCodes::InvalidRequest;
@@ -1715,7 +1716,7 @@ void WiFiRequestHandler::SendTo(void * const vpMessage)
                 //  declared Length past the end of the allocation is rejected here rather
                 //  than read past the end of the heap block and transmitted (issue #238).
                 //
-                if ((request->Length < 0) || (static_cast<uint32_t>(request->Length) > request->BufferLength))
+                if ((request->Length < 0) || std::cmp_greater(request->Length, request->BufferLength))
                 {
                     ERROR_MESSAGE("SendTo: declared length %" PRIi32 " is either negative or exceeds the allocated buffer of %" PRIu32 " bytes.", request->Length, request->BufferLength);
                     result = StatusCodes::InvalidRequest;
@@ -1781,7 +1782,7 @@ void WiFiRequestHandler::SendTo(void * const vpMessage)
  */
 StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRequest *request, Esp32Messaging::RecvFromResponse &response)
 {
-    if ((request->Length < 0) || (static_cast<uint32_t>(request->Length) > Message::MAXIMUM_PAYLOAD_LENGTH))
+    if ((request->Length < 0) || std::cmp_greater(request->Length, Message::MAXIMUM_PAYLOAD_LENGTH))
     {
         ERROR_MESSAGE("RecvFrom: requested length %" PRIi32 " is out of range.", request->Length);
         response.Result = -1;

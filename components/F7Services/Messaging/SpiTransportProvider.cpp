@@ -10,6 +10,7 @@
 #include "sdkconfig.h"
 
 #include <cstring>
+#include <utility>
 
 #include "esp_heap_caps.h"
 
@@ -632,11 +633,11 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessInboundPacket(Message *pac
         if (_incomingMessage->MessageID == packet->MessageID)
         {
             TRACE_MESSAGE("Packet matches incoming packet");
-            if ((packet->PacketOffset + packet->PacketLength) <= _incomingMessage->PayloadLength)
+            if (std::cmp_less_equal(packet->PacketOffset + packet->PacketLength, _incomingMessage->PayloadLength))
             {
                 TRACE_MESSAGE("Copying data.");
                 memcpy(static_cast<void *>(_incomingMessage->Payload + packet->PacketOffset), static_cast<const void *>(packet->Payload), packet->PacketLength);
-                if ((packet->PacketOffset + packet->PacketLength) == _incomingMessage->PayloadLength)
+                if (std::cmp_equal(packet->PacketOffset + packet->PacketLength, _incomingMessage->PayloadLength))
                 {
                     TRACE_MESSAGE("Full message received, sending to queue.");
                     //
