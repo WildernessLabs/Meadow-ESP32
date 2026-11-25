@@ -18,9 +18,9 @@
 static esp_bt_controller_status_t s_status = ESP_BT_CONTROLLER_STATUS_IDLE;
 
 esp_err_t __real_esp_bt_controller_init(esp_bt_controller_config_t *cfg);
-esp_err_t __real_esp_bt_controller_deinit(void);
+esp_err_t __real_esp_bt_controller_deinit();
 esp_err_t __real_esp_bt_controller_enable(esp_bt_mode_t mode);
-esp_err_t __real_esp_bt_controller_disable(void);
+esp_err_t __real_esp_bt_controller_disable();
 
 esp_err_t __wrap_esp_bt_controller_init(esp_bt_controller_config_t *cfg)
 {
@@ -32,7 +32,7 @@ esp_err_t __wrap_esp_bt_controller_init(esp_bt_controller_config_t *cfg)
     return result;
 }
 
-esp_err_t __wrap_esp_bt_controller_deinit(void)
+esp_err_t __wrap_esp_bt_controller_deinit()
 {
     const esp_err_t result = __real_esp_bt_controller_deinit();
     if (result == ESP_OK)
@@ -52,7 +52,7 @@ esp_err_t __wrap_esp_bt_controller_enable(esp_bt_mode_t mode)
     return result;
 }
 
-esp_err_t __wrap_esp_bt_controller_disable(void)
+esp_err_t __wrap_esp_bt_controller_disable()
 {
     const esp_err_t result = __real_esp_bt_controller_disable();
     if (result == ESP_OK)
@@ -62,7 +62,7 @@ esp_err_t __wrap_esp_bt_controller_disable(void)
     return result;
 }
 
-esp_bt_controller_status_t __wrap_esp_bt_controller_get_status(void)
+esp_bt_controller_status_t __wrap_esp_bt_controller_get_status()
 {
     return s_status;
 }
