@@ -247,9 +247,9 @@ static void CheckPageContents(const std::string &page, const bool complete)
     printf("Received %u bytes from the server.\n", static_cast<unsigned>(page.length()));
 
     TEST_ASSERT_TRUE_MESSAGE(complete, "The server did not close the connection.");
-    TEST_ASSERT_TRUE_MESSAGE(page.find("200 OK") != std::string::npos, "The server did not return 200 OK.");
-    TEST_ASSERT_TRUE_MESSAGE(page.find(TEST_EXPECTED_HEADING) != std::string::npos, "The page did not contain the expected heading.");
-    TEST_ASSERT_TRUE_MESSAGE(page.find(TEST_EXPECTED_PARAGRAPH) != std::string::npos, "The page did not contain the expected paragraph.");
+    TEST_ASSERT_TRUE_MESSAGE(page.contains("200 OK"), "The server did not return 200 OK.");
+    TEST_ASSERT_TRUE_MESSAGE(page.contains(TEST_EXPECTED_HEADING), "The page did not contain the expected heading.");
+    TEST_ASSERT_TRUE_MESSAGE(page.contains(TEST_EXPECTED_PARAGRAPH), "The page did not contain the expected paragraph.");
 }
 
 /**
@@ -912,7 +912,7 @@ TEST_CASE("Fetch a web page repeatedly", SLOW_TESTS)
             TEST_FAIL_MESSAGE("A fetch failed during the soak test.");
         }
 
-        if (page.find(TEST_EXPECTED_HEADING) == std::string::npos)
+        if (!page.contains(TEST_EXPECTED_HEADING))
         {
             printf("Fetch %" PRIu32 " of %" PRIu32 " returned %u bytes without the expected content.\n", iteration, iterations, static_cast<unsigned>(page.length()));
             TEST_FAIL_MESSAGE("A fetch returned the wrong content during the soak test.");
