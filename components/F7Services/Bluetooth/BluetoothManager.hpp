@@ -344,7 +344,7 @@ public:
     /**
      * @brief Get the services collections.
      */
-    const std::vector<BluetoothService *> GetServiceDefinitions()
+    std::vector<BluetoothService *> GetServiceDefinitions()
     {
         return Services.GetServiceDefinitions();
     }
