@@ -96,7 +96,7 @@ private:
     /**
      *  @brief This method will dispatch incoming messages to the appropriate request handler.
      */
-    void DispatchRequest(Message * const) override;
+    void DispatchRequest(Message * const request) override;
 
     /**
      *  @brief Default constructor.
@@ -171,7 +171,7 @@ public:
     /**
      *  @brief Public constructor.
      */
-    explicit SystemRequestHandler(IMessageDispatcher *);
+    explicit SystemRequestHandler(IMessageDispatcher *messageDispatcher);
 
     /**
      *  @brief Public destructor.
@@ -189,58 +189,58 @@ public:
      *  The stored value, or a copy of the default if none is stored; never the default
      *  itself.  Release it with Utils::DeleteAndNullifyPointer.
      */
-    static const char *GetConfigurationValue(const char *, const char *);
+    static const char *GetConfigurationValue(const char *name, const char *defaultValue);
 
     /**
      *  @brief Get an unsigned integer configuration value.
      */
-    static uint32_t GetConfigurationValue(const char *, const uint32_t);
+    static uint32_t GetConfigurationValue(const char *name, const uint32_t defaultValue);
 
     /**
      *  @brief Get an integer configuration value.
      */
-    static int GetConfigurationValue(const char *, const int32_t);
+    static int GetConfigurationValue(const char *name, const int32_t defaultValue);
 
     /**
      *  @brief Get a byte configuration value.
      */
-    static uint8_t GetConfigurationValue(const char *, const uint8_t);
+    static uint8_t GetConfigurationValue(const char *name, const uint8_t defaultValue);
 
     /**
      *  @brief Get a boolean configuration value.
      */
-    static bool GetConfigurationValue(const char *, const bool);
+    static bool GetConfigurationValue(const char *name, const bool defaultValue);
 
     /**
      *  @brief Get / Set the maximum message queue length.
      */
     static uint32_t GetMaximumMessageQueueLength();
-    static StatusCodes::StatusCodes SetMaximumMessageQueueLength(uint32_t);
+    static StatusCodes::StatusCodes SetMaximumMessageQueueLength(uint32_t value);
 
     /**
      *  @brief Set a string configuration value.
      */
-    static NvsManager::ErrorCodes SetConfigurationValue(const char *, const char *);
+    static NvsManager::ErrorCodes SetConfigurationValue(const char *name, const char *value);
 
     /**
      *  @brief Set an unsigned integer configuration value.
      */
-    static NvsManager::ErrorCodes SetConfigurationValue(const char *, const uint32_t);
+    static NvsManager::ErrorCodes SetConfigurationValue(const char *name, const uint32_t value);
 
     /**
      *  @brief Set an integer configuration value.
      */
-    static NvsManager::ErrorCodes SetConfigurationValue(const char *, const int32_t);
+    static NvsManager::ErrorCodes SetConfigurationValue(const char *name, const int32_t value);
 
     /**
      *  @brief Set a byte configuration value.
      */
-    static NvsManager::ErrorCodes SetConfigurationValue(const char *, const uint8_t);
+    static NvsManager::ErrorCodes SetConfigurationValue(const char *name, const uint8_t value);
 
     /**
      *  @brief Set a boolean configuration value.
      */
-    static NvsManager::ErrorCodes SetConfigurationValue(const char *, const bool);
+    static NvsManager::ErrorCodes SetConfigurationValue(const char *name, const bool value);
 
     /**
      *  @brief Get / Set the name of the device on the network.
@@ -249,7 +249,7 @@ public:
      *  task at any time.  It is empty if no name is held.
      */
     static std::string GetDeviceName();
-    static StatusCodes::StatusCodes SetDeviceName(const char *);
+    static StatusCodes::StatusCodes SetDeviceName(const char *value);
 
     /**
      *  @brief Send the configuration data as an interrupt message.

@@ -127,35 +127,35 @@ public:
     /**
      * @brief Record an event with one value (compiled out).
      */
-    static inline void Record(const ProfileEvent, const uint32_t)
+    static inline void Record([[maybe_unused]] const ProfileEvent event, [[maybe_unused]] const uint32_t first)
     {
     }
 
     /**
      * @brief Record an event with two values (compiled out).
      */
-    static inline void Record(const ProfileEvent, const uint32_t, const uint32_t)
+    static inline void Record([[maybe_unused]] const ProfileEvent event, [[maybe_unused]] const uint32_t first, [[maybe_unused]] const uint32_t second)
     {
     }
 
     /**
      * @brief Record an event with three values (compiled out).
      */
-    static inline void Record(const ProfileEvent, const uint32_t, const uint32_t, const uint32_t)
+    static inline void Record([[maybe_unused]] const ProfileEvent event, [[maybe_unused]] const uint32_t first, [[maybe_unused]] const uint32_t second, [[maybe_unused]] const uint32_t third)
     {
     }
 
     /**
      * @brief Mark the start of a message's life (compiled out).
      */
-    static inline void MessageStart(const uint32_t)
+    static inline void MessageStart([[maybe_unused]] const uint32_t messageId)
     {
     }
 
     /**
      * @brief Mark the end of a message's life (compiled out).
      */
-    static inline void MessageStop(const uint32_t)
+    static inline void MessageStop([[maybe_unused]] const uint32_t messageId)
     {
     }
 

@@ -121,7 +121,7 @@ private:
      *  Note this this method is static as it is used as a callback
      *  in some C code.
      */
-    static void SpiPostSetupCallback(spi_slave_transaction_t *);
+    static void SpiPostSetupCallback(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Send an ACK or NAK with the specified code.
@@ -134,17 +134,17 @@ private:
     /**
      *  @brief FreeRTOS task handler for this class.
      */
-    static void Task(void *);
+    static void Task(void *pvParameters);
 
     /**
      *  @brief FreeRTOS task handler for the synchronisation task.
      */
-    static void SynchronisationTask(void *);
+    static void SynchronisationTask(void *pvParameters);
 
     /**
      *  @brief Process incoming messages.
      */
-    spi_slave_transaction_t *ProcessMessages(spi_slave_transaction_t *);
+    spi_slave_transaction_t *ProcessMessages(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Convert the current state into a string message for debugging.
@@ -155,7 +155,7 @@ private:
      *  @brief Check to see if the specified buffer looks to contain valid
      *  (non-zero) data.
      */
-    static bool MessageContainsData(const uint8_t *, uint32_t);
+    static bool MessageContainsData(const uint8_t *buffer, uint32_t bufferLength);
 
     /**
      *  @brief Check to see if the state we are in indicates that we should be

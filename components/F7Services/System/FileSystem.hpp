@@ -133,7 +133,7 @@ public:
     /**
      * @brief Public File System constructor.
      */
-    FileSystem(IMessageDispatcher *);
+    FileSystem(IMessageDispatcher *messageDispatcher);
 
     /**
      * @brief Destroy the File System object
