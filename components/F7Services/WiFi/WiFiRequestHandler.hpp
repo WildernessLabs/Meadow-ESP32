@@ -1245,12 +1245,12 @@ private:
     /**
      *  @brief Teardown a poll request that has previously been setup by PollSetup.
      */
-    static int PollTeardown(void *pvMessage);
+    static int PollTeardown(void *vpMessage);
 
     /**
      *  @brief Execute the actual request to poll a socket.
      */
-    static void PollSocket(void *pvMessage);
+    static void PollSocket(void *activePollPointer);
 
     /**
      *  @brief Open the socket a poll request is woken up with, connected to itself.
@@ -1353,7 +1353,7 @@ private:
     /**
      *  @brief Provide a mechanism to call the getsockname or getpeername.
      */
-    static void GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunction request);
+    static void GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunction methodToCall);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the simulated getsockname method.

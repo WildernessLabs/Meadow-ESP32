@@ -79,11 +79,11 @@ protected:
      * @brief Send an IntegerResponse to the STM32.
      *
      * @param interface - The interface to sending the response.
-     * @param eventType - The event type of the response.
+     * @param function - The function the response is for.
      * @param statusCode - The status code of the response.
-     * @param result - Value to send.
+     * @param value - Value to send.
      */
-    static void SendIntegerResult(uint8_t interface, uint32_t eventType, uint32_t statusCode, uint32_t value);
+    static void SendIntegerResult(uint8_t interface, uint32_t function, uint32_t statusCode, uint32_t value);
 
     /**
      * @brief Answer a request whose function code this handler does not recognise.

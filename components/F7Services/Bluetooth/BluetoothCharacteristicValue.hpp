@@ -86,12 +86,12 @@ public:
     /**
      * @brief Construct a new BluetoothCharacteristicValue object with a 16-bit UUID.
      */
-    BluetoothCharacteristicValue(BluetoothCharacteristic *c, const Uuid16 &uuid, CharacteristicPermission permission, int maxValueLength);
+    BluetoothCharacteristicValue(BluetoothCharacteristic *parent, const Uuid16 &uuid, CharacteristicPermission permission, int maxValueLength);
 
     /**
      * @brief Construct a new BluetoothCharacteristicValue object with a 128-bit UUID.
      */
-    BluetoothCharacteristicValue(BluetoothCharacteristic *c, const Uuid128 &uuid, CharacteristicPermission permission, int maxValueLength);
+    BluetoothCharacteristicValue(BluetoothCharacteristic *parent, const Uuid128 &uuid, CharacteristicPermission permission, int maxValueLength);
 
     /**
      * @brief Destroy the BluetoothCharacteristicValue object and release any allocated resources.
