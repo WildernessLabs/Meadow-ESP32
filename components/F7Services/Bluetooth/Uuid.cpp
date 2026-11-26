@@ -129,7 +129,7 @@ bool IsValidHexChar(const char ch)
  */
 unsigned char HexPairToChar(const char a, const char b)
 {
-    return HexDigitToChar(a) * 16 + HexDigitToChar(b);
+    return (HexDigitToChar(a) * 16) + HexDigitToChar(b);
 }
 
 /**
