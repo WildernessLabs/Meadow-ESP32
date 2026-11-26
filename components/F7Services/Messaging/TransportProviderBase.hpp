@@ -57,11 +57,11 @@ public:
 
     ControlMessageType GetControlSignalMessage();
 
-    void SetControlSignalMessage(const ControlMessageType);
+    void SetControlSignalMessage(const ControlMessageType messageType);
 
     TickType_t GetControlSignalDelay() const;
 
-    void SetControlSignalDelay(const TickType_t);
+    void SetControlSignalDelay(const TickType_t delay);
 
 private:
     /**
@@ -140,7 +140,7 @@ protected:
     /**
      *  @brief Send a control message to the STM32.
      */
-    static void SendControlMessageToStm32(const ControlMessageType);
+    static void SendControlMessageToStm32(const ControlMessageType messageType);
 
     /**
      *  @brief Method used for debugging, this will dump the message at the head

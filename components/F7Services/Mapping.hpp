@@ -250,7 +250,7 @@ public:
     /**
      *  @brief Map the ESP error codes to a StatusCode value.
      */
-    static StatusCodes::StatusCodes GetStatusCode(const esp_err_t);
+    static StatusCodes::StatusCodes GetStatusCode(const esp_err_t error);
 
     /**
      *  @brief Map the ESP errno to a NuttX errno value.

@@ -236,7 +236,7 @@ private:
     /**
      *  This method will dispatch incoming messages to the appropriate request handler.
      */
-    void DispatchRequest(Message *) override;
+    void DispatchRequest(Message *request) override;
 
     /**
      * @brief Maximum size of the transmission unit.  BLE supports up to 512 bytes.
@@ -501,7 +501,7 @@ private:
      *  Construct a new Bluetooth request handler object with reference to a
      *  Message Dispatcher object.
      */
-    explicit BluetoothRequestHandler(IMessageDispatcher *);
+    explicit BluetoothRequestHandler(IMessageDispatcher *messageDispatcher);
 
     /**
      * @brief Get a pointer to this instance of the BluetoothRequestHandler.
@@ -588,7 +588,7 @@ public:
     /**
      * @brief Event handler for the GATTS system (registered through esp_ble_gatts_register_callback).
      */
-    static void GATTSProfileEventHandler(esp_gatts_cb_event_t, esp_gatt_if_t, esp_ble_gatts_cb_param_t *);
+    static void GATTSProfileEventHandler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
 
     /**
      * @brief Get the MAC address for the Bluetooth interface.

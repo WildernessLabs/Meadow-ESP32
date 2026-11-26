@@ -730,7 +730,7 @@ private:
     /**
      *  Process the request from the managed code to change the antenna.
      */
-    static void SetAntennaRequest(Message *);
+    static void SetAntennaRequest(Message *message);
 
     /**
      *  @brief Copy the IP and access point structure into the connection event data structure.
@@ -740,7 +740,7 @@ private:
     /**
      *  @brief Raise the ConnectToAccessPointEvent for the managed code.
      */
-    void RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes);
+    void RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes status);
 
     /**
      *  @brief Raise the RaiseDisconnectEvent for the managed code.
@@ -840,7 +840,7 @@ private:
      *
      * @return Esp32Messaging::AccessPointInformation*
      */
-    Esp32Messaging::AccessPointInformation *ExtractAndValidateAccessPointInformation(const uint8_t *, uint32_t, StatusCodes::StatusCodes &status) const;
+    Esp32Messaging::AccessPointInformation *ExtractAndValidateAccessPointInformation(const uint8_t *data, uint32_t dataLength, StatusCodes::StatusCodes &status) const;
 
     /**
      * @brief Is this a passphrase the soft-AP can be started with, for a mode that has one?
@@ -987,12 +987,12 @@ private:
     /**
      *  @brief Process the WiFi connecting and getting an IP address event
      */
-    void StationGotIpEvent(const ip_event_got_ip_t *);
+    void StationGotIpEvent(const ip_event_got_ip_t *eventData);
 
     /**
      *  @brief Process the station connected to access point event (WIFI_EVENT_STA_CONNECTED).
      */
-    void StationConnectedEvent(const wifi_event_sta_connected_t *);
+    void StationConnectedEvent(const wifi_event_sta_connected_t *eventData);
 
     /**
      *  @brief Destroy the station and soft access point network interfaces, if there are any.
@@ -1002,7 +1002,7 @@ private:
     /**
      *  @brief Processes the station disconnected event (WIFI_EVENT_STA_DISCONNECTED).
      */
-    void StationDisconnectedEvent(const wifi_event_sta_disconnected_t *);
+    void StationDisconnectedEvent(const wifi_event_sta_disconnected_t *eventData);
 
     /**
      * @brief Process a node associating with the access point.
@@ -1027,7 +1027,7 @@ private:
     /**
      * @brief Processes the node disconnecting from the access point event.
      */
-    void NodeDisconnectedEvent(const wifi_event_ap_stadisconnected_t *);
+    void NodeDisconnectedEvent(const wifi_event_ap_stadisconnected_t *eventData);
 
     /**
      * @brief Processes when the IP address is obtained from the access point event.
