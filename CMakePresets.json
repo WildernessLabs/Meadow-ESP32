@@ -4,7 +4,7 @@
     {
       "name": "Debug-ESP-IDF 6.1",
       "displayName": "Debug-ESP-IDF 6.1",
-      "description": "ESP-IDF 6.1 debug build for the ESP32. Builds into build/, shared with build.sh and idf.py. In CLion, needs a toolchain named \"ESP-IDF 6.1\" whose environment file is ~/.espressif/tools/activate_idf_v6.1.sh.",
+      "description": "ESP-IDF 6.1 debug build for the ESP32. Builds into build/, shared with build.sh and idf.py. In CLion, needs a toolchain named \"ESP-IDF 6.1.1\" whose environment file is ~/.espressif/tools/activate_idf_v6.1.1.sh.",
       "generator": "Ninja",
       "binaryDir": "build",
       "cacheVariables": {
@@ -13,7 +13,7 @@
       },
       "vendor": {
         "jetbrains.com/clion": {
-          "toolchain": "ESP-IDF 6.1"
+          "toolchain": "ESP-IDF 6.1.1"
         }
       }
     },
@@ -30,7 +30,7 @@
       },
       "vendor": {
         "jetbrains.com/clion": {
-          "toolchain": "ESP-IDF 6.1"
+          "toolchain": "ESP-IDF 6.1.1"
         }
       }
     }

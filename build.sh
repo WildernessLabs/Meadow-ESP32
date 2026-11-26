@@ -4,14 +4,13 @@ set -e
 scriptdir="$( cd "$(dirname "$0")" ; pwd -P )"
 
 #
-#   generate_build_info rewrites the tracked build_info.template and version.txt
-#   files as scratch space.  This trap restores both on every exit path -
-#   success, an error under set -e, or a signal - so a failed build cannot
-#   leave the tree dirty or poison the next build with stale version data.
+#   generate_build_info rewrites the tracked build_info.template file as scratch
+#   space.  This trap restores it on every exit path - success, an error under
+#   set -e, or a signal - so a failed build cannot leave the tree dirty or
+#   poison the next build with stale version data.
 #
 restore_tracked_build_files() {
   git checkout HEAD "$scriptdir/main/build_info.template" 2>/dev/null || true
-  git checkout HEAD "$scriptdir/version.txt" 2>/dev/null || true
   rm -f "$scriptdir/main/build_info.template.bak"
 }
 trap restore_tracked_build_files EXIT
@@ -249,8 +248,6 @@ generate_build_info() {
   BUILD_GIT_HASH=$(get_git_commit_hash .)
   BUILD_GIT_REF=$(get_git_branch_or_tag .)
 
-  git checkout HEAD $scriptdir/version.txt
-
   read -r BUILD_VERSION_STRING<$scriptdir/version.txt || true
   IFS='.' read -ra BUILD_VERSION <<< "$BUILD_VERSION_STRING"
   VERSION_MAJOR=${BUILD_VERSION[0]}
@@ -259,7 +256,14 @@ generate_build_info() {
 
   VERSION_BUILD=$(get_version_change_distance $1)
 
-  echo "$VERSION_MAJOR.$VERSION_MINOR.$VERSION_REVISION.$VERSION_BUILD" > $scriptdir/version.txt
+  #
+  #   The full version goes to CMake as PROJECT_VER (the application descriptor's
+  #   version) rather than into version.txt.  ESP-IDF makes version.txt a configure
+  #   dependency, so rewriting it, and restoring it afterwards, made every build
+  #   rerun CMake and made CLion, which shares build/, reload the project.  As a
+  #   cache entry, PROJECT_VER only reruns CMake when the version changes.
+  #
+  IDF_DEFINES+=" -DPROJECT_VER=$VERSION_MAJOR.$VERSION_MINOR.$VERSION_REVISION.$VERSION_BUILD"
 
   echo Calculated version: ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}.${VERSION_BUILD} '('${BUILD_GIT_HASH:0-8}:${BUILD_GIT_REF}')'
 
