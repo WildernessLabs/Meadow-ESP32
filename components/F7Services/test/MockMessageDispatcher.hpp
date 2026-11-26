@@ -119,7 +119,7 @@ public:
     /**
      *  @brief Queue a message for the STM32.
      */
-    bool QueueMessageForStm32(Message *response);
+    bool QueueMessageForStm32(Message *message);
 
     /**
      *  @brief Get the next message ID.

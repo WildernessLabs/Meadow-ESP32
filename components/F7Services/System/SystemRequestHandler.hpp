@@ -140,17 +140,17 @@ private:
     /**
      *  @brief Get the battery level.
      */
-    void GetBatteryChargeLevel(Message *request);
+    void GetBatteryChargeLevel(Message *message);
 
     /**
      * @brief Process the logging configuration.
      */
-    static void LoggingConfiguration(Message *request);
+    static void LoggingConfiguration(Message *message);
 
     /**
      * @brief Process the log message
      */
-    static void LogMessage(Message *request);
+    static void LogMessage(Message *message);
 
     /**
      *  @brief Populate the configuration object with the current configuration.
